@@ -29,8 +29,6 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-# Environment
-.env
 
 # Local configuration and secrets (examples stay versioned)
 .env.*
