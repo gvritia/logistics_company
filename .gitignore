@@ -31,3 +31,47 @@ bin/
 
 # Environment
 .env
+
+# Local configuration and secrets (examples stay versioned)
+.env.*
+!.env.example
+*.jks
+*.keystore
+
+# IDE local files (already tracked settings are preserved)
+.idea/
+*.iml
+
+# Maven / Java / JavaFX
+target/
+*.class
+*.log
+logs/
+hs_err_pid*
+replay_pid*
+
+# Gradle / Android
+.gradle/
+build/
+.cxx/
+.externalNativeBuild/
+local.properties
+*.apk
+*.aab
+*.dex
+captures/
+
+# Local PostgreSQL storage and Docker volumes
+pgdata/
+/database/data/
+/database/local/
+/infra/docker/data/
+/infra/docker/volumes/
+
+# OS / temporary files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.tmp
+*.swp
+*~
