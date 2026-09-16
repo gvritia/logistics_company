@@ -31,6 +31,7 @@ bin/
 
 
 # Local configuration and secrets (examples stay versioned)
+.env
 .env.*
 !.env.example
 *.jks
