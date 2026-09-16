@@ -27,7 +27,7 @@ public class TransportationRequest {
 
     private LocalDateTime createdAt;
     private LocalDateTime plannedDeliveryAt;
-    private TransportationRequestStatus status;
+    private TransportationRequestStatus status;  // enum
     private String pickupAddress;
     private String deliveryAddress;
 
