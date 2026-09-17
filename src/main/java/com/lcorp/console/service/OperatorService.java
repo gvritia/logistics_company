@@ -8,8 +8,7 @@ import com.lcorp.console.repository.OperatorRepository;
 import java.util.List;
 import java.util.Objects;
 
-// Управляет данными операторов и делегирует операции с заявками
-// в TransportationRequestService, где находятся бизнес-правила заявок.
+// Управление данными операторов
 public class OperatorService {
 
     private final OperatorRepository operatorRepository;

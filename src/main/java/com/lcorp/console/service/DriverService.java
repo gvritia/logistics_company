@@ -9,7 +9,7 @@ import com.lcorp.console.repository.DriverRepository;
 import java.util.List;
 import java.util.Objects;
 
-// Управляет данными доставщиков и их пользовательскими сценариями
+// Управление данными доставщиков и их пользовательскими сценариями
 public class DriverService {
 
     private final DriverRepository driverRepository;
