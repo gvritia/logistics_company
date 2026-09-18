@@ -21,7 +21,7 @@ public final class ConsoleApp {
     }
 
     public void run() {
-        ConsoleWriter.printInfo("Логистическая компания — консольный интерфейс");
+        ConsoleWriter.printInfo("Логистическая компания");
 
         while (true) {
             ConsoleWriter.printMenu("Выбор роли", List.of(

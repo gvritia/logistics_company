@@ -8,8 +8,12 @@ import com.lcorp.console.util.ConsoleReader;
 import com.lcorp.console.util.InputClosedException;
 import jakarta.persistence.PersistenceException;
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Scanner;
 import java.util.logging.LogManager;
@@ -20,7 +24,7 @@ public class Main {
         configureLogging();
 
         try (ApplicationContext context = new ApplicationContext(DatabaseConfig.load());
-             Scanner scanner = new Scanner(System.in)) {
+             Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
             new ConsoleApp(context, new ConsoleReader(scanner)).run();
         } catch (InputClosedException exception) {
             System.out.println("Ввод завершён, работа прекращена");
