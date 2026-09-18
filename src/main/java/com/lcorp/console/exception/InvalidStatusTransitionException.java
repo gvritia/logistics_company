@@ -2,7 +2,7 @@ package com.lcorp.console.exception;
 
 import com.lcorp.console.model.TransportationRequestStatus;
 
-public class InvalidStatusTransitionException extends RuntimeException {
+public class InvalidStatusTransitionException extends LogisticsException {
 
     private static final long serialVersionUID = 1L;
 

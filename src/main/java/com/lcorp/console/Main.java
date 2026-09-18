@@ -1,42 +1,43 @@
 package com.lcorp.console;
 
+import com.lcorp.console.app.ApplicationContext;
+import com.lcorp.console.app.ConsoleApp;
 import com.lcorp.console.config.DatabaseConfig;
-import com.lcorp.console.config.DatabaseConnectionFactory;
-import com.lcorp.console.config.HibernateConfig;
-import com.lcorp.console.repository.ClientRepository;
-import com.lcorp.console.repository.hibernate.HibernateClientRepository;
+import com.lcorp.console.exception.DataAccessException;
+import com.lcorp.console.util.ConsoleReader;
+import com.lcorp.console.util.InputClosedException;
 import jakarta.persistence.PersistenceException;
-import org.hibernate.SessionFactory;
 
-import java.sql.Connection;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.Scanner;
+import java.util.logging.LogManager;
 
 public class Main {
 
     public static void main(String[] args) {
-        try {
-            DatabaseConfig config = DatabaseConfig.load();
-            DatabaseConnectionFactory connectionFactory =
-                new DatabaseConnectionFactory(config);
+        configureLogging();
 
-            try (Connection connection = connectionFactory.openConnection()) {
-                if (!connection.isValid(5)) {
-                    throw new SQLException("PostgreSQL не подтвердил соединение");
-                }
-                System.out.println("Подключение к PostgreSQL установлено");
-            }
-
-            // Фабрика общая для будущих ORM-репозиториев; здесь пока проверяем чтение
-            try (SessionFactory sessionFactory = HibernateConfig.createSessionFactory(config)) {
-                ClientRepository clients = new HibernateClientRepository(sessionFactory);
-                System.out.println("Hibernate: соответствие моделей таблицам проверено");
-                System.out.println("Клиентов в базе: " + clients.findAll().size());
-            }
-        } catch (IllegalStateException | SQLException | PersistenceException exception) {
-            System.err.println(
-                "Ошибка запуска JDBC/Hibernate: " + exception.getMessage()
-            );
+        try (ApplicationContext context = new ApplicationContext(DatabaseConfig.load());
+             Scanner scanner = new Scanner(System.in)) {
+            new ConsoleApp(context, new ConsoleReader(scanner)).run();
+        } catch (InputClosedException exception) {
+            System.out.println("Ввод завершён, работа прекращена");
+        } catch (IllegalStateException | SQLException | PersistenceException
+                 | DataAccessException exception) {
+            System.err.println("Ошибка работы с базой данных: " + exception.getMessage());
             System.exit(1);
+        }
+    }
+
+    private static void configureLogging() {
+        try (InputStream settings =
+                 Main.class.getResourceAsStream("/logging.properties")) {
+            if (settings != null) {
+                LogManager.getLogManager().readConfiguration(settings);
+            }
+        } catch (IOException exception) {
         }
     }
 }
