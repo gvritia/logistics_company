@@ -49,7 +49,7 @@ public class ClientService {
         requireClient(clientId);
 
         // Клиента со связанными заявками нельзя удалять, иначе потеряется
-        // связь с историей перевозок.
+        // связь с историей перевозок
         if (!findRequestsForExistingClient(clientId).isEmpty()) {
             throw new IllegalStateException(
                     "Нельзя удалить клиента, у которого есть заявки"
@@ -62,7 +62,7 @@ public class ClientService {
     }
 
     // В Repository пока нет отдельного запроса findByClientId, поэтому на
-    // текущем этапе фильтрация выполняется через сервис заявок.
+    // текущем этапе фильтрация выполняется через сервис заявок
     public List<TransportationRequest> findRequests(Long clientId) {
         requireClient(clientId);
         return findRequestsForExistingClient(clientId);
