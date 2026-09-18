@@ -14,6 +14,7 @@ import com.lcorp.console.repository.OperatorRepository;
 import com.lcorp.console.repository.TransportationRequestRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,6 +47,45 @@ public class TransportationRequestService {
         requireOperator(request.getOperatorId());
 
         return requestRepository.create(request);
+    }
+
+    // Изменять содержимое можно только у новой заявки, пока её не начали обрабатывать.
+    // Служебные поля берутся из сохранённой заявки, а не из объекта, полученного от меню.
+    public TransportationRequest updateRequest(TransportationRequest request) {
+        if (request == null) {
+            throw new InvalidRequestDataException("request", "заявка не должна быть null");
+        }
+        requireId(request.getId(), "id");
+
+        TransportationRequest existingRequest = requireRequest(request.getId());
+        ensureDraftRequest(existingRequest, "Редактирование");
+        validateRequestDetails(request, existingRequest.getCreatedAt());
+
+        requireClient(request.getClientId());
+        requireOperator(request.getOperatorId());
+
+        existingRequest.setClientId(request.getClientId());
+        existingRequest.setOperatorId(request.getOperatorId());
+        existingRequest.setCargoDescription(request.getCargoDescription());
+        existingRequest.setWeightKg(request.getWeightKg());
+        existingRequest.setPrice(request.getPrice());
+        existingRequest.setPlannedDeliveryAt(request.getPlannedDeliveryAt());
+        existingRequest.setPickupAddress(request.getPickupAddress());
+        existingRequest.setDeliveryAddress(request.getDeliveryAddress());
+
+        updateExisting(existingRequest);
+        return existingRequest;
+    }
+
+    // Физически удалять можно только черновик CREATED.
+    // Для заявок, попавших в обработку, используется смена статуса на CANCELLED.
+    public void deleteRequest(Long requestId) {
+        TransportationRequest request = requireRequest(requestId);
+        ensureDraftRequest(request, "Удаление");
+
+        if (!requestRepository.deleteById(requestId)) {
+            throw new EntityNotFoundException("Заявка", requestId);
+        }
     }
 
     public TransportationRequest getById(Long requestId) {
@@ -189,6 +229,27 @@ public class TransportationRequestService {
         if (request.getId() != null) {
             throw new InvalidRequestDataException("id", "у новой заявки ID должен отсутствовать");
         }
+
+        validateRequestDetails(request, request.getCreatedAt());
+
+        if (request.getStatus() != TransportationRequestStatus.CREATED) {
+            throw new InvalidRequestDataException(
+                "status",
+                "новая заявка должна иметь статус CREATED"
+            );
+        }
+        if (request.getDriverId() != null) {
+            throw new InvalidRequestDataException(
+                "driverId",
+                "новая заявка должна быть свободной"
+            );
+        }
+    }
+
+    private void validateRequestDetails(
+        TransportationRequest request,
+        LocalDateTime createdAt
+    ) {
         requireId(request.getClientId(), "clientId");
         requireId(request.getOperatorId(), "operatorId");
         requireText(request.getCargoDescription(), "cargoDescription");
@@ -204,26 +265,23 @@ public class TransportationRequestService {
                 "адрес доставки должен отличаться от адреса отправления"
             );
         }
-        if (request.getCreatedAt() == null) {
+        if (createdAt == null) {
             throw new InvalidRequestDataException("createdAt", "дата создания обязательна");
         }
         if (request.getPlannedDeliveryAt() == null
-            || !request.getPlannedDeliveryAt().isAfter(request.getCreatedAt())) {
+            || !request.getPlannedDeliveryAt().isAfter(createdAt)) {
             throw new InvalidRequestDataException(
                 "plannedDeliveryAt",
                 "плановая доставка должна быть позже даты создания"
             );
         }
-        if (request.getStatus() != TransportationRequestStatus.CREATED) {
-            throw new InvalidRequestDataException(
-                "status",
-                "новая заявка должна иметь статус CREATED"
-            );
-        }
-        if (request.getDriverId() != null) {
-            throw new InvalidRequestDataException(
-                "driverId",
-                "новая заявка должна быть свободной"
+    }
+
+    private void ensureDraftRequest(TransportationRequest request, String operationName) {
+        if (request.getStatus() != TransportationRequestStatus.CREATED
+            || request.getDriverId() != null) {
+            throw new IllegalStateException(
+                operationName + " разрешено только для заявки CREATED без доставщика"
             );
         }
     }
