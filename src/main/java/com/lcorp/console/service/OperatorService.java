@@ -67,6 +67,14 @@ public class OperatorService {
         return requestService.createRequest(request);
     }
 
+    public TransportationRequest updateRequest(TransportationRequest request) {
+        return requestService.updateRequest(request);
+    }
+
+    public void deleteRequest(Long requestId) {
+        requestService.deleteRequest(requestId);
+    }
+
     public List<TransportationRequest> findAllRequests() {
         return requestService.findAll();
     }
