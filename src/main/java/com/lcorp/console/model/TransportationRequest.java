@@ -1,35 +1,67 @@
 package com.lcorp.console.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "transportation_requests", schema = "public")
 public class TransportationRequest {
 
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
 
+    // Сохраняем ID связей: внешние ключи уже определены в SQL-схеме
+    @Column(name = "client_id", nullable = false)
     private Long clientId;
 
 
+    @Column(name = "driver_id")
     private Long driverId;
 
 
+    @Column(name = "operator_id", nullable = false)
     private Long operatorId;
 
+    @Column(name = "cargo_description", length = 500, nullable = false)
     private String cargoDescription;
 
 
+    @Column(name = "weight_kg", precision = 12, scale = 3, nullable = false)
     private BigDecimal weightKg;
 
 
+    @Column(name = "price", precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
 
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    @Column(name = "planned_delivery_at", nullable = false)
     private LocalDateTime plannedDeliveryAt;
+
+    // STRING хранит название (APPROVED), а не порядковый номер enum
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
     private TransportationRequestStatus status;  // enum
+    @Column(name = "pickup_address", length = 300, nullable = false)
     private String pickupAddress;
+    @Column(name = "delivery_address", length = 300, nullable = false)
     private String deliveryAddress;
+
+    // Конструктор для загрузки существующей заявки через Hibernate
+    protected TransportationRequest() {
+    }
 
 
     public TransportationRequest(
