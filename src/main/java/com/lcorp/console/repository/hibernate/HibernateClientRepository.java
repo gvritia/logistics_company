@@ -26,8 +26,8 @@ public class HibernateClientRepository implements ClientRepository {
         if (client.getId() != null) {
             throw new IllegalArgumentException("Для create нужен клиент без ID");
         }
-//  inTransaction открывает Session, начинает Transaction, затем
-//  выполняет мой код, делает commit и закрывает Session
+        //  inTransaction открывает Session, начинает Transaction, затем
+        //  выполняет мой код, делает commit и закрывает Session
         return inTransaction(session -> {
             // persist говорит Хибернету, что этот объект является новой сущностью
             // и его нужно сохранить в базе
@@ -87,7 +87,7 @@ public class HibernateClientRepository implements ClientRepository {
     // Общий метод позволяет не повторять открытие, commit и rollback в каждом CRUD
     private <T> T inTransaction(Function<Session, T> action) {
         // Session живёт только в рамках одной операции и всегда закрывается
-        try (Session session = sessionFactory.openSession()) {
+        try (Session session = sessionFactory.openSession()){
             Transaction transaction = session.beginTransaction();
             try {
                 T result = action.apply(session);
