@@ -3,6 +3,7 @@ package com.lcorp.console.app;
 import com.lcorp.console.config.DatabaseConfig;
 import com.lcorp.console.config.DatabaseConnectionFactory;
 import com.lcorp.console.config.HibernateConfig;
+import com.lcorp.console.export.XlsxExporter;
 import com.lcorp.console.repository.ClientRepository;
 import com.lcorp.console.repository.DriverRepository;
 import com.lcorp.console.repository.OperatorRepository;
@@ -31,6 +32,7 @@ public final class ApplicationContext implements AutoCloseable {
     private final OperatorService operatorService;
     private final TransportationRequestService requestService;
     private final TransportationRequestQueryService queryService;
+    private final XlsxExporter exporter = new XlsxExporter();
 
     public ApplicationContext(DatabaseConfig config) throws SQLException {
         DatabaseConnectionFactory connectionFactory = new DatabaseConnectionFactory(config);
@@ -73,6 +75,10 @@ public final class ApplicationContext implements AutoCloseable {
 
     public TransportationRequestQueryService queries() {
         return queryService;
+    }
+
+    public XlsxExporter exporter() {
+        return exporter;
     }
 
     @Override

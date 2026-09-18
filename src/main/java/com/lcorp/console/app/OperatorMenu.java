@@ -7,6 +7,8 @@ import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.console.model.query.SortDirection;
 import com.lcorp.console.model.query.TransportationRequestSearchCriteria;
 import com.lcorp.console.model.query.TransportationRequestSortField;
+import com.lcorp.console.model.query.TransportationRequestView;
+import com.lcorp.console.export.ExportResult;
 import com.lcorp.console.service.ClientService;
 import com.lcorp.console.service.DriverService;
 import com.lcorp.console.service.OperatorService;
@@ -15,11 +17,16 @@ import com.lcorp.console.util.ConsoleWriter;
 import com.lcorp.console.util.ErrorHandler;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
 public final class OperatorMenu implements Menu {
+
+    private static final DateTimeFormatter FILE_NAME_TIME =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm");
 
     private static final BigDecimal MAX_WEIGHT = new BigDecimal("100000");
     private static final BigDecimal MAX_PRICE = new BigDecimal("100000000");
@@ -29,7 +36,8 @@ public final class OperatorMenu implements Menu {
         "Клиенты",
         "Доставщики",
         "Поиск заявок",
-        "Статистика по статусам"
+        "Статистика по статусам",
+        "Экспорт всех заявок в Excel"
     );
 
     private static final List<String> REQUEST_ITEMS = List.of(
@@ -92,6 +100,7 @@ public final class OperatorMenu implements Menu {
                 case 3 -> showDrivers();
                 case 4 -> runAndPause(this::searchRequests);
                 case 5 -> runAndPause(this::showStatistics);
+                case 6 -> runAndPause(this::exportAllRequests);
                 default -> ConsoleWriter.printError("Неизвестный пункт меню");
             }
         }
@@ -419,8 +428,41 @@ public final class OperatorMenu implements Menu {
             reader.readEnum("Направление сортировки", SortDirection.class)
         );
 
+        List<TransportationRequestView> found = context.queries().search(criteria);
         ConsoleWriter.printTitle("Результаты поиска");
-        ConsoleWriter.printRequestViews(context.queries().search(criteria));
+        ConsoleWriter.printRequestViews(found);
+
+        if (!found.isEmpty() && reader.confirm("Выгрузить результат в Excel?")) {
+            exportToFile(found, "requests");
+        }
+    }
+
+    private void exportAllRequests() {
+        List<TransportationRequestView> all =
+            context.queries().search(new TransportationRequestSearchCriteria());
+        if (all.isEmpty()) {
+            ConsoleWriter.printInfo("Список пуст");
+            return;
+        }
+        exportToFile(all, "requests_all");
+    }
+
+    private void exportToFile(List<TransportationRequestView> requests, String namePrefix) {
+        String defaultName = namePrefix + "_"
+            + LocalDateTime.now().format(FILE_NAME_TIME) + ".xlsx";
+
+        Path target = reader.readFilePath("Путь к файлу", defaultName, ".xlsx");
+        if (target == null) {
+            ConsoleWriter.printInfo("Экспорт отменён");
+            return;
+        }
+
+        ExportResult result = context.exporter().export(
+            target, requests, context.queries().getStatisticsByStatus()
+        );
+        ConsoleWriter.printSuccess(
+            "Выгружено заявок: " + result.requestCount() + ", файл " + result.file()
+        );
     }
 
     private void showStatistics() {
