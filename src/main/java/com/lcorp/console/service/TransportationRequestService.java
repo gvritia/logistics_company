@@ -1,10 +1,6 @@
 package com.lcorp.console.service;
 
-import com.lcorp.console.exception.DriverUnavailableException;
-import com.lcorp.console.exception.EntityNotFoundException;
-import com.lcorp.console.exception.InvalidRequestDataException;
-import com.lcorp.console.exception.InvalidStatusTransitionException;
-import com.lcorp.console.exception.RequestAssignmentException;
+import com.lcorp.console.exception.*;
 import com.lcorp.console.model.Driver;
 import com.lcorp.console.model.TransportationRequest;
 import com.lcorp.console.model.TransportationRequestStatus;

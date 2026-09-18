@@ -3,22 +3,13 @@ package com.lcorp.console.app;
 import com.lcorp.console.config.DatabaseConfig;
 import com.lcorp.console.config.DatabaseConnectionFactory;
 import com.lcorp.console.config.HibernateConfig;
-import com.lcorp.console.export.XlsxExporter;
-import com.lcorp.console.repository.ClientRepository;
-import com.lcorp.console.repository.DriverRepository;
-import com.lcorp.console.repository.OperatorRepository;
-import com.lcorp.console.repository.TransportationRequestQueryRepository;
-import com.lcorp.console.repository.TransportationRequestRepository;
+import com.lcorp.console.repository.*;
 import com.lcorp.console.repository.hibernate.HibernateClientRepository;
 import com.lcorp.console.repository.hibernate.HibernateDriverRepository;
 import com.lcorp.console.repository.hibernate.HibernateOperatorRepository;
 import com.lcorp.console.repository.hibernate.HibernateTransportationRequestRepository;
 import com.lcorp.console.repository.jdbc.JdbcTransportationRequestQueryRepository;
-import com.lcorp.console.service.ClientService;
-import com.lcorp.console.service.DriverService;
-import com.lcorp.console.service.OperatorService;
-import com.lcorp.console.service.TransportationRequestQueryService;
-import com.lcorp.console.service.TransportationRequestService;
+import com.lcorp.console.service.*;
 import org.hibernate.SessionFactory;
 
 import java.sql.Connection;
@@ -32,7 +23,6 @@ public final class ApplicationContext implements AutoCloseable {
     private final OperatorService operatorService;
     private final TransportationRequestService requestService;
     private final TransportationRequestQueryService queryService;
-    private final XlsxExporter exporter = new XlsxExporter();
 
     public ApplicationContext(DatabaseConfig config) throws SQLException {
         DatabaseConnectionFactory connectionFactory = new DatabaseConnectionFactory(config);
@@ -75,10 +65,6 @@ public final class ApplicationContext implements AutoCloseable {
 
     public TransportationRequestQueryService queries() {
         return queryService;
-    }
-
-    public XlsxExporter exporter() {
-        return exporter;
     }
 
     @Override
