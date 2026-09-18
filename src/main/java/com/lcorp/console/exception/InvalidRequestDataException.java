@@ -1,6 +1,6 @@
 package com.lcorp.console.exception;
 
-public class InvalidRequestDataException extends RuntimeException {
+public class InvalidRequestDataException extends LogisticsException {
 
     private static final long serialVersionUID = 1L;
 

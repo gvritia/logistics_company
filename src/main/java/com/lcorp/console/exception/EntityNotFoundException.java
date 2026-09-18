@@ -1,6 +1,6 @@
 package com.lcorp.console.exception;
 
-public class EntityNotFoundException extends RuntimeException {
+public class EntityNotFoundException extends LogisticsException {
 
     private static final long serialVersionUID = 1L;
 
