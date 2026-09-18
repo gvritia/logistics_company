@@ -67,6 +67,10 @@ pgdata/
 /infra/docker/data/
 /infra/docker/volumes/
 
+# Отчёты, созданные приложением при работе
+/requests_*.xlsx
+/requests_all_*.xlsx
+
 # OS / temporary files
 Thumbs.db
 Desktop.ini

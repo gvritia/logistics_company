@@ -1,6 +1,9 @@
 package com.lcorp.console.util;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -86,6 +89,33 @@ public final class ConsoleReader {
 
     public void pause() {
         readLine("Enter — продолжить");
+    }
+
+    public Path readFilePath(String prompt, String defaultName, String extension) {
+        while (true) {
+            String line = readLine(prompt + " (Enter — " + defaultName + ")");
+            String fileName = line.isEmpty() ? defaultName : line;
+            if (!fileName.toLowerCase().endsWith(extension)) {
+                fileName = fileName + extension;
+            }
+
+            Path path;
+            try {
+                path = Path.of(fileName).toAbsolutePath();
+            } catch (InvalidPathException exception) {
+                System.out.println("Недопустимый путь к файлу");
+                continue;
+            }
+
+            if (Files.isDirectory(path)) {
+                System.out.println("Это каталог, укажите имя файла!");
+                continue;
+            }
+            if (Files.exists(path) && !confirm("Файл существует, перезаписать?")) {
+                return null;
+            }
+            return path;
+        }
     }
 
     public String readString(String prompt, int minLength, int maxLength) {
