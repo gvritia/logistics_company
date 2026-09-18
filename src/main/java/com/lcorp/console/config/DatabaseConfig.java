@@ -60,7 +60,8 @@ public final class DatabaseConfig {
             for (String line : lines) {
                 String trimmedLine = line.trim(); // trim удаляет пробелы
                 // пропуск пустых строк или комментариев
-                if (trimmedLine.isEmpty() || trimmedLine.startsWith("//")) {
+                if (trimmedLine.isEmpty() || trimmedLine.startsWith("#")
+                    || trimmedLine.startsWith("//")) {
                     continue;
                 }
 

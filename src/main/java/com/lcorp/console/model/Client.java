@@ -1,11 +1,31 @@
 package com.lcorp.console.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+// Entity связывает Java-класс с таблицей, а Column — поле со столбцом
+@Entity
+@Table(name = "clients", schema = "public")
 public class Client {
+    // Значение ID создаёт PostgreSQL своим identity-счётчиком
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "full_name", length = 150, nullable = false)
     private String fullName;
+    @Column(name = "phone", length = 32)
     private String phone;
+    @Column(name = "email", length = 254)
     private String email;
+
+    // Hibernate сначала создаёт пустой объект, затем заполняет поля из БД
+    protected Client() {
+    }
 
     public Client(String fullName, String phone, String email) {
         this(null, fullName, phone, email);
