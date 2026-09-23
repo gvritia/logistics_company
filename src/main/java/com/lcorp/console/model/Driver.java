@@ -7,11 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-// Entity связывает Java-класс с таблицей, а Column — поле со столбцом
 @Entity
 @Table(name = "drivers", schema = "public")
 public class Driver {
-    // Значение ID создаёт PostgreSQL своим identity-счётчиком
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,7 +20,6 @@ public class Driver {
     @Column(name = "active", nullable = false)
     private boolean active;
 
-    // Hibernate сначала создаёт пустой объект, затем заполняет поля из БД
     protected Driver() {
     }
 

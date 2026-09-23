@@ -101,22 +101,22 @@ public class DriverService {
         return requestService.takeRequest(requestId, driverId);
     }
 
-    // Делегирует отказ от назначения TransportationRequestService.
+    // Делегирует отказ от назначения TransportationRequestService
     public TransportationRequest rejectAssignment(Long driverId, Long requestId) {
         requireDriver(driverId);
         return requestService.rejectAssignment(requestId, driverId);
     }
 
-    // Делегирует начало перевозки TransportationRequestService.
+    // Делегирует начало перевозки TransportationRequestService
     public TransportationRequest startTransportation(Long driverId, Long requestId) {
         requireActiveDriver(driverId);
         return requestService.startTransportation(requestId, driverId);
     }
 
-    // Делегирует завершение перевозки TransportationRequestService.
+    // Делегирует завершение перевозки TransportationRequestService
     public TransportationRequest completeDelivery(Long driverId, Long requestId) {
         // Деактивация запрещает новые назначения, но не мешает завершить
-        // перевозку, которая уже была начата этим доставщиком.
+        // перевозку, которая уже была начата этим доставщиком
         requireDriver(driverId);
         return requestService.completeDelivery(requestId, driverId);
     }

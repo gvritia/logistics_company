@@ -87,7 +87,7 @@ public class HibernateTransportationRequestRepository implements TransportationR
 
     @Override
     public List<TransportationRequest> findAvailable() {
-        // Свободна только одобренная заявка без доставщика; одного NULL недостаточно
+        // Свободна только одобренная заявка без доставщика
         return inTransaction(session -> session
             .createSelectionQuery(
                 "from TransportationRequest r where r.status = :status "
@@ -101,8 +101,6 @@ public class HibernateTransportationRequestRepository implements TransportationR
     @Override
     public List<TransportationRequest> findByDriverId(Long driverId) {
         Objects.requireNonNull(driverId);
-        // Именованный параметр передаёт значение отдельно от текста запроса
-        // Статус не ограничиваем: история завершённых/отменённых заявок тоже нужна
         return inTransaction(session -> session
             .createSelectionQuery(
                 "from TransportationRequest r where r.driverId = :driverId order by r.id",

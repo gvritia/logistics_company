@@ -8,11 +8,11 @@ import com.lcorp.console.util.ConsoleReader;
 import com.lcorp.console.util.InputClosedException;
 import jakarta.persistence.PersistenceException;
 
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
+//import java.io.FileDescriptor;
+//import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+//import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Scanner;

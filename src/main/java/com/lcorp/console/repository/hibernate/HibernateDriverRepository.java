@@ -78,7 +78,7 @@ public class HibernateDriverRepository implements DriverRepository {
 
     @Override
     public List<Driver> findActive() {
-        // active — имя поля Java-модели. HQL выполняет фильтрацию в БД
+        // active это имя поля модели
         return inTransaction(session -> session
             .createSelectionQuery("from Driver d where d.active = true order by d.id", Driver.class)
             .getResultList());

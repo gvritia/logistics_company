@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-// Реализация существующего интерфейса: ClientService не нужно знать о Hibernate
+// Реализация существующего интерфейса (ClientService не нужно знать о Hibernate)
 public class HibernateClientRepository implements ClientRepository {
 
     private final SessionFactory sessionFactory;
@@ -29,7 +29,7 @@ public class HibernateClientRepository implements ClientRepository {
         //  inTransaction открывает Session, начинает Transaction, затем
         //  выполняет мой код, делает commit и закрывает Session
         return inTransaction(session -> {
-            // persist говорит Хибернету, что этот объект является новой сущностью
+            // persist говорит Hibernate, что этот объект является новой сущностью
             // и его нужно сохранить в базе
             session.persist(client);
             return client;
@@ -44,8 +44,6 @@ public class HibernateClientRepository implements ClientRepository {
 
     @Override
     public List<Client> findAll() {
-        // Это HQL: Client — имя Java-класса. SQL к таблице clients строит Hibernate
-        // Сортировка по ID делает порядок списка предсказуемым
         return inTransaction(session -> session
             .createSelectionQuery("from Client c order by c.id", Client.class)
             .getResultList());
@@ -77,13 +75,12 @@ public class HibernateClientRepository implements ClientRepository {
             if (existing == null) {
                 return false;
             }
-            // Проверка истории остаётся в Service, а FK в БД защищает от потери связей
             session.remove(existing);
             return true;
         });
     }
 
-    // Function описывает действие: получает Session и возвращает результат типа T
+    // Function описывает действие (получает Session и возвращает результат типа T)
     // Общий метод позволяет не повторять открытие, commit и rollback в каждом CRUD
     private <T> T inTransaction(Function<Session, T> action) {
         // Session живёт только в рамках одной операции и всегда закрывается

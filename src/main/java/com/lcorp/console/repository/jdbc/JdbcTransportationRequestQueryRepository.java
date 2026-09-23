@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-// Выполняет только чтение через JDBC. CRUD этого класса не касается.
+// Выполняет только чтение через JDBC. CRUD этого класса не касается
 public class JdbcTransportationRequestQueryRepository
     implements TransportationRequestQueryRepository {
 

@@ -84,7 +84,6 @@ public final class DatabaseConfig {
         }
     }
 
-    // Параметр -DKEY=value имеет приоритет над переменной окружения и .env
     private static String requireSetting(String key, Map<String, String> fileValues) {
         String value = firstNotBlank(
             System.getProperty(key),

@@ -22,7 +22,7 @@ public class TransportationRequest {
     private Long id;
 
 
-    // Сохраняем ID связей: внешние ключи уже определены в SQL-схеме
+    // Сохраняем ID связей (внешние ключи уже определены в SQL схеме)
     @Column(name = "client_id", nullable = false)
     private Long clientId;
 

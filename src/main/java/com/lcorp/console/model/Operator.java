@@ -20,7 +20,6 @@ public class Operator {
     @Column(name = "phone", length = 32, nullable = false)
     private String phone;
 
-    // Hibernate сначала создаёт пустой объект, затем заполняет поля из БД
     protected Operator() {
     }
 

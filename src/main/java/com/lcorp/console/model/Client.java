@@ -7,11 +7,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-// Entity связывает Java-класс с таблицей, а Column — поле со столбцом
+// Entity связывает класс с таблицей, а Column поле со столбцом
 @Entity
 @Table(name = "clients", schema = "public")
 public class Client {
-    // Значение ID создаёт PostgreSQL своим identity-счётчиком
+    // Значение ID создаёт PostgreSQL своим identity счётчиком
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

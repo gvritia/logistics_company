@@ -13,7 +13,7 @@ CREATE TABLE public.clients (
     CONSTRAINT chk_clients_email_not_blank
         CHECK (email IS NULL OR btrim(email) <> ''),
     CONSTRAINT chk_clients_contact_present
-        -- NULLIF на данном примере если номер пустой, то в данном случае вернёт NULL
+        -- NULLIF на данном примере если номер пустой, то вернёт NULL
         CHECK (
             NULLIF(btrim(phone), '') IS NOT NULL
             OR NULLIF(btrim(email), '') IS NOT NULL

@@ -49,8 +49,7 @@ public class TransportationRequestService {
         return requestRepository.create(request);
     }
 
-    // Изменять содержимое можно только у новой заявки, пока её не начали обрабатывать.
-    // Служебные поля берутся из сохранённой заявки, а не из объекта, полученного от меню.
+    // Изменять содержимое можно только у новой заявки, пока её не начали обрабатывать
     public TransportationRequest updateRequest(TransportationRequest request) {
         if (request == null) {
             throw new InvalidRequestDataException("request", "заявка не должна быть null");
@@ -77,8 +76,8 @@ public class TransportationRequestService {
         return existingRequest;
     }
 
-    // Физически удалять можно только черновик CREATED.
-    // Для заявок, попавших в обработку, используется смена статуса на CANCELLED.
+    // Физически удалять можно только черновик CREATED
+    // Для заявок, попавших в обработку, используется смена статуса на CANCELLED
     public void deleteRequest(Long requestId) {
         TransportationRequest request = requireRequest(requestId);
         ensureDraftRequest(request, "Удаление");
