@@ -24,12 +24,21 @@ public final class ConsoleWriter {
         System.out.println("=== " + title + " ===");
     }
 
+    public static void printForm(String title) {
+        printTitle(title);
+        System.out.println(ConsoleReader.CANCEL_INPUT + " — отменить и вернуться в меню");
+    }
+
     public static void printMenu(String title, List<String> items) {
+        printMenu(title, items, "Назад");
+    }
+
+    public static void printMenu(String title, List<String> items, String backLabel) {
         printTitle(title);
         for (int index = 0; index < items.size(); index++) {
             System.out.println("  " + (index + 1) + ") " + items.get(index));
         }
-        System.out.println("  0) Назад");
+        System.out.println("  0) " + backLabel);
     }
 
     public static void printSuccess(String message) {

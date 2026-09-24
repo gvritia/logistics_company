@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Objects;
 
-// Создаёт JDBC-соединения. Вызывающий код закрывает их через try-with-resources
 public final class DatabaseConnectionFactory {
 
     private final DatabaseConfig config;
