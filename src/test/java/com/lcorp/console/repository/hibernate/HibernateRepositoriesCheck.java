@@ -2,11 +2,7 @@ package com.lcorp.console.repository.hibernate;
 
 import com.lcorp.console.config.DatabaseConfig;
 import com.lcorp.console.config.HibernateConfig;
-import com.lcorp.console.model.Client;
-import com.lcorp.console.model.Driver;
-import com.lcorp.console.model.Operator;
-import com.lcorp.console.model.TransportationRequest;
-import com.lcorp.console.model.TransportationRequestStatus;
+import com.lcorp.console.model.*;
 import org.hibernate.exception.ConstraintViolationException;
 
 import java.math.BigDecimal;

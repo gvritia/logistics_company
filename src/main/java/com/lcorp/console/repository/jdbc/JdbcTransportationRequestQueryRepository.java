@@ -3,11 +3,7 @@ package com.lcorp.console.repository.jdbc;
 import com.lcorp.console.config.DatabaseConnectionFactory;
 import com.lcorp.console.exception.DataAccessException;
 import com.lcorp.console.model.TransportationRequestStatus;
-import com.lcorp.console.model.query.RequestStatusStatistics;
-import com.lcorp.console.model.query.SortDirection;
-import com.lcorp.console.model.query.TransportationRequestSearchCriteria;
-import com.lcorp.console.model.query.TransportationRequestSortField;
-import com.lcorp.console.model.query.TransportationRequestView;
+import com.lcorp.console.model.query.*;
 import com.lcorp.console.repository.TransportationRequestQueryRepository;
 
 import java.sql.PreparedStatement;
