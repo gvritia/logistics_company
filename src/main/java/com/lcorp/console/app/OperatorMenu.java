@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public final class OperatorMenu implements Menu {
 
@@ -30,6 +33,9 @@ public final class OperatorMenu implements Menu {
 
     private static final BigDecimal MAX_WEIGHT = new BigDecimal("100000");
     private static final BigDecimal MAX_PRICE = new BigDecimal("100000000");
+
+    private static final int WEIGHT_SCALE = 3;
+    private static final int PRICE_SCALE = 2;
 
     private static final List<String> ITEMS = List.of(
         "Заявки",
@@ -89,8 +95,8 @@ public final class OperatorMenu implements Menu {
     @Override
     public void show() {
         while (true) {
-            ConsoleWriter.printMenu(title(), ITEMS);
-            int choice = reader.readInt("Выбор", 0, ITEMS.size());
+            ConsoleWriter.printMenu(title(), ITEMS, "Сменить пользователя");
+            int choice = reader.readMenuChoice(ITEMS.size());
             if (choice == 0) {
                 return;
             }
@@ -111,14 +117,15 @@ public final class OperatorMenu implements Menu {
     }
 
     private void runAndPause(Runnable action) {
-        ErrorHandler.run(action);
-        reader.pause();
+        if (ErrorHandler.run(action)) {
+            reader.pause();
+        }
     }
 
     private void showRequests() {
         while (true) {
             ConsoleWriter.printMenu(title() + " / Заявки", REQUEST_ITEMS);
-            int choice = reader.readInt("Выбор", 0, REQUEST_ITEMS.size());
+            int choice = reader.readMenuChoice(REQUEST_ITEMS.size());
             if (choice == 0) {
                 return;
             }
@@ -148,7 +155,7 @@ public final class OperatorMenu implements Menu {
     }
 
     private void showRequestCard() {
-        Long requestId = chooseRequest("Все заявки", operatorService.findAllRequests());
+        Long requestId = chooseRequest("Карточка заявки", operatorService.findAllRequests());
         if (requestId == null) {
             return;
         }
@@ -157,19 +164,26 @@ public final class OperatorMenu implements Menu {
 
     private void createRequest() {
         List<Client> clients = clientService.findAll();
-        ConsoleWriter.printTitle("Клиенты");
-        ConsoleWriter.printClients(clients);
         if (clients.isEmpty()) {
+            ConsoleWriter.printTitle("Создание заявки");
+            ConsoleWriter.printInfo("Сначала создайте клиента");
             return;
         }
+        ConsoleWriter.printForm("Создание заявки");
+        ConsoleWriter.printClients(clients);
 
         long clientId = reader.readIdFrom("ID клиента", ConsoleWriter.clientIdsOf(clients));
         String cargo = reader.readString("Описание груза", 3, 500);
-        BigDecimal weight = reader.readBigDecimal("Вес, кг", BigDecimal.ZERO, MAX_WEIGHT);
-        BigDecimal price = reader.readBigDecimal("Цена", BigDecimal.ZERO, MAX_PRICE);
-        LocalDateTime plannedAt = reader.readDateTime("Плановая дата доставки");
+        BigDecimal weight = reader.readPositiveDecimal("Вес, кг", MAX_WEIGHT, WEIGHT_SCALE);
+        BigDecimal price = reader.readPositiveDecimal("Цена", MAX_PRICE, PRICE_SCALE);
+        LocalDateTime plannedAt = reader.readFutureDateTime("Плановая дата доставки");
         String pickup = reader.readString("Адрес отправления", 3, 300);
-        String delivery = reader.readString("Адрес доставки", 3, 300);
+        String delivery = readDeliveryAddress(pickup);
+
+        while (!plannedAt.isAfter(LocalDateTime.now())) {
+            ConsoleWriter.printError("Указанная дата доставки уже прошла");
+            plannedAt = reader.readFutureDateTime("Плановая дата доставки");
+        }
 
         TransportationRequest created = operatorService.createRequest(new TransportationRequest(
             clientId,
@@ -184,8 +198,19 @@ public final class OperatorMenu implements Menu {
         ConsoleWriter.printSuccess("Заявка создана, ID " + created.getId());
     }
 
+    private String readDeliveryAddress(String pickup) {
+        while (true) {
+            String delivery = reader.readString("Адрес доставки", 3, 300);
+            if (!delivery.equalsIgnoreCase(pickup)) {
+                return delivery;
+            }
+            ConsoleWriter.printError("Адрес доставки должен отличаться от адреса отправления");
+        }
+    }
+
     private void deleteRequest() {
-        Long requestId = chooseRequest("Все заявки", operatorService.findAllRequests());
+        Long requestId = chooseRequest("Удаление заявки: новые",
+            requestsWithStatus(TransportationRequestStatus.CREATED));
         if (requestId == null) {
             return;
         }
@@ -197,7 +222,8 @@ public final class OperatorMenu implements Menu {
     }
 
     private void approveRequest() {
-        Long requestId = chooseRequest("Все заявки", operatorService.findAllRequests());
+        Long requestId = chooseRequest("Подтверждение заявки: новые",
+            requestsWithStatus(TransportationRequestStatus.CREATED));
         if (requestId == null) {
             return;
         }
@@ -206,11 +232,12 @@ public final class OperatorMenu implements Menu {
     }
 
     private void assignDriver() {
-        Long requestId = chooseRequest("Свободные заявки", operatorService.findAvailableRequests());
+        Long requestId = chooseRequest("Назначение доставщика: подтверждённые без доставщика",
+            operatorService.findAvailableRequests());
         if (requestId == null) {
             return;
         }
-        Long driverId = chooseActiveDriver();
+        Long driverId = chooseActiveDriver(null);
         if (driverId == null) {
             return;
         }
@@ -219,11 +246,14 @@ public final class OperatorMenu implements Menu {
     }
 
     private void reassignDriver() {
-        Long requestId = chooseRequest("Все заявки", operatorService.findAllRequests());
+        List<TransportationRequest> assigned = requestsWithStatus(TransportationRequestStatus.APPROVED)
+            .stream().filter(request -> request.getDriverId() != null).toList();
+        Long requestId = chooseRequest("Переназначение: назначенные до начала перевозки", assigned);
         if (requestId == null) {
             return;
         }
-        Long driverId = chooseActiveDriver();
+        Long currentDriverId = context.requests().getById(requestId).getDriverId();
+        Long driverId = chooseActiveDriver(currentDriverId);
         if (driverId == null) {
             return;
         }
@@ -232,7 +262,8 @@ public final class OperatorMenu implements Menu {
     }
 
     private void cancelRequest() {
-        Long requestId = chooseRequest("Все заявки", operatorService.findAllRequests());
+        Long requestId = chooseRequest("Отмена заявки: новые и подтверждённые", requestsWithStatus(
+            TransportationRequestStatus.CREATED, TransportationRequestStatus.APPROVED));
         if (requestId == null) {
             return;
         }
@@ -244,28 +275,32 @@ public final class OperatorMenu implements Menu {
     }
 
     private Long chooseRequest(String title, List<TransportationRequest> requests) {
-        ConsoleWriter.printTitle(title);
-        ConsoleWriter.printRequests(requests);
         if (requests.isEmpty()) {
+            ConsoleWriter.printTitle(title);
+            ConsoleWriter.printInfo("Подходящих заявок нет");
             return null;
         }
+        ConsoleWriter.printForm(title);
+        ConsoleWriter.printRequests(requests);
         return reader.readIdFrom("ID заявки", ConsoleWriter.idsOf(requests));
     }
 
-    private Long chooseActiveDriver() {
-        List<Driver> drivers = driverService.findActive();
-        ConsoleWriter.printTitle("Активные доставщики");
-        ConsoleWriter.printDrivers(drivers);
-        if (drivers.isEmpty()) {
-            return null;
-        }
-        return reader.readIdFrom("ID доставщика", ConsoleWriter.driverIdsOf(drivers));
+    private List<TransportationRequest> requestsWithStatus(TransportationRequestStatus... statuses) {
+        List<TransportationRequestStatus> allowed = List.of(statuses);
+        return operatorService.findAllRequests().stream()
+            .filter(request -> allowed.contains(request.getStatus())).toList();
+    }
+
+    private Long chooseActiveDriver(Long excludedDriverId) {
+        List<Driver> drivers = driverService.findActive().stream()
+            .filter(driver -> !driver.getId().equals(excludedDriverId)).toList();
+        return chooseDriver("Выбор доставщика: активные", drivers);
     }
 
     private void showClients() {
         while (true) {
             ConsoleWriter.printMenu(title() + " / Клиенты", CLIENT_ITEMS);
-            int choice = reader.readInt("Выбор", 0, CLIENT_ITEMS.size());
+            int choice = reader.readMenuChoice(CLIENT_ITEMS.size());
             if (choice == 0) {
                 return;
             }
@@ -279,26 +314,13 @@ public final class OperatorMenu implements Menu {
                 ConsoleWriter.printTitle("Все клиенты");
                 ConsoleWriter.printClients(clientService.findAll());
             }
-            case 2 -> {
-                String fullName = reader.readString("ФИО", 3, 150);
-                String phone = reader.readString("Телефон", 5, 32);
-                String email = reader.readOptionalString("Email", 254);
-                Client created = clientService.createClient(new Client(fullName, phone, email));
-                ConsoleWriter.printSuccess("Клиент создан, ID " + created.getId());
-            }
-            case 3 -> {
-                Long clientId = chooseClient();
-                if (clientId == null) {
-                    return;
-                }
-                String fullName = reader.readString("ФИО", 3, 150);
-                String phone = reader.readString("Телефон", 5, 32);
-                String email = reader.readOptionalString("Email", 254);
-                clientService.updateClient(new Client(clientId, fullName, phone, email));
-                ConsoleWriter.printSuccess("Клиент " + clientId + " обновлён");
-            }
+            case 2 -> createClient();
+            case 3 -> editClient();
             case 4 -> {
-                Long clientId = chooseClient();
+                Set<Long> withRequests = operatorService.findAllRequests().stream()
+                    .map(TransportationRequest::getClientId).collect(Collectors.toSet());
+                Long clientId = chooseClient("Удаление клиента: без заявок",
+                    client -> !withRequests.contains(client.getId()));
                 if (clientId == null) {
                     return;
                 }
@@ -309,7 +331,7 @@ public final class OperatorMenu implements Menu {
                 ConsoleWriter.printSuccess("Клиент " + clientId + " удалён");
             }
             case 5 -> {
-                Long clientId = chooseClient();
+                Long clientId = chooseClient("Заявки клиента", client -> true);
                 if (clientId == null) {
                     return;
                 }
@@ -320,20 +342,87 @@ public final class OperatorMenu implements Menu {
         }
     }
 
-    private Long chooseClient() {
-        List<Client> clients = clientService.findAll();
-        ConsoleWriter.printTitle("Клиенты");
-        ConsoleWriter.printClients(clients);
+    private void createClient() {
+        ConsoleWriter.printForm("Новый клиент");
+        String fullName = reader.readString("ФИО", 3, 150);
+        String phone = reader.readOptionalString("Телефон", 32);
+        String email = readEmail();
+        while (phone == null && email == null) {
+            ConsoleWriter.printError("Укажите хотя бы один контакт: телефон или email");
+            phone = reader.readOptionalString("Телефон", 32);
+            email = readEmail();
+        }
+        Client created = clientService.createClient(new Client(fullName, phone, email));
+        ConsoleWriter.printSuccess("Клиент создан, ID " + created.getId());
+    }
+
+    private void editClient() {
+        Long clientId = chooseClient("Изменение клиента", client -> true);
+        if (clientId == null) {
+            return;
+        }
+        Client existing = clientService.getById(clientId);
+        String fullName = reader.readEditedString("ФИО", existing.getFullName(), 3, 150);
+        String phone = reader.readEditedOptionalString("Телефон", existing.getPhone(), 32);
+        String email = readEditedEmail(existing.getEmail());
+        while (phone == null && email == null) {
+            ConsoleWriter.printError("Укажите хотя бы один контакт: телефон или email");
+            phone = reader.readEditedOptionalString("Телефон", null, 32);
+            email = readEditedEmail(null);
+        }
+
+        if (fullName.equals(existing.getFullName())
+            && Objects.equals(phone, existing.getPhone())
+            && Objects.equals(email, existing.getEmail())) {
+            ConsoleWriter.printInfo("Изменений нет");
+            return;
+        }
+        clientService.updateClient(new Client(clientId, fullName, phone, email));
+        ConsoleWriter.printSuccess("Клиент " + clientId + " обновлён");
+    }
+
+    private Long chooseClient(String title, Predicate<Client> suitable) {
+        List<Client> clients = clientService.findAll().stream().filter(suitable).toList();
         if (clients.isEmpty()) {
+            ConsoleWriter.printTitle(title);
+            ConsoleWriter.printInfo("Подходящих клиентов нет");
             return null;
         }
+        ConsoleWriter.printForm(title);
+        ConsoleWriter.printClients(clients);
         return reader.readIdFrom("ID клиента", ConsoleWriter.clientIdsOf(clients));
+    }
+
+    private String readEmail() {
+        while (true) {
+            String email = reader.readOptionalString("Email", 254);
+            if (email == null || isEmailValid(email)) {
+                return email;
+            }
+            ConsoleWriter.printError("Введите email, например name@example.com");
+        }
+    }
+
+    private String readEditedEmail(String current) {
+        while (true) {
+            String email = reader.readEditedOptionalString("Email", current, 254);
+            if (email == null || email.equals(current) || isEmailValid(email)) {
+                return email;
+            }
+            ConsoleWriter.printError("Введите email, например name@example.com");
+        }
+    }
+
+    private static boolean isEmailValid(String email) {
+        int at = email.indexOf('@');
+        int dot = email.lastIndexOf('.');
+        return at > 0 && dot > at + 1 && dot < email.length() - 1;
     }
 
     private void showDrivers() {
         while (true) {
             ConsoleWriter.printMenu(title() + " / Доставщики", DRIVER_ITEMS);
-            int choice = reader.readInt("Выбор", 0, DRIVER_ITEMS.size());
+            int choice = reader.readMenuChoice(DRIVER_ITEMS.size());
             if (choice == 0) {
                 return;
             }
@@ -352,26 +441,16 @@ public final class OperatorMenu implements Menu {
                 ConsoleWriter.printDrivers(driverService.findActive());
             }
             case 3 -> {
+                ConsoleWriter.printForm("Новый доставщик");
                 String fullName = reader.readString("ФИО", 3, 150);
                 String phone = reader.readString("Телефон", 5, 32);
                 Driver created = driverService.createDriver(new Driver(fullName, phone));
                 ConsoleWriter.printSuccess("Доставщик создан, ID " + created.getId());
             }
-            case 4 -> {
-                Long driverId = chooseDriver();
-                if (driverId == null) {
-                    return;
-                }
-                Driver existing = driverService.getById(driverId);
-                String fullName = reader.readString("ФИО", 3, 150);
-                String phone = reader.readString("Телефон", 5, 32);
-                driverService.updateDriver(
-                    new Driver(driverId, fullName, phone, existing.isActive())
-                );
-                ConsoleWriter.printSuccess("Доставщик " + driverId + " обновлён");
-            }
+            case 4 -> editDriver();
             case 5 -> {
-                Long driverId = chooseDriver();
+                Long driverId = chooseDriver("Активация: неактивные доставщики",
+                    driverService.findAll().stream().filter(driver -> !driver.isActive()).toList());
                 if (driverId == null) {
                     return;
                 }
@@ -379,7 +458,8 @@ public final class OperatorMenu implements Menu {
                 ConsoleWriter.printSuccess("Доставщик " + driverId + " активирован");
             }
             case 6 -> {
-                Long driverId = chooseDriver();
+                Long driverId = chooseDriver("Деактивация: активные доставщики",
+                    driverService.findActive());
                 if (driverId == null) {
                     return;
                 }
@@ -387,7 +467,13 @@ public final class OperatorMenu implements Menu {
                 ConsoleWriter.printSuccess("Доставщик " + driverId + " деактивирован");
             }
             case 7 -> {
-                Long driverId = chooseDriver();
+                Set<Long> withRequests = operatorService.findAllRequests().stream()
+                    .map(TransportationRequest::getDriverId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+                Long driverId = chooseDriver("Удаление доставщика: без заявок",
+                    driverService.findAll().stream()
+                        .filter(driver -> !withRequests.contains(driver.getId())).toList());
                 if (driverId == null) {
                     return;
                 }
@@ -401,32 +487,40 @@ public final class OperatorMenu implements Menu {
         }
     }
 
-    private Long chooseDriver() {
-        List<Driver> drivers = driverService.findAll();
-        ConsoleWriter.printTitle("Доставщики");
-        ConsoleWriter.printDrivers(drivers);
+    private void editDriver() {
+        Long driverId = chooseDriver("Изменение доставщика", driverService.findAll());
+        if (driverId == null) {
+            return;
+        }
+        Driver existing = driverService.getById(driverId);
+        String fullName = reader.readEditedString("ФИО", existing.getFullName(), 3, 150);
+        String phone = reader.readEditedString("Телефон", existing.getPhone(), 5, 32);
+        if (fullName.equals(existing.getFullName()) && phone.equals(existing.getPhone())) {
+            ConsoleWriter.printInfo("Изменений нет");
+            return;
+        }
+        driverService.updateDriver(new Driver(driverId, fullName, phone, existing.isActive()));
+        ConsoleWriter.printSuccess("Доставщик " + driverId + " обновлён");
+    }
+
+    private Long chooseDriver(String title, List<Driver> drivers) {
         if (drivers.isEmpty()) {
+            ConsoleWriter.printTitle(title);
+            ConsoleWriter.printInfo("Подходящих доставщиков нет");
             return null;
         }
+        ConsoleWriter.printForm(title);
+        ConsoleWriter.printDrivers(drivers);
         return reader.readIdFrom("ID доставщика", ConsoleWriter.driverIdsOf(drivers));
     }
 
     private void searchRequests() {
+        ConsoleWriter.printForm("Поиск заявок");
         TransportationRequestSearchCriteria criteria = new TransportationRequestSearchCriteria();
         criteria.setSearchText(reader.readOptionalString("Текст поиска", 200));
-        criteria.setStatus(reader.readOptionalEnum("Статус", TransportationRequestStatus.class));
-        criteria.setClientId(reader.readOptionalLong("ID клиента", 1));
-        criteria.setDriverId(reader.readOptionalLong("ID доставщика", 1));
-        criteria.setMinPrice(reader.readOptionalBigDecimal("Цена от", BigDecimal.ZERO));
-        criteria.setMaxPrice(reader.readOptionalBigDecimal("Цена до", BigDecimal.ZERO));
-        criteria.setPlannedFrom(reader.readOptionalDateTime("Доставка с"));
-        criteria.setPlannedTo(reader.readOptionalDateTime("Доставка по"));
-        criteria.setSortField(
-            reader.readEnum("Поле сортировки", TransportationRequestSortField.class)
-        );
-        criteria.setSortDirection(
-            reader.readEnum("Направление сортировки", SortDirection.class)
-        );
+        if (reader.confirm("Дополнительные фильтры?")) {
+            readSearchFilters(criteria);
+        }
 
         List<TransportationRequestView> found = context.queries().search(criteria);
         ConsoleWriter.printTitle("Результаты поиска");
@@ -437,13 +531,45 @@ public final class OperatorMenu implements Menu {
         }
     }
 
+    private void readSearchFilters(TransportationRequestSearchCriteria criteria) {
+        criteria.setStatus(reader.readOptionalEnum("Статус", TransportationRequestStatus.class));
+        criteria.setClientId(reader.readOptionalLong("ID клиента", 1));
+        criteria.setDriverId(reader.readOptionalLong("ID доставщика", 1));
+        criteria.setMinPrice(reader.readOptionalBigDecimal("Цена от", BigDecimal.ZERO));
+        criteria.setMaxPrice(reader.readOptionalBigDecimal("Цена до", BigDecimal.ZERO));
+        while (criteria.getMinPrice() != null && criteria.getMaxPrice() != null
+            && criteria.getMaxPrice().compareTo(criteria.getMinPrice()) < 0) {
+            ConsoleWriter.printError("Цена до должна быть не меньше цены от");
+            criteria.setMaxPrice(reader.readOptionalBigDecimal("Цена до", BigDecimal.ZERO));
+        }
+        criteria.setPlannedFrom(reader.readOptionalDateTime("Доставка с"));
+        criteria.setPlannedTo(reader.readOptionalDateTime("Доставка по"));
+        while (criteria.getPlannedFrom() != null && criteria.getPlannedTo() != null
+            && criteria.getPlannedTo().isBefore(criteria.getPlannedFrom())) {
+            ConsoleWriter.printError("Конец периода должен быть не раньше начала");
+            criteria.setPlannedTo(reader.readOptionalDateTime("Доставка по"));
+        }
+        TransportationRequestSortField sort = reader.readOptionalEnum(
+            "Сортировка (по умолчанию — дата доставки)", TransportationRequestSortField.class);
+        if (sort != null) {
+            criteria.setSortField(sort);
+        }
+        SortDirection direction = reader.readOptionalEnum(
+            "Направление (по умолчанию — по возрастанию)", SortDirection.class);
+        if (direction != null) {
+            criteria.setSortDirection(direction);
+        }
+    }
+
     private void exportAllRequests() {
         List<TransportationRequestView> all =
             context.queries().search(new TransportationRequestSearchCriteria());
         if (all.isEmpty()) {
+            ConsoleWriter.printTitle("Экспорт всех заявок");
             ConsoleWriter.printInfo("Список пуст");
             return;
         }
+        ConsoleWriter.printForm("Экспорт всех заявок");
         exportToFile(all, "requests_all");
     }
 
@@ -452,14 +578,7 @@ public final class OperatorMenu implements Menu {
             + LocalDateTime.now().format(FILE_NAME_TIME) + ".xlsx";
 
         Path target = reader.readFilePath("Путь к файлу", defaultName, ".xlsx");
-        if (target == null) {
-            ConsoleWriter.printInfo("Экспорт отменён");
-            return;
-        }
-
-        ExportResult result = context.exporter().export(
-            target, requests, context.queries().getStatisticsByStatus()
-        );
+        ExportResult result = context.exporter().export(target, requests);
         ConsoleWriter.printSuccess(
             "Выгружено заявок: " + result.requestCount() + ", файл " + result.file()
         );

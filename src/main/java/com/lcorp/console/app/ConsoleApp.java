@@ -4,6 +4,7 @@ import com.lcorp.console.model.Driver;
 import com.lcorp.console.model.Operator;
 import com.lcorp.console.util.ConsoleReader;
 import com.lcorp.console.util.ConsoleWriter;
+import com.lcorp.console.util.InputCancelledException;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,20 +28,20 @@ public final class ConsoleApp {
             ConsoleWriter.printMenu("Выбор роли", List.of(
                 Role.OPERATOR.getTitle(),
                 Role.DRIVER.getTitle()
-            ));
-            int choice = reader.readInt("Выбор", 0, 2);
+            ), "Выход");
+            int choice = reader.readMenuChoice(2);
             if (choice == 0) {
                 ConsoleWriter.printInfo("Завершение работы");
                 return;
             }
 
             Role role = choice == 1 ? Role.OPERATOR : Role.DRIVER;
-            Session session = login(role);
-            if (session == null) {
-                continue;
+            try {
+                Session session = login(role);
+                if (session != null) menuFor(session).show();
+            } catch (InputCancelledException exception) {
+                ConsoleWriter.printInfo("Вход отменён");
             }
-
-            menuFor(session).show();
         }
     }
 
@@ -55,7 +56,7 @@ public final class ConsoleApp {
             return null;
         }
 
-        ConsoleWriter.printTitle("Вход оператора");
+        ConsoleWriter.printForm("Вход оператора");
         ConsoleWriter.printOperators(operators);
 
         Set<Long> ids = operators.stream().map(Operator::getId).collect(Collectors.toSet());
@@ -75,7 +76,7 @@ public final class ConsoleApp {
             return null;
         }
 
-        ConsoleWriter.printTitle("Вход доставщика");
+        ConsoleWriter.printForm("Вход доставщика");
         ConsoleWriter.printDrivers(drivers);
 
         long id = reader.readIdFrom("ID доставщика", ConsoleWriter.driverIdsOf(drivers));

@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// Загружает параметры подключения, не сохраняя пароль в исходном коде
 public final class DatabaseConfig {
 
     private static final Path DOT_ENV_PATH = Path.of(".env");
@@ -27,7 +26,7 @@ public final class DatabaseConfig {
         Map<String, String> fileValues = readDotEnv();
 
         String host = requireSetting("POSTGRES_HOST", fileValues);
-        int port = parsePort(requireSetting("POSTGRES_PORT", fileValues));
+        int port = Integer.parseInt(requireSetting("POSTGRES_PORT", fileValues));
         String database = requireSetting("POSTGRES_DB", fileValues);
         String username = requireSetting("POSTGRES_USER", fileValues);
         String password = requireSetting("POSTGRES_PASSWORD", fileValues);
@@ -58,24 +57,15 @@ public final class DatabaseConfig {
             Map<String, String> values = new HashMap<>();
 
             for (String line : lines) {
-                String trimmedLine = line.trim(); // trim удаляет пробелы
-                // пропуск пустых строк или комментариев
+                String trimmedLine = line.trim();
                 if (trimmedLine.isEmpty() || trimmedLine.startsWith("#")
                     || trimmedLine.startsWith("//")) {
                     continue;
                 }
-
                 int separatorIndex = trimmedLine.indexOf('=');
-                if (separatorIndex <= 0) {
-                    throw new IllegalStateException(
-                        "Некорректная строка в .env: ожидается формат KEY=VALUE"
-                    );
-                }
-                // substring вырезает часть строки
                 String key = trimmedLine.substring(0, separatorIndex).trim();
                 String value = trimmedLine.substring(separatorIndex + 1).trim();
-                // removeMatchingQuotes убирает кавычки, что бы не было "123" а просто 123
-                values.put(key, removeMatchingQuotes(value));
+                values.put(key, value);
             }
 
             return values;
@@ -84,8 +74,7 @@ public final class DatabaseConfig {
         }
     }
 
-    // Параметр -DKEY=value имеет приоритет над переменной окружения и .env
-    private static String requireSetting(String key, Map<String, String> fileValues) {
+        private static String requireSetting(String key, Map<String, String> fileValues) {
         String value = firstNotBlank(
             System.getProperty(key),
             System.getenv(key),
@@ -94,8 +83,7 @@ public final class DatabaseConfig {
 
         if (value == null) {
             throw new IllegalStateException(
-                "Не задан параметр подключения " + key
-                    + ". Укажите его в переменной окружения или файле .env"
+                "Value is not set: " + key
             );
         }
 
@@ -109,36 +97,5 @@ public final class DatabaseConfig {
             }
         }
         return null;
-    }
-
-    private static int parsePort(String value) {
-        try {
-            int port = Integer.parseInt(value);
-            if (port < 1 || port > 65_535) {
-                throw new IllegalStateException(
-                    "POSTGRES_PORT должен находиться в диапазоне от 1 до 65535"
-                );
-            }
-            return port;
-        } catch (NumberFormatException exception) {
-            throw new IllegalStateException(
-                "POSTGRES_PORT должен быть целым числом",
-                exception
-            );
-        }
-    }
-
-    private static String removeMatchingQuotes(String value) {
-        if (value.length() < 2) {
-            return value;
-        }
-
-        char first = value.charAt(0);
-        char last = value.charAt(value.length() - 1);
-        if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
-            return value.substring(1, value.length() - 1);
-        }
-
-        return value;
     }
 }

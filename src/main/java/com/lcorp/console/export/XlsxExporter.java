@@ -1,6 +1,7 @@
 package com.lcorp.console.export;
 
 import com.lcorp.console.exception.ExportException;
+import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.console.model.query.RequestStatusStatistics;
 import com.lcorp.console.model.query.TransportationRequestView;
 import org.apache.poi.ss.usermodel.Cell;
@@ -15,10 +16,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 public final class XlsxExporter {
 
@@ -38,16 +41,16 @@ public final class XlsxExporter {
     private CellStyle headerStyle;
     private CellStyle dateStyle;
     private CellStyle moneyStyle;
+    private CellStyle weightStyle;
 
     public ExportResult export(
         Path targetFile,
-        List<TransportationRequestView> requests,
-        List<RequestStatusStatistics> statistics
+        List<TransportationRequestView> requests
     ) {
         try (Workbook workbook = new XSSFWorkbook()) {
             createStyles(workbook);
             writeRequests(workbook.createSheet("Заявки"), requests);
-            writeStatistics(workbook.createSheet("Статистика"), statistics);
+            writeStatistics(workbook.createSheet("Статистика"), statisticsFor(requests));
 
             Path parent = targetFile.toAbsolutePath().getParent();
             if (parent != null) {
@@ -67,6 +70,24 @@ public final class XlsxExporter {
         }
     }
 
+    private List<RequestStatusStatistics> statisticsFor(List<TransportationRequestView> requests) {
+        List<RequestStatusStatistics> result = new ArrayList<>();
+        for (TransportationRequestStatus status : TransportationRequestStatus.values()) {
+            long count = 0;
+            BigDecimal price = BigDecimal.ZERO;
+            BigDecimal weight = BigDecimal.ZERO;
+            for (TransportationRequestView request : requests) {
+                if (request.status() != status) continue;
+                count++;
+                price = price.add(request.price());
+                weight = weight.add(request.weightKg());
+            }
+            if (count > 0) result.add(new RequestStatusStatistics(status, count, price,
+                price.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP), weight));
+        }
+        return result;
+    }
+
     private void createStyles(Workbook workbook) {
         Font boldFont = workbook.createFont();
         boldFont.setBold(true);
@@ -81,6 +102,8 @@ public final class XlsxExporter {
 
         moneyStyle = workbook.createCellStyle();
         moneyStyle.setDataFormat(helper.createDataFormat().getFormat(MONEY_PATTERN));
+        weightStyle = workbook.createCellStyle();
+        weightStyle.setDataFormat(helper.createDataFormat().getFormat("#,##0.000"));
     }
 
     private void writeRequests(Sheet sheet, List<TransportationRequestView> requests) {
@@ -105,7 +128,7 @@ public final class XlsxExporter {
 
             putText(row, column++, view.cargoDescription());
 
-            putMoney(row, column++, view.weightKg());
+            putWeight(row, column++, view.weightKg());
 
             putMoney(row, column++, view.price());
 
@@ -131,7 +154,7 @@ public final class XlsxExporter {
             putNumber(row, 1, item.requestCount());
             putMoney(row, 2, item.totalPrice());
             putMoney(row, 3, item.averagePrice());
-            putMoney(row, 4, item.totalWeightKg());
+            putWeight(row, 4, item.totalWeightKg());
         }
 
         finishSheet(sheet, STATISTICS_HEADERS.size());
@@ -179,6 +202,13 @@ public final class XlsxExporter {
         Cell cell = row.createCell(column);
         cell.setCellValue(value.doubleValue());
         cell.setCellStyle(moneyStyle);
+    }
+
+    private void putWeight(Row row, int column, BigDecimal value) {
+        if (value == null) return;
+        Cell cell = row.createCell(column);
+        cell.setCellValue(value.doubleValue());
+        cell.setCellStyle(weightStyle);
     }
 
     private void putDateTime(Row row, int column, LocalDateTime value) {
