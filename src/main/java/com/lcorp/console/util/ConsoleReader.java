@@ -7,17 +7,38 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.*;
 
 public final class ConsoleReader {
 
     public static final DateTimeFormatter DATE_TIME_FORMAT =
-        DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+        DateTimeFormatter.ofPattern("dd.MM.uuuu HH:mm").withResolverStyle(ResolverStyle.STRICT);
+
+    public static final String CANCEL_INPUT = "0";
+    public static final String CLEAR_INPUT = "-";
+
+    private static final Set<String> YES = Set.of("1", "y", "yes", "д", "да");
+    private static final Set<String> NO = Set.of("2", "n", "no", "н", "нет");
 
     private final Scanner scanner;
 
     public ConsoleReader(Scanner scanner) {
         this.scanner = Objects.requireNonNull(scanner);
+    }
+
+    public int readMenuChoice(int itemCount) {
+        while (true) {
+            String line = nextLine("Выбор");
+            try {
+                int value = Integer.parseInt(line);
+                if (value >= 0 && value <= itemCount) {
+                    return value;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+            System.out.println("Введите номер пункта от 0 до " + itemCount);
+        }
     }
 
     public int readInt(String prompt, int min, int max) {
@@ -71,8 +92,6 @@ public final class ConsoleReader {
         }
     }
 
-    // Принимает только ID из показанного списка, поэтому опечатка видна сразу,
-    // не доходя до исключения сервиса
     public long readIdFrom(String prompt, Collection<Long> allowedIds) {
         while (true) {
             long value = readLong(prompt, 1);
@@ -84,7 +103,7 @@ public final class ConsoleReader {
     }
 
     public void pause() {
-        readLine("Enter — продолжить");
+        nextLine("Enter — вернуться в меню");
     }
 
     public Path readFilePath(String prompt, String defaultName, String extension) {
@@ -108,7 +127,8 @@ public final class ConsoleReader {
                 continue;
             }
             if (Files.exists(path) && !confirm("Файл существует, перезаписать?")) {
-                return null;
+                System.out.println("Укажите другое имя файла");
+                continue;
             }
             return path;
         }
@@ -118,7 +138,9 @@ public final class ConsoleReader {
         while (true) {
             String line = readLine(prompt);
             if (line.length() < minLength) {
-                System.out.println("Введите не меньше " + minLength + " символов");
+                System.out.println(line.isEmpty()
+                    ? "Поле обязательно"
+                    : "Введите не меньше " + minLength + " символов");
                 continue;
             }
             if (line.length() > maxLength) {
@@ -143,15 +165,61 @@ public final class ConsoleReader {
         }
     }
 
-    public BigDecimal readBigDecimal(String prompt, BigDecimal min, BigDecimal max) {
+    public String readEditedString(String prompt, String current, int minLength, int maxLength) {
+        while (true) {
+            String line = readLine(prompt + " [" + current + "] (Enter — оставить)");
+            if (line.isEmpty()) {
+                return current;
+            }
+            if (line.length() < minLength) {
+                System.out.println("Введите не меньше " + minLength + " символов");
+                continue;
+            }
+            if (line.length() > maxLength) {
+                System.out.println("Введите не больше " + maxLength + " символов");
+                continue;
+            }
+            return line;
+        }
+    }
+
+    public String readEditedOptionalString(String prompt, String current, int maxLength) {
+        String hint = current == null
+            ? " [не указан] (Enter — оставить пустым)"
+            : " [" + current + "] (Enter — оставить, " + CLEAR_INPUT + " — удалить)";
+        while (true) {
+            String line = readLine(prompt + hint);
+            if (line.isEmpty()) {
+                return current;
+            }
+            if (line.equals(CLEAR_INPUT)) {
+                return null;
+            }
+            if (line.length() > maxLength) {
+                System.out.println("Введите не больше " + maxLength + " символов");
+                continue;
+            }
+            return line;
+        }
+    }
+
+    public BigDecimal readPositiveDecimal(String prompt, BigDecimal max, int maxScale) {
         while (true) {
             String line = readLine(prompt);
             BigDecimal value = parseDecimal(line);
             if (value == null) {
                 continue;
             }
-            if (value.compareTo(min) < 0 || value.compareTo(max) > 0) {
-                System.out.println("Введите значение от " + min + " до " + max);
+            if (value.signum() <= 0) {
+                System.out.println("Значение должно быть больше 0");
+                continue;
+            }
+            if (value.compareTo(max) > 0) {
+                System.out.println("Значение должно быть не больше " + max.toPlainString());
+                continue;
+            }
+            if (value.stripTrailingZeros().scale() > maxScale) {
+                System.out.println("Допускается не больше " + maxScale + " знаков после запятой");
                 continue;
             }
             return value;
@@ -186,6 +254,16 @@ public final class ConsoleReader {
         }
     }
 
+    public LocalDateTime readFutureDateTime(String prompt) {
+        while (true) {
+            LocalDateTime value = readDateTime(prompt);
+            if (value.isAfter(LocalDateTime.now())) {
+                return value;
+            }
+            System.out.println("Дата должна быть в будущем");
+        }
+    }
+
     public LocalDateTime readOptionalDateTime(String prompt) {
         while (true) {
             String line = readLine(prompt + " (дд.мм.гггг чч:мм, Enter — пропустить)");
@@ -201,43 +279,60 @@ public final class ConsoleReader {
 
     public <E extends Enum<E>> E readEnum(String prompt, Class<E> enumType) {
         List<E> values = List.of(enumType.getEnumConstants());
-        System.out.println(prompt);
-        for (int index = 0; index < values.size(); index++) {
-            System.out.println("  " + (index + 1) + ") " + values.get(index));
-        }
+        printOptions(prompt, values);
         int choice = readInt("Выбор", 1, values.size());
         return values.get(choice - 1);
     }
 
     public <E extends Enum<E>> E readOptionalEnum(String prompt, Class<E> enumType) {
         List<E> values = List.of(enumType.getEnumConstants());
-        System.out.println(prompt + " (0 — пропустить)");
-        for (int index = 0; index < values.size(); index++) {
-            System.out.println("  " + (index + 1) + ") " + values.get(index));
+        printOptions(prompt, values);
+        while (true) {
+            Long choice = readOptionalLong("Выбор", 1);
+            if (choice == null) {
+                return null;
+            }
+            if (choice <= values.size()) {
+                return values.get(choice.intValue() - 1);
+            }
+            System.out.println("Введите число от 1 до " + values.size());
         }
-        int choice = readInt("Выбор", 0, values.size());
-        return choice == 0 ? null : values.get(choice - 1);
     }
 
     public boolean confirm(String prompt) {
         while (true) {
-            String line = readLine(prompt + " (д/н)").toLowerCase();
-            if (line.equals("д") || line.equals("y")) {
+            String line = readLine(prompt + " (1 — да, Enter — нет)").toLowerCase();
+            if (YES.contains(line)) {
                 return true;
             }
-            if (line.equals("н") || line.equals("n")) {
+            if (line.isEmpty() || NO.contains(line)) {
                 return false;
             }
-            System.out.println("Введите 'д' или 'н'");
+            System.out.println("Введите 1 — да, или нажмите Enter — нет");
         }
     }
 
     public String readLine(String prompt) {
+        String line = nextLine(prompt);
+        if (line.equals(CANCEL_INPUT)) {
+            throw new InputCancelledException();
+        }
+        return line;
+    }
+
+    private String nextLine(String prompt) {
         System.out.print(prompt + ": ");
         try {
             return scanner.nextLine().trim();
         } catch (NoSuchElementException exception) {
             throw new InputClosedException("Ввод завершён", exception);
+        }
+    }
+
+    private static void printOptions(String prompt, List<?> values) {
+        System.out.println(prompt);
+        for (int index = 0; index < values.size(); index++) {
+            System.out.println("  " + (index + 1) + ") " + values.get(index));
         }
     }
 
@@ -254,7 +349,7 @@ public final class ConsoleReader {
         try {
             return LocalDateTime.parse(line, DATE_TIME_FORMAT);
         } catch (DateTimeParseException exception) {
-            System.out.println("Введите дату в формате 31.12.2026 18:30");
+            System.out.println("Введите существующую дату в формате 31.12.2026 18:30");
             return null;
         }
     }

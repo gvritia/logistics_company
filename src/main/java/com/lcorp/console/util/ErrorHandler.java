@@ -7,11 +7,15 @@ public final class ErrorHandler {
     private ErrorHandler() {
     }
 
-    public static void run(Runnable action) {
+    public static boolean run(Runnable action) {
         try {
             action.run();
+        } catch (InputCancelledException exception) {
+            ConsoleWriter.printInfo("Операция отменена");
+            return false;
         } catch (LogisticsException | IllegalArgumentException | IllegalStateException exception) {
             ConsoleWriter.printError(exception.getMessage());
         }
+        return true;
     }
 }

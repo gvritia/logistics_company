@@ -1,6 +1,7 @@
 package com.lcorp.console.app;
 
 import com.lcorp.console.model.TransportationRequest;
+import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.console.service.DriverService;
 import com.lcorp.console.util.ConsoleReader;
 import com.lcorp.console.util.ConsoleWriter;
@@ -22,8 +23,6 @@ public final class DriverMenu implements Menu {
 
     private final DriverService driverService;
     private final ConsoleReader reader;
-
-
     private final Session session;
 
     public DriverMenu(ApplicationContext context, ConsoleReader reader, Session session) {
@@ -35,13 +34,12 @@ public final class DriverMenu implements Menu {
     @Override
     public void show() {
         while (true) {
-            ConsoleWriter.printMenu("Доставщик: " + session.getActorName(), ITEMS);
-            int choice = reader.readInt("Выбор", 0, ITEMS.size());
+            ConsoleWriter.printMenu("Доставщик: " + session.getActorName(), ITEMS, "Сменить пользователя");
+            int choice = reader.readMenuChoice(ITEMS.size());
             if (choice == 0) {
                 return;
             }
-            ErrorHandler.run(() -> handle(choice));
-            reader.pause();
+            if (ErrorHandler.run(() -> handle(choice))) reader.pause();
         }
     }
 
@@ -65,7 +63,7 @@ public final class DriverMenu implements Menu {
     }
 
     private void takeRequest() {
-        Long requestId = chooseRequest("Доступные заявки", available());
+        Long requestId = chooseRequest("Взять заявку: свободные", available());
         if (requestId == null) return;
 
         driverService.takeRequest(session.getActorId(), requestId);
@@ -73,7 +71,8 @@ public final class DriverMenu implements Menu {
     }
 
     private void rejectAssignment() {
-        Long requestId = chooseRequest("Мои заявки", assigned());
+        Long requestId = chooseRequest("Отказ от заявки: назначенные до начала перевозки",
+            assignedWithStatus(TransportationRequestStatus.APPROVED));
         if (requestId == null) return;
         if (!reader.confirm("Отказаться от заявки " + requestId + "?")) {
             return;
@@ -83,23 +82,29 @@ public final class DriverMenu implements Menu {
     }
 
     private void startTransportation() {
-        Long requestId = chooseRequest("Мои заявки", assigned());
+        Long requestId = chooseRequest("Начать перевозку: готовые к отправке",
+            assignedWithStatus(TransportationRequestStatus.APPROVED));
         if (requestId == null) return;
         driverService.startTransportation(session.getActorId(), requestId);
         ConsoleWriter.printSuccess("Заявка " + requestId + " в пути");
     }
 
     private void completeDelivery() {
-        Long requestId = chooseRequest("Мои заявки", assigned());
+        Long requestId = chooseRequest("Завершить доставку: в пути",
+            assignedWithStatus(TransportationRequestStatus.IN_TRANSIT));
         if (requestId == null) return;
         driverService.completeDelivery(session.getActorId(), requestId);
         ConsoleWriter.printSuccess("Заявка " + requestId + " доставлена");
     }
 
     private Long chooseRequest(String title, List<TransportationRequest> requests) {
-        ConsoleWriter.printTitle(title);
+        if (requests.isEmpty()) {
+            ConsoleWriter.printTitle(title);
+            ConsoleWriter.printInfo("Подходящих заявок нет");
+            return null;
+        }
+        ConsoleWriter.printForm(title);
         ConsoleWriter.printRequests(requests);
-        if (requests.isEmpty()) return null;
         return reader.readIdFrom("ID заявки", ConsoleWriter.idsOf(requests));
     }
 
@@ -109,5 +114,9 @@ public final class DriverMenu implements Menu {
 
     private List<TransportationRequest> assigned() {
         return driverService.findAssignedRequests(session.getActorId());
+    }
+
+    private List<TransportationRequest> assignedWithStatus(TransportationRequestStatus status) {
+        return assigned().stream().filter(request -> request.getStatus() == status).toList();
     }
 }
