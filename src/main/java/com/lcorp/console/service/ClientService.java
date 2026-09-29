@@ -4,6 +4,7 @@ import com.lcorp.console.exception.EntityNotFoundException;
 import com.lcorp.console.model.Client;
 import com.lcorp.console.model.TransportationRequest;
 import com.lcorp.console.repository.ClientRepository;
+import com.lcorp.console.util.PhoneValidator;
 
 import java.util.List;
 import java.util.Objects;
@@ -99,6 +100,10 @@ public class ClientService {
             throw new IllegalArgumentException(
                     "У клиента должен быть указан телефон или email"
             );
+        }
+
+        if (client.getPhone() != null && !PhoneValidator.isValid(client.getPhone())) {
+            throw new IllegalArgumentException("Телефон клиента имеет неверный формат");
         }
 
         if (!emailMissing && !isEmailValid(client.getEmail())) {

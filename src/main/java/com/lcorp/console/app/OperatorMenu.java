@@ -15,6 +15,7 @@ import com.lcorp.console.service.OperatorService;
 import com.lcorp.console.util.ConsoleReader;
 import com.lcorp.console.util.ConsoleWriter;
 import com.lcorp.console.util.ErrorHandler;
+import com.lcorp.console.util.PhoneValidator;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -345,11 +346,11 @@ public final class OperatorMenu implements Menu {
     private void createClient() {
         ConsoleWriter.printForm("Новый клиент");
         String fullName = reader.readString("ФИО", 3, 150);
-        String phone = reader.readOptionalString("Телефон", 32);
+        String phone = readOptionalPhone();
         String email = readEmail();
         while (phone == null && email == null) {
             ConsoleWriter.printError("Укажите хотя бы один контакт: телефон или email");
-            phone = reader.readOptionalString("Телефон", 32);
+            phone = readOptionalPhone();
             email = readEmail();
         }
         Client created = clientService.createClient(new Client(fullName, phone, email));
@@ -363,11 +364,11 @@ public final class OperatorMenu implements Menu {
         }
         Client existing = clientService.getById(clientId);
         String fullName = reader.readEditedString("ФИО", existing.getFullName(), 3, 150);
-        String phone = reader.readEditedOptionalString("Телефон", existing.getPhone(), 32);
+        String phone = readEditedOptionalPhone(existing.getPhone());
         String email = readEditedEmail(existing.getEmail());
         while (phone == null && email == null) {
             ConsoleWriter.printError("Укажите хотя бы один контакт: телефон или email");
-            phone = reader.readEditedOptionalString("Телефон", null, 32);
+            phone = readEditedOptionalPhone(null);
             email = readEditedEmail(null);
         }
 
@@ -400,6 +401,46 @@ public final class OperatorMenu implements Menu {
                 return email;
             }
             ConsoleWriter.printError("Введите email, например name@example.com");
+        }
+    }
+
+    private String readOptionalPhone() {
+        while (true) {
+            String phone = reader.readOptionalString("Телефон", 32);
+            if (phone == null || PhoneValidator.isValid(phone)) {
+                return phone;
+            }
+            ConsoleWriter.printError("Введите телефон в формате +79999999999 или +7-999-999-99-99");
+        }
+    }
+
+    private String readEditedOptionalPhone(String current) {
+        while (true) {
+            String phone = reader.readEditedOptionalString("Телефон", current, 32);
+            if (phone == null || PhoneValidator.isValid(phone)) {
+                return phone;
+            }
+            ConsoleWriter.printError("Введите телефон в формате +79999999999 или +7-999-999-99-99");
+        }
+    }
+
+    private String readRequiredPhone() {
+        while (true) {
+            String phone = reader.readString("Телефон", 5, 32);
+            if (PhoneValidator.isValid(phone)) {
+                return phone;
+            }
+            ConsoleWriter.printError("Введите телефон в формате +79999999999 или +7-999-999-99-99");
+        }
+    }
+
+    private String readEditedRequiredPhone(String current) {
+        while (true) {
+            String phone = reader.readEditedString("Телефон", current, 5, 32);
+            if (PhoneValidator.isValid(phone)) {
+                return phone;
+            }
+            ConsoleWriter.printError("Введите телефон в формате +79999999999 или +7-999-999-99-99");
         }
     }
 
@@ -443,7 +484,7 @@ public final class OperatorMenu implements Menu {
             case 3 -> {
                 ConsoleWriter.printForm("Новый доставщик");
                 String fullName = reader.readString("ФИО", 3, 150);
-                String phone = reader.readString("Телефон", 5, 32);
+                String phone = readRequiredPhone();
                 Driver created = driverService.createDriver(new Driver(fullName, phone));
                 ConsoleWriter.printSuccess("Доставщик создан, ID " + created.getId());
             }
@@ -494,7 +535,7 @@ public final class OperatorMenu implements Menu {
         }
         Driver existing = driverService.getById(driverId);
         String fullName = reader.readEditedString("ФИО", existing.getFullName(), 3, 150);
-        String phone = reader.readEditedString("Телефон", existing.getPhone(), 5, 32);
+        String phone = readEditedRequiredPhone(existing.getPhone());
         if (fullName.equals(existing.getFullName()) && phone.equals(existing.getPhone())) {
             ConsoleWriter.printInfo("Изменений нет");
             return;

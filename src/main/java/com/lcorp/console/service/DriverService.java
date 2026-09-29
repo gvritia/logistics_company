@@ -5,6 +5,7 @@ import com.lcorp.console.exception.EntityNotFoundException;
 import com.lcorp.console.model.Driver;
 import com.lcorp.console.model.TransportationRequest;
 import com.lcorp.console.repository.DriverRepository;
+import com.lcorp.console.util.PhoneValidator;
 
 import java.util.List;
 import java.util.Objects;
@@ -144,6 +145,9 @@ public class DriverService {
         }
         if (driver.getPhone() == null || driver.getPhone().isBlank()) {
             throw new IllegalArgumentException("Телефон доставщика обязателен");
+        }
+        if (!PhoneValidator.isValid(driver.getPhone())) {
+            throw new IllegalArgumentException("Телефон доставщика имеет неверный формат");
         }
     }
 

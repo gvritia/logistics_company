@@ -4,6 +4,7 @@ import com.lcorp.console.exception.EntityNotFoundException;
 import com.lcorp.console.model.Operator;
 import com.lcorp.console.model.TransportationRequest;
 import com.lcorp.console.repository.OperatorRepository;
+import com.lcorp.console.util.PhoneValidator;
 
 import java.util.List;
 import java.util.Objects;
@@ -119,6 +120,9 @@ public class OperatorService {
         }
         if (operator.getPhone() == null || operator.getPhone().isBlank()) {
             throw new IllegalArgumentException("Номер телефона оператора обязателен");
+        }
+        if (!PhoneValidator.isValid(operator.getPhone())) {
+            throw new IllegalArgumentException("Телефон оператора имеет неверный формат");
         }
     }
 
