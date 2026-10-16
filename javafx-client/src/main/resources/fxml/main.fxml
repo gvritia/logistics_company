@@ -5,25 +5,36 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.lcorp.javafx.controller.MainController">
     <!-- Верхняя часть окна: название экрана -->
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="16">
+        <VBox spacing="10">
             <BorderPane.margin>
                 <Insets top="16" right="16" bottom="12" left="16" />
             </BorderPane.margin>
-            <Label text="Заявки на перевозку" />
-            <Button fx:id="createButton" text="Добавить заявку"
-                    disable="true" onAction="#onCreateRequest" />
-            <Button fx:id="editButton" text="Редактировать"
-                    disable="true" onAction="#onEditRequest" />
-            <Button fx:id="deleteButton" text="Удалить"
-                    disable="true" onAction="#onDeleteRequest" />
-        </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="Заявки на перевозку" />
+                <Button fx:id="createButton" text="Добавить заявку"
+                        disable="true" onAction="#onCreateRequest" />
+                <Button fx:id="editButton" text="Редактировать"
+                        disable="true" onAction="#onEditRequest" />
+                <Button fx:id="deleteButton" text="Удалить"
+                        disable="true" onAction="#onDeleteRequest" />
+            </HBox>
+            <HBox fx:id="searchBox" alignment="CENTER_LEFT" spacing="8" disable="true">
+                <Label text="Поиск:" />
+                <TextField fx:id="searchField" prefWidth="300"
+                           promptText="Груз, адрес или клиент" onAction="#onSearch" />
+                <Button text="Найти" onAction="#onSearch" />
+                <Button text="Сбросить" onAction="#onClearSearch" />
+            </HBox>
+        </VBox>
     </top>
 
     <!-- Контроллер заполняет таблицу данными из PostgreSQL. -->

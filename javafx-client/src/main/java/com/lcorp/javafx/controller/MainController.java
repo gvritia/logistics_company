@@ -24,6 +24,8 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 
 import java.math.BigDecimal;
 import java.io.IOException;
@@ -33,6 +35,8 @@ public final class MainController {
     @FXML private Button createButton;
     @FXML private Button editButton;
     @FXML private Button deleteButton;
+    @FXML private TextField searchField;
+    @FXML private HBox searchBox;
     @FXML private TableView<TransportationRequestView> requestTable;
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
@@ -44,6 +48,8 @@ public final class MainController {
     private RequestCreationService creationService;
     private RequestEditingService editingService;
     private RequestDeletionService deletionService;
+    // Введённый, но ещё не отправленный текст не должен менять список при сохранении заявки.
+    private String activeSearchText = "";
 
     @FXML
     private void initialize() {
@@ -73,17 +79,34 @@ public final class MainController {
         this.editingService = Objects.requireNonNull(editingService);
         this.deletionService = Objects.requireNonNull(deletionService);
         createButton.setDisable(false);
+        searchBox.setDisable(false);
         loadRequests();
     }
 
     public void loadRequests() {
         try {
-            var requests = queryService.search(new TransportationRequestSearchCriteria());
+            TransportationRequestSearchCriteria criteria = new TransportationRequestSearchCriteria();
+            criteria.setSearchText(activeSearchText);
+            var requests = queryService.search(criteria);
             requestTable.setItems(FXCollections.observableArrayList(requests));
-            requestTable.setPlaceholder(new Label("Заявок пока нет"));
+            requestTable.setPlaceholder(new Label(activeSearchText.isEmpty()
+                ? "Заявок пока нет" : "По запросу ничего не найдено"));
         } catch (DataAccessException exception) {
             showLoadError();
         }
+    }
+
+    @FXML
+    private void onSearch() {
+        activeSearchText = searchField.getText().trim();
+        loadRequests();
+    }
+
+    @FXML
+    private void onClearSearch() {
+        searchField.clear();
+        activeSearchText = "";
+        loadRequests();
     }
 
     @FXML
@@ -207,6 +230,7 @@ public final class MainController {
     }
 
     public void showLoadError() {
+        requestTable.setItems(FXCollections.observableArrayList());
         requestTable.setPlaceholder(new Label("Не удалось загрузить заявки"));
         new Alert(Alert.AlertType.ERROR,
             "Не удалось загрузить заявки. Проверьте подключение к PostgreSQL и настройки .env.")
