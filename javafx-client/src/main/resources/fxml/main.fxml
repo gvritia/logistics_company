@@ -12,23 +12,26 @@
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
+            styleClass="app-root"
             fx:controller="com.lcorp.javafx.controller.MainController">
     <!-- Верхняя часть окна: название экрана -->
     <top>
-        <VBox spacing="10">
+        <VBox spacing="10" styleClass="toolbar">
             <BorderPane.margin>
                 <Insets top="16" right="16" bottom="12" left="16" />
             </BorderPane.margin>
             <HBox alignment="CENTER_LEFT" spacing="16">
-                <Label text="Заявки на перевозку" />
+                <Label text="Заявки на перевозку" styleClass="page-title" />
                 <Button fx:id="createButton" text="Добавить заявку"
-                        disable="true" onAction="#onCreateRequest" />
+                        disable="true" onAction="#onCreateRequest" styleClass="primary" />
                 <Button fx:id="editButton" text="Редактировать"
                         disable="true" onAction="#onEditRequest" />
                 <Button fx:id="deleteButton" text="Удалить"
-                        disable="true" onAction="#onDeleteRequest" />
+                        disable="true" onAction="#onDeleteRequest" styleClass="danger" />
                 <Button fx:id="statisticsButton" text="Статистика"
                         disable="true" onAction="#onShowStatistics" />
+                <Button fx:id="exportButton" text="Экспорт CSV"
+                        disable="true" onAction="#onExportCsv" />
             </HBox>
             <HBox fx:id="searchBox" alignment="CENTER_LEFT" spacing="8" disable="true">
                 <Label text="Поиск:" />

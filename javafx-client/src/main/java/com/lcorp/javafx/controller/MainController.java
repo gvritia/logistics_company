@@ -15,6 +15,7 @@ import com.lcorp.javafx.service.RequestEditingService;
 import com.lcorp.javafx.model.ReferenceOption;
 import com.lcorp.javafx.model.RequestStatisticsSummary;
 import com.lcorp.javafx.service.RequestStatisticsService;
+import com.lcorp.javafx.export.RequestCsvExporter;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -32,10 +33,13 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
-import java.math.BigDecimal;
+import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 
 public final class MainController {
@@ -50,6 +54,7 @@ public final class MainController {
     @FXML private ComboBox<TransportationRequestSortField> sortFieldBox;
     @FXML private ComboBox<SortDirection> sortDirectionBox;
     @FXML private Button statisticsButton;
+    @FXML private Button exportButton;
     @FXML private TableView<TransportationRequestView> requestTable;
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
@@ -62,6 +67,7 @@ public final class MainController {
     private RequestEditingService editingService;
     private RequestDeletionService deletionService;
     private RequestStatisticsService statisticsService;
+    private final RequestCsvExporter csvExporter = new RequestCsvExporter();
     // Храним применённые условия отдельно от полей формы: CRUD обновляет ту же выборку.
     private TransportationRequestSearchCriteria activeCriteria = new TransportationRequestSearchCriteria();
 
@@ -119,6 +125,7 @@ public final class MainController {
         try {
             var requests = queryService.search(activeCriteria);
             requestTable.setItems(FXCollections.observableArrayList(requests));
+            exportButton.setDisable(requests.isEmpty());
             requestTable.setPlaceholder(new Label(noActiveFilters()
                 ? "Заявок пока нет" : "По запросу ничего не найдено"));
         } catch (DataAccessException exception) {
@@ -173,6 +180,32 @@ public final class MainController {
             statistics.showAndWait();
         } catch (DataAccessException exception) {
             showError("Не удалось получить статистику", "Проверьте подключение к PostgreSQL.");
+        }
+    }
+
+    @FXML
+    private void onExportCsv() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Экспорт заявок в CSV");
+        chooser.setInitialFileName("заявки.csv");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"));
+        File file = chooser.showSaveDialog(requestTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        try {
+            // Снимок строк сохраняет ровно ту выборку и порядок, которые видит пользователь.
+            var visibleRequests = List.copyOf(requestTable.getItems());
+            csvExporter.export(visibleRequests, file.toPath());
+            Alert success = new Alert(Alert.AlertType.INFORMATION,
+                "Сохранено заявок: " + visibleRequests.size() + "\nФайл: " + file.getAbsolutePath());
+            success.initOwner(requestTable.getScene().getWindow());
+            success.setTitle("Экспорт завершён");
+            success.setHeaderText(null);
+            success.showAndWait();
+        } catch (IOException | SecurityException exception) {
+            showError("Не удалось сохранить CSV", "Проверьте путь к файлу и право на запись.");
         }
     }
 
@@ -252,6 +285,8 @@ public final class MainController {
     private void openRequestDialog(TransportationRequestView existing) {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/request-form.fxml"));
         Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.getDialogPane().getStylesheets().add(
+            getClass().getResource("/styles/app.css").toExternalForm());
         dialog.initOwner(requestTable.getScene().getWindow());
         dialog.setTitle(existing == null ? "Новая заявка" : "Редактирование заявки № " + existing.id());
         ButtonType saveType = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
@@ -326,6 +361,7 @@ public final class MainController {
 
     public void showLoadError() {
         requestTable.setItems(FXCollections.observableArrayList());
+        exportButton.setDisable(true);
         requestTable.setPlaceholder(new Label("Не удалось загрузить заявки"));
         new Alert(Alert.AlertType.ERROR,
             "Не удалось загрузить заявки. Проверьте подключение к PostgreSQL и настройки .env.")

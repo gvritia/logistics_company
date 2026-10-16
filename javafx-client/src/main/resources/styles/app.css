@@ -1,0 +1,83 @@
+.app-root {
+    -fx-background-color: #f3f6fa;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+}
+
+.toolbar {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-padding: 14;
+    -fx-border-color: #dbe4ee;
+    -fx-border-radius: 10;
+}
+
+.page-title {
+    -fx-text-fill: #17324d;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.button {
+    -fx-background-color: #e7eef6;
+    -fx-text-fill: #17324d;
+    -fx-background-radius: 6;
+    -fx-padding: 7 12;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #d8e6f4;
+}
+
+.button.primary {
+    -fx-background-color: #246fa8;
+    -fx-text-fill: white;
+}
+
+.button.primary:hover {
+    -fx-background-color: #195c91;
+}
+
+.button.danger {
+    -fx-text-fill: #a52b2b;
+}
+
+.text-field, .combo-box, .date-picker {
+    -fx-background-color: white;
+    -fx-border-color: #cbd8e5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.text-field:focused, .combo-box:focused, .date-picker:focused {
+    -fx-border-color: #246fa8;
+}
+
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #dbe4ee;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #e8eff6;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #f8fafc;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #c8e2f6;
+    -fx-text-background-color: #17324d;
+}
+
+.dialog-pane, .request-form {
+    -fx-background-color: #f8fafc;
+}
