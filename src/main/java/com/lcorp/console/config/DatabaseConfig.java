@@ -48,12 +48,16 @@ public final class DatabaseConfig {
     }
 
     private static Map<String, String> readDotEnv() {
-        if (!Files.exists(DOT_ENV_PATH)) {
+        // Из корневого проекта читаем .env, из javafx-client/ — ../.env.
+        Path envPath = Files.exists(DOT_ENV_PATH)
+            ? DOT_ENV_PATH
+            : Path.of("..", ".env");
+        if (!Files.exists(envPath)) {
             return Map.of();
         }
 
         try {
-            List<String> lines = Files.readAllLines(DOT_ENV_PATH, StandardCharsets.UTF_8);
+            List<String> lines = Files.readAllLines(envPath, StandardCharsets.UTF_8);
             Map<String, String> values = new HashMap<>();
 
             for (String line : lines) {

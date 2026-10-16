@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.lcorp.javafx.controller.MainController">
+    <!-- Верхняя часть окна: название экрана. -->
+    <top>
+        <Label text="Заявки на перевозку">
+            <BorderPane.margin>
+                <Insets top="16" right="16" bottom="12" left="16" />
+            </BorderPane.margin>
+        </Label>
+    </top>
+
+    <!-- Контроллер заполняет таблицу данными из PostgreSQL. -->
+    <center>
+        <TableView fx:id="requestTable">
+            <BorderPane.margin>
+                <Insets right="16" bottom="16" left="16" />
+            </BorderPane.margin>
+            <columns>
+                <TableColumn fx:id="idColumn" text="№" prefWidth="60" />
+                <TableColumn fx:id="cargoColumn" text="Груз" prefWidth="160" />
+                <TableColumn fx:id="weightColumn" text="Вес, кг" prefWidth="90" />
+                <TableColumn fx:id="statusColumn" text="Статус" prefWidth="110" />
+                <TableColumn fx:id="pickupColumn" text="Откуда" prefWidth="160" />
+                <TableColumn fx:id="deliveryColumn" text="Куда" prefWidth="160" />
+            </columns>
+            <placeholder>
+                <Label text="Данные пока не подключены" />
+            </placeholder>
+        </TableView>
+    </center>
+</BorderPane>
