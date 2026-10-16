@@ -218,7 +218,8 @@ public class TransportationRequestService {
         request.setStatus(targetStatus);
     }
 
-    private void validateNewRequest(TransportationRequest request) {
+    // Эту же проверку вызывает JavaFX перед JDBC-вставкой.
+    public static void validateNewRequest(TransportationRequest request) {
         if (request == null) {
             throw new InvalidRequestDataException("request", "заявка не должна быть null");
         }
@@ -242,7 +243,7 @@ public class TransportationRequestService {
         }
     }
 
-    private void validateRequestDetails(
+    private static void validateRequestDetails(
         TransportationRequest request,
         LocalDateTime createdAt
     ) {
@@ -339,7 +340,7 @@ public class TransportationRequestService {
         }
     }
 
-    private void requireId(Long id, String fieldName) {
+    private static void requireId(Long id, String fieldName) {
         if (id == null || id <= 0) {
             throw new InvalidRequestDataException(
                 fieldName,
@@ -348,13 +349,13 @@ public class TransportationRequestService {
         }
     }
 
-    private void requireText(String value, String fieldName) {
+    private static void requireText(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new InvalidRequestDataException(fieldName, "значение обязательно");
         }
     }
 
-    private void requirePositive(BigDecimal value, String fieldName) {
+    private static void requirePositive(BigDecimal value, String fieldName) {
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidRequestDataException(
                 fieldName,
