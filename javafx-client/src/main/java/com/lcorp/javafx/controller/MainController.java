@@ -6,7 +6,9 @@ import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.console.model.query.TransportationRequestSearchCriteria;
 import com.lcorp.console.model.query.TransportationRequestView;
 import com.lcorp.console.service.TransportationRequestQueryService;
+import com.lcorp.console.service.TransportationRequestService;
 import com.lcorp.javafx.service.RequestCreationService;
+import com.lcorp.javafx.service.RequestDeletionService;
 import com.lcorp.javafx.service.RequestEditingService;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -30,6 +32,7 @@ import java.util.Objects;
 public final class MainController {
     @FXML private Button createButton;
     @FXML private Button editButton;
+    @FXML private Button deleteButton;
     @FXML private TableView<TransportationRequestView> requestTable;
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
@@ -40,6 +43,7 @@ public final class MainController {
     private TransportationRequestQueryService queryService;
     private RequestCreationService creationService;
     private RequestEditingService editingService;
+    private RequestDeletionService deletionService;
 
     @FXML
     private void initialize() {
@@ -50,22 +54,24 @@ public final class MainController {
         statusColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().status()));
         pickupColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().pickupAddress()));
         deliveryColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().deliveryAddress()));
-        requestTable.getSelectionModel().selectedItemProperty().addListener(
-            (observable, previous, selected) -> editButton.setDisable(
-                selected == null || selected.status() != TransportationRequestStatus.CREATED
-                    || selected.driverId() != null
-            )
-        );
+        requestTable.getSelectionModel().selectedItemProperty().addListener((observable, previous, selected) -> {
+            boolean canModify = selected != null
+                && TransportationRequestService.isEditableDraft(selected.status(), selected.driverId());
+            editButton.setDisable(!canModify);
+            deleteButton.setDisable(!canModify);
+        });
     }
 
     public void configure(
         TransportationRequestQueryService service,
         RequestCreationService creationService,
-        RequestEditingService editingService
+        RequestEditingService editingService,
+        RequestDeletionService deletionService
     ) {
         this.queryService = Objects.requireNonNull(service);
         this.creationService = Objects.requireNonNull(creationService);
         this.editingService = Objects.requireNonNull(editingService);
+        this.deletionService = Objects.requireNonNull(deletionService);
         createButton.setDisable(false);
         loadRequests();
     }
@@ -90,6 +96,37 @@ public final class MainController {
         TransportationRequestView selected = requestTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
             openRequestDialog(selected);
+        }
+    }
+
+    @FXML
+    private void onDeleteRequest() {
+        TransportationRequestView selected = requestTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.initOwner(requestTable.getScene().getWindow());
+        confirmation.setTitle("Удаление заявки");
+        confirmation.setHeaderText("Удалить заявку № " + selected.id() + "?");
+        confirmation.setContentText("Груз: " + selected.cargoDescription());
+        ButtonType deleteType = new ButtonType("Удалить", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirmation.getButtonTypes().setAll(deleteType, cancelType);
+
+        // Данные удаляются только после явного подтверждения в диалоге
+        if (confirmation.showAndWait().orElse(cancelType) != deleteType) {
+            return;
+        }
+        try {
+            deletionService.delete(selected);
+            loadRequests();
+        } catch (IllegalStateException exception) {
+            showError("Заявка изменилась", exception.getMessage());
+            loadRequests();
+        } catch (DataAccessException exception) {
+            showError("Не удалось удалить заявку", "Проверьте подключение к PostgreSQL.");
         }
     }
 

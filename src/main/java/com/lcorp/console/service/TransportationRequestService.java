@@ -287,12 +287,16 @@ public class TransportationRequestService {
     }
 
     private void ensureDraftRequest(TransportationRequest request, String operationName) {
-        if (request.getStatus() != TransportationRequestStatus.CREATED
-            || request.getDriverId() != null) {
+        if (!isEditableDraft(request.getStatus(), request.getDriverId())) {
             throw new IllegalStateException(
                 operationName + " разрешено только для заявки CREATED без доставщика"
             );
         }
+    }
+
+    // КР1 и JavaFX используют одно правило для изменения и удаления черновика.
+    public static boolean isEditableDraft(TransportationRequestStatus status, Long driverId) {
+        return status == TransportationRequestStatus.CREATED && driverId == null;
     }
 
     private void ensureApproved(TransportationRequest request, Long driverId) {

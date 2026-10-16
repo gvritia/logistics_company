@@ -21,6 +21,8 @@
                     disable="true" onAction="#onCreateRequest" />
             <Button fx:id="editButton" text="Редактировать"
                     disable="true" onAction="#onEditRequest" />
+            <Button fx:id="deleteButton" text="Удалить"
+                    disable="true" onAction="#onDeleteRequest" />
         </HBox>
     </top>
 

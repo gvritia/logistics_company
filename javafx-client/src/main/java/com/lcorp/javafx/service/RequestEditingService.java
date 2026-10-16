@@ -1,7 +1,6 @@
 package com.lcorp.javafx.service;
 
 import com.lcorp.console.model.TransportationRequest;
-import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.console.model.query.TransportationRequestView;
 import com.lcorp.console.service.TransportationRequestService;
 import com.lcorp.javafx.repository.JdbcRequestUpdateDao;
@@ -19,8 +18,7 @@ public final class RequestEditingService {
     public long update(TransportationRequestView existing, TransportationRequest edited) {
         Objects.requireNonNull(existing);
         Objects.requireNonNull(edited);
-        if (existing.status() != TransportationRequestStatus.CREATED
-            || existing.driverId() != null) {
+        if (!TransportationRequestService.isEditableDraft(existing.status(), existing.driverId())) {
             throw new IllegalStateException("Редактировать можно только заявку CREATED без доставщика.");
         }
         if (!Objects.equals(existing.id(), edited.getId())) {
