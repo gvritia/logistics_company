@@ -1,6 +1,7 @@
 package com.lcorp.javafx.controller;
 
 import com.lcorp.console.model.TransportationRequest;
+import com.lcorp.console.model.query.TransportationRequestView;
 import com.lcorp.javafx.model.ReferenceOption;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -11,6 +12,7 @@ import javafx.scene.control.TextField;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 public final class RequestFormController {
     @FXML private ComboBox<ReferenceOption> clientBox;
@@ -30,6 +32,49 @@ public final class RequestFormController {
     public void setOptions(List<ReferenceOption> clients, List<ReferenceOption> operators) {
         clientBox.setItems(FXCollections.observableArrayList(clients));
         operatorBox.setItems(FXCollections.observableArrayList(operators));
+    }
+
+    // Заполняет общую форму данными выбранной заявки перед редактированием.
+    public void setRequest(TransportationRequestView request) {
+        Objects.requireNonNull(request);
+        clientBox.getItems().stream()
+            .filter(option -> option.id().equals(request.clientId()))
+            .findFirst().ifPresent(clientBox::setValue);
+        operatorBox.getItems().stream()
+            .filter(option -> option.id().equals(request.operatorId()))
+            .findFirst().ifPresent(operatorBox::setValue);
+        cargoField.setText(request.cargoDescription());
+        weightField.setText(request.weightKg().toPlainString());
+        priceField.setText(request.price().toPlainString());
+        deliveryDatePicker.setValue(request.plannedDeliveryAt().toLocalDate());
+        pickupField.setText(request.pickupAddress());
+        deliveryField.setText(request.deliveryAddress());
+    }
+
+    // Сохраняет служебные поля исходной заявки; меняет только значения из формы.
+    public TransportationRequest readEditedRequest(TransportationRequestView existing) {
+        Objects.requireNonNull(existing);
+        TransportationRequest values = readRequest();
+        // DatePicker хранит лишь дату: неизменённое время доставки берём из БД.
+        var plannedDelivery = deliveryDatePicker.getValue()
+            .equals(existing.plannedDeliveryAt().toLocalDate())
+            ? existing.plannedDeliveryAt()
+            : values.getPlannedDeliveryAt();
+
+        return new TransportationRequest(
+            existing.id(),
+            values.getClientId(),
+            existing.driverId(),
+            values.getOperatorId(),
+            values.getCargoDescription(),
+            values.getWeightKg(),
+            values.getPrice(),
+            existing.createdAt(),
+            plannedDelivery,
+            existing.status(),
+            values.getPickupAddress(),
+            values.getDeliveryAddress()
+        );
     }
 
     public TransportationRequest readRequest() {

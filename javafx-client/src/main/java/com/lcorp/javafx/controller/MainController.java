@@ -7,6 +7,7 @@ import com.lcorp.console.model.query.TransportationRequestSearchCriteria;
 import com.lcorp.console.model.query.TransportationRequestView;
 import com.lcorp.console.service.TransportationRequestQueryService;
 import com.lcorp.javafx.service.RequestCreationService;
+import com.lcorp.javafx.service.RequestEditingService;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -28,6 +29,7 @@ import java.util.Objects;
 
 public final class MainController {
     @FXML private Button createButton;
+    @FXML private Button editButton;
     @FXML private TableView<TransportationRequestView> requestTable;
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
@@ -37,23 +39,33 @@ public final class MainController {
     @FXML private TableColumn<TransportationRequestView, String> deliveryColumn;
     private TransportationRequestQueryService queryService;
     private RequestCreationService creationService;
+    private RequestEditingService editingService;
 
     @FXML
     private void initialize() {
+        // TableView ожидает ObservableValue, поэтому поля record оборачиваются для ячеек
         idColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().id()));
         cargoColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().cargoDescription()));
         weightColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().weightKg()));
         statusColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().status()));
         pickupColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().pickupAddress()));
         deliveryColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().deliveryAddress()));
+        requestTable.getSelectionModel().selectedItemProperty().addListener(
+            (observable, previous, selected) -> editButton.setDisable(
+                selected == null || selected.status() != TransportationRequestStatus.CREATED
+                    || selected.driverId() != null
+            )
+        );
     }
 
     public void configure(
         TransportationRequestQueryService service,
-        RequestCreationService creationService
+        RequestCreationService creationService,
+        RequestEditingService editingService
     ) {
         this.queryService = Objects.requireNonNull(service);
         this.creationService = Objects.requireNonNull(creationService);
+        this.editingService = Objects.requireNonNull(editingService);
         createButton.setDisable(false);
         loadRequests();
     }
@@ -70,12 +82,26 @@ public final class MainController {
 
     @FXML
     private void onCreateRequest() {
+        openRequestDialog(null);
+    }
+
+    @FXML
+    private void onEditRequest() {
+        TransportationRequestView selected = requestTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            openRequestDialog(selected);
+        }
+    }
+
+    // Одна FXML форма работает для создания и редактирования а existing == null означает новую заявку.
+    private void openRequestDialog(TransportationRequestView existing) {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/request-form.fxml"));
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.initOwner(requestTable.getScene().getWindow());
-        dialog.setTitle("Новая заявка");
+        dialog.setTitle(existing == null ? "Новая заявка" : "Редактирование заявки № " + existing.id());
+        ButtonType saveType = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(
-            new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE),
+            saveType,
             new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE)
         );
 
@@ -83,16 +109,20 @@ public final class MainController {
             dialog.getDialogPane().setContent(loader.load());
             RequestFormController form = loader.getController();
             form.setOptions(creationService.findClients(), creationService.findOperators());
+            if (existing != null) {
+                form.setRequest(existing);
+            }
 
-            Button saveButton = (Button) dialog.getDialogPane().lookupButton(
-                dialog.getDialogPane().getButtonTypes().getFirst()
-            );
+            Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveType);
+            // consume() оставляет форму открытой, чтобы пользователь исправил ошибку
             saveButton.addEventFilter(ActionEvent.ACTION, event -> {
                 try {
-                    long newId = creationService.create(form.readRequest());
+                    long savedId = existing == null
+                        ? creationService.create(form.readRequest())
+                        : editingService.update(existing, form.readEditedRequest(existing));
                     loadRequests();
                     requestTable.getItems().stream()
-                        .filter(row -> row.id() == newId)
+                        .filter(row -> row.id() == savedId)
                         .findFirst()
                         .ifPresent(row -> requestTable.getSelectionModel().select(row));
                 } catch (InvalidRequestDataException exception) {
@@ -100,6 +130,10 @@ public final class MainController {
                     event.consume();
                 } catch (IllegalArgumentException exception) {
                     showError("Проверьте поля", exception.getMessage());
+                    event.consume();
+                } catch (IllegalStateException exception) {
+                    showError("Заявка изменилась", exception.getMessage());
+                    loadRequests();
                     event.consume();
                 } catch (DataAccessException exception) {
                     showError("Не удалось сохранить заявку",
@@ -109,7 +143,7 @@ public final class MainController {
             });
             dialog.showAndWait();
         } catch (IOException exception) {
-            showError("Ошибка формы", "Не удалось открыть форму новой заявки.");
+            showError("Ошибка формы", "Не удалось открыть форму заявки.");
         } catch (DataAccessException exception) {
             showError("Ошибка загрузки", "Не удалось получить список клиентов и операторов.");
         }

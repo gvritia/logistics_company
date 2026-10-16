@@ -10,7 +10,7 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.lcorp.javafx.controller.MainController">
-    <!-- Верхняя часть окна: название экрана. -->
+    <!-- Верхняя часть окна: название экрана -->
     <top>
         <HBox alignment="CENTER_LEFT" spacing="16">
             <BorderPane.margin>
@@ -19,6 +19,8 @@
             <Label text="Заявки на перевозку" />
             <Button fx:id="createButton" text="Добавить заявку"
                     disable="true" onAction="#onCreateRequest" />
+            <Button fx:id="editButton" text="Редактировать"
+                    disable="true" onAction="#onEditRequest" />
         </HBox>
     </top>
 

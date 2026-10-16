@@ -55,7 +55,7 @@ public class TransportationRequestService {
 
         TransportationRequest existingRequest = requireRequest(request.getId());
         ensureDraftRequest(existingRequest, "Редактирование");
-        validateRequestDetails(request, existingRequest.getCreatedAt());
+        validateEditableDetails(request, existingRequest.getCreatedAt());
 
         requireClient(request.getClientId());
         requireOperator(request.getOperatorId());
@@ -241,6 +241,18 @@ public class TransportationRequestService {
                 "новая заявка должна быть свободной"
             );
         }
+    }
+
+    // Проверяет изменяемые поля относительно исходной даты создания заявки.
+    public static void validateEditableDetails(
+        TransportationRequest request,
+        LocalDateTime originalCreatedAt
+    ) {
+        if (request == null) {
+            throw new InvalidRequestDataException("request", "заявка не должна быть null");
+        }
+        requireId(request.getId(), "id");
+        validateRequestDetails(request, originalCreatedAt);
     }
 
     private static void validateRequestDetails(

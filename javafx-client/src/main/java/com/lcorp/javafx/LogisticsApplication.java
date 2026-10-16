@@ -6,7 +6,9 @@ import com.lcorp.console.repository.jdbc.JdbcTransportationRequestQueryRepositor
 import com.lcorp.console.service.TransportationRequestQueryService;
 import com.lcorp.javafx.controller.MainController;
 import com.lcorp.javafx.repository.JdbcRequestCreateDao;
+import com.lcorp.javafx.repository.JdbcRequestUpdateDao;
 import com.lcorp.javafx.service.RequestCreationService;
+import com.lcorp.javafx.service.RequestEditingService;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -29,7 +31,8 @@ public final class LogisticsApplication extends Application {
             var repository = new JdbcTransportationRequestQueryRepository(connectionFactory);
             controller.configure(
                 new TransportationRequestQueryService(repository),
-                new RequestCreationService(new JdbcRequestCreateDao(connectionFactory))
+                new RequestCreationService(new JdbcRequestCreateDao(connectionFactory)),
+                new RequestEditingService(new JdbcRequestUpdateDao(connectionFactory))
             );
         } catch (IllegalStateException | NumberFormatException exception) {
             controller.showLoadError();
