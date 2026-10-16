@@ -8,6 +8,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
@@ -21,7 +22,7 @@
                 <Insets top="16" right="16" bottom="12" left="16" />
             </BorderPane.margin>
             <Label text="Заявки на перевозку" styleClass="page-title" />
-            <HBox alignment="CENTER_LEFT" spacing="8">
+            <FlowPane alignment="CENTER_LEFT" hgap="8" vgap="8">
                 <Button fx:id="createButton" text="Добавить заявку"
                         disable="true" onAction="#onCreateRequest" styleClass="primary" />
                 <Button fx:id="editButton" text="Редактировать"
@@ -36,7 +37,7 @@
                         disable="true" onAction="#onShowStatistics" />
                 <Button fx:id="exportButton" text="Экспорт CSV"
                         disable="true" onAction="#onExportCsv" />
-            </HBox>
+            </FlowPane>
             <HBox fx:id="searchBox" alignment="CENTER_LEFT" spacing="8" disable="true">
                 <Label text="Поиск:" />
                 <TextField fx:id="searchField" prefWidth="300"
@@ -44,15 +45,21 @@
                 <Button text="Применить" onAction="#onSearch" />
                 <Button text="Сбросить" onAction="#onClearSearch" />
             </HBox>
-            <HBox fx:id="filterBox" alignment="CENTER_LEFT" spacing="8" disable="true">
-                <Label text="Статус:" />
-                <ComboBox fx:id="statusBox" prefWidth="145" promptText="Все" />
-                <Label text="Клиент:" />
-                <ComboBox fx:id="clientBox" prefWidth="205" promptText="Все" />
-                <Label text="Сортировка:" />
-                <ComboBox fx:id="sortFieldBox" prefWidth="145" />
-                <ComboBox fx:id="sortDirectionBox" prefWidth="155" />
-            </HBox>
+            <FlowPane fx:id="filterBox" alignment="CENTER_LEFT" hgap="8" vgap="8" disable="true">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="Статус:" />
+                    <ComboBox fx:id="statusBox" prefWidth="145" promptText="Все" />
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="Клиент:" />
+                    <ComboBox fx:id="clientBox" prefWidth="205" promptText="Все" />
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="Сортировка:" />
+                    <ComboBox fx:id="sortFieldBox" prefWidth="145" />
+                    <ComboBox fx:id="sortDirectionBox" prefWidth="155" />
+                </HBox>
+            </FlowPane>
         </VBox>
     </top>
 

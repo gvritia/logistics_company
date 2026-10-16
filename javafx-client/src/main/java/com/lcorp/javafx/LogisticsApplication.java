@@ -25,6 +25,8 @@ public final class LogisticsApplication extends Application {
         Scene scene = new Scene(loader.load(), 1000, 560);
         scene.getStylesheets().add(getClass().getResource("/styles/app.css").toExternalForm());
         stage.setTitle("Логистическая компания");
+        stage.setMinWidth(750);
+        stage.setMinHeight(500);
         stage.setScene(scene);
         stage.show();
 

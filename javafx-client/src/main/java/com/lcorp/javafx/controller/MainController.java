@@ -33,6 +33,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
@@ -50,7 +51,7 @@ public final class MainController {
     @FXML private Button refreshButton;
     @FXML private TextField searchField;
     @FXML private HBox searchBox;
-    @FXML private HBox filterBox;
+    @FXML private FlowPane filterBox;
     @FXML private ComboBox<TransportationRequestStatus> statusBox;
     @FXML private ComboBox<ReferenceOption> clientBox;
     @FXML private ComboBox<TransportationRequestSortField> sortFieldBox;
@@ -61,7 +62,7 @@ public final class MainController {
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
     @FXML private TableColumn<TransportationRequestView, BigDecimal> weightColumn;
-    @FXML private TableColumn<TransportationRequestView, TransportationRequestStatus> statusColumn;
+    @FXML private TableColumn<TransportationRequestView, String> statusColumn;
     @FXML private TableColumn<TransportationRequestView, String> pickupColumn;
     @FXML private TableColumn<TransportationRequestView, String> deliveryColumn;
     private TransportationRequestQueryService queryService;
@@ -88,7 +89,8 @@ public final class MainController {
         idColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().id()));
         cargoColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().cargoDescription()));
         weightColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().weightKg()));
-        statusColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().status()));
+        statusColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(
+            statusLabel(row.getValue().status())));
         pickupColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().pickupAddress()));
         deliveryColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().deliveryAddress()));
         requestTable.getSelectionModel().selectedItemProperty().addListener((observable, previous, selected) -> {
@@ -375,6 +377,9 @@ public final class MainController {
 
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR, message);
+        alert.initOwner(requestTable.getScene().getWindow());
+        alert.getDialogPane().getStylesheets().add(
+            getClass().getResource("/styles/app.css").toExternalForm());
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.showAndWait();
@@ -397,8 +402,13 @@ public final class MainController {
         requestTable.setItems(FXCollections.observableArrayList());
         exportButton.setDisable(true);
         requestTable.setPlaceholder(new Label("Не удалось загрузить заявки"));
-        new Alert(Alert.AlertType.ERROR,
-            "Не удалось загрузить заявки. Проверьте подключение к PostgreSQL и настройки .env.")
-            .show();
+        Alert alert = new Alert(Alert.AlertType.ERROR,
+            "Не удалось загрузить заявки. Проверьте подключение к PostgreSQL и настройки .env.");
+        alert.initOwner(requestTable.getScene().getWindow());
+        alert.getDialogPane().getStylesheets().add(
+            getClass().getResource("/styles/app.css").toExternalForm());
+        alert.setTitle("Ошибка загрузки");
+        alert.setHeaderText(null);
+        alert.show();
     }
 }
