@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.lcorp.javafx.controller.RequestDetailsController"
+      spacing="14" styleClass="request-details">
+    <padding><Insets top="16" right="18" bottom="12" left="18" /></padding>
+    <Label fx:id="titleLabel" styleClass="details-title" />
+    <GridPane hgap="14" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints prefWidth="145" />
+            <ColumnConstraints prefWidth="400" />
+        </columnConstraints>
+        <Label text="Груз" styleClass="detail-key" GridPane.rowIndex="0" />
+        <Label fx:id="cargoLabel" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        <Label text="Клиент" styleClass="detail-key" GridPane.rowIndex="1" />
+        <Label fx:id="clientLabel" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+        <Label text="Оператор" styleClass="detail-key" GridPane.rowIndex="2" />
+        <Label fx:id="operatorLabel" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+        <Label text="Доставщик" styleClass="detail-key" GridPane.rowIndex="3" />
+        <Label fx:id="driverLabel" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+        <Label text="Вес" styleClass="detail-key" GridPane.rowIndex="4" />
+        <Label fx:id="weightLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+        <Label text="Стоимость" styleClass="detail-key" GridPane.rowIndex="5" />
+        <Label fx:id="priceLabel" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+        <Label text="Статус" styleClass="detail-key" GridPane.rowIndex="6" />
+        <Label fx:id="statusLabel" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+        <Label text="Откуда" styleClass="detail-key" GridPane.rowIndex="7" />
+        <Label fx:id="pickupLabel" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+        <Label text="Куда" styleClass="detail-key" GridPane.rowIndex="8" />
+        <Label fx:id="deliveryLabel" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+        <Label text="Создана" styleClass="detail-key" GridPane.rowIndex="9" />
+        <Label fx:id="createdLabel" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+        <Label text="Плановая доставка" styleClass="detail-key" GridPane.rowIndex="10" />
+        <Label fx:id="plannedLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+    </GridPane>
+</VBox>

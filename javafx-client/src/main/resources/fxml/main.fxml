@@ -20,14 +20,18 @@
             <BorderPane.margin>
                 <Insets top="16" right="16" bottom="12" left="16" />
             </BorderPane.margin>
-            <HBox alignment="CENTER_LEFT" spacing="16">
-                <Label text="Заявки на перевозку" styleClass="page-title" />
+            <Label text="Заявки на перевозку" styleClass="page-title" />
+            <HBox alignment="CENTER_LEFT" spacing="8">
                 <Button fx:id="createButton" text="Добавить заявку"
                         disable="true" onAction="#onCreateRequest" styleClass="primary" />
                 <Button fx:id="editButton" text="Редактировать"
                         disable="true" onAction="#onEditRequest" />
                 <Button fx:id="deleteButton" text="Удалить"
                         disable="true" onAction="#onDeleteRequest" styleClass="danger" />
+                <Button fx:id="detailsButton" text="Подробнее"
+                        disable="true" onAction="#onShowDetails" />
+                <Button fx:id="refreshButton" text="Обновить"
+                        disable="true" onAction="#onRefresh" />
                 <Button fx:id="statisticsButton" text="Статистика"
                         disable="true" onAction="#onShowStatistics" />
                 <Button fx:id="exportButton" text="Экспорт CSV"

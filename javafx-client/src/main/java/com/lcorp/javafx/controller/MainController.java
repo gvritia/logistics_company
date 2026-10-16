@@ -46,6 +46,8 @@ public final class MainController {
     @FXML private Button createButton;
     @FXML private Button editButton;
     @FXML private Button deleteButton;
+    @FXML private Button detailsButton;
+    @FXML private Button refreshButton;
     @FXML private TextField searchField;
     @FXML private HBox searchBox;
     @FXML private HBox filterBox;
@@ -94,6 +96,7 @@ public final class MainController {
                 && TransportationRequestService.isEditableDraft(selected.status(), selected.driverId());
             editButton.setDisable(!canModify);
             deleteButton.setDisable(!canModify);
+            detailsButton.setDisable(selected == null);
         });
     }
 
@@ -109,6 +112,7 @@ public final class MainController {
         this.deletionService = Objects.requireNonNull(deletionService);
         this.statisticsService = new RequestStatisticsService(service);
         createButton.setDisable(false);
+        refreshButton.setDisable(false);
         searchBox.setDisable(false);
         statisticsButton.setDisable(false);
         try {
@@ -155,6 +159,36 @@ public final class MainController {
         sortDirectionBox.setValue(SortDirection.ASC);
         activeCriteria = new TransportationRequestSearchCriteria();
         loadRequests();
+    }
+
+    @FXML
+    private void onRefresh() {
+        loadRequests();
+    }
+
+    @FXML
+    private void onShowDetails() {
+        TransportationRequestView selected = requestTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/request-details.fxml"));
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.initOwner(requestTable.getScene().getWindow());
+        dialog.setTitle("Заявка № " + selected.id());
+        dialog.getDialogPane().getStylesheets().add(
+            getClass().getResource("/styles/app.css").toExternalForm());
+        dialog.getDialogPane().getButtonTypes().add(
+            new ButtonType("Закрыть", ButtonBar.ButtonData.CANCEL_CLOSE));
+        try {
+            dialog.getDialogPane().setContent(loader.load());
+            RequestDetailsController details = loader.getController();
+            details.setRequest(selected);
+            dialog.showAndWait();
+        } catch (IOException exception) {
+            showError("Ошибка просмотра", "Не удалось открыть подробности заявки.");
+        }
     }
 
     private boolean noActiveFilters() {

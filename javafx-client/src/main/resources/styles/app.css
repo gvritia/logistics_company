@@ -81,3 +81,18 @@
 .dialog-pane, .request-form {
     -fx-background-color: #f8fafc;
 }
+
+.request-details {
+    -fx-background-color: #f8fafc;
+}
+
+.details-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #17324d;
+}
+
+.detail-key {
+    -fx-font-weight: bold;
+    -fx-text-fill: #496174;
+}
