@@ -22,7 +22,7 @@ public final class LogisticsApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main.fxml"));
-        Scene scene = new Scene(loader.load(), 800, 500);
+        Scene scene = new Scene(loader.load(), 1000, 560);
         stage.setTitle("Логистическая компания");
         stage.setScene(scene);
         stage.show();

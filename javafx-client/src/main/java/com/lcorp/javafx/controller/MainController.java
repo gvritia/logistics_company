@@ -3,13 +3,18 @@ package com.lcorp.javafx.controller;
 import com.lcorp.console.exception.DataAccessException;
 import com.lcorp.console.exception.InvalidRequestDataException;
 import com.lcorp.console.model.TransportationRequestStatus;
+import com.lcorp.console.model.query.SortDirection;
 import com.lcorp.console.model.query.TransportationRequestSearchCriteria;
+import com.lcorp.console.model.query.TransportationRequestSortField;
 import com.lcorp.console.model.query.TransportationRequestView;
 import com.lcorp.console.service.TransportationRequestQueryService;
 import com.lcorp.console.service.TransportationRequestService;
 import com.lcorp.javafx.service.RequestCreationService;
 import com.lcorp.javafx.service.RequestDeletionService;
 import com.lcorp.javafx.service.RequestEditingService;
+import com.lcorp.javafx.model.ReferenceOption;
+import com.lcorp.javafx.model.RequestStatisticsSummary;
+import com.lcorp.javafx.service.RequestStatisticsService;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -20,12 +25,14 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.io.IOException;
@@ -37,6 +44,12 @@ public final class MainController {
     @FXML private Button deleteButton;
     @FXML private TextField searchField;
     @FXML private HBox searchBox;
+    @FXML private HBox filterBox;
+    @FXML private ComboBox<TransportationRequestStatus> statusBox;
+    @FXML private ComboBox<ReferenceOption> clientBox;
+    @FXML private ComboBox<TransportationRequestSortField> sortFieldBox;
+    @FXML private ComboBox<SortDirection> sortDirectionBox;
+    @FXML private Button statisticsButton;
     @FXML private TableView<TransportationRequestView> requestTable;
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
@@ -48,11 +61,21 @@ public final class MainController {
     private RequestCreationService creationService;
     private RequestEditingService editingService;
     private RequestDeletionService deletionService;
-    // Введённый, но ещё не отправленный текст не должен менять список при сохранении заявки.
-    private String activeSearchText = "";
+    private RequestStatisticsService statisticsService;
+    // Храним применённые условия отдельно от полей формы: CRUD обновляет ту же выборку.
+    private TransportationRequestSearchCriteria activeCriteria = new TransportationRequestSearchCriteria();
 
     @FXML
     private void initialize() {
+        statusBox.setItems(FXCollections.observableArrayList(TransportationRequestStatus.values()));
+        statusBox.setConverter(enumLabels(this::statusLabel));
+        sortFieldBox.setItems(FXCollections.observableArrayList(TransportationRequestSortField.values()));
+        sortFieldBox.setConverter(enumLabels(this::sortFieldLabel));
+        sortFieldBox.setValue(TransportationRequestSortField.PLANNED_DELIVERY_AT);
+        sortDirectionBox.setItems(FXCollections.observableArrayList(SortDirection.values()));
+        sortDirectionBox.setConverter(enumLabels(direction -> direction == SortDirection.ASC
+            ? "По возрастанию" : "По убыванию"));
+        sortDirectionBox.setValue(SortDirection.ASC);
         // TableView ожидает ObservableValue, поэтому поля record оборачиваются для ячеек
         idColumn.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().id()));
         cargoColumn.setCellValueFactory(row -> new ReadOnlyStringWrapper(row.getValue().cargoDescription()));
@@ -78,18 +101,25 @@ public final class MainController {
         this.creationService = Objects.requireNonNull(creationService);
         this.editingService = Objects.requireNonNull(editingService);
         this.deletionService = Objects.requireNonNull(deletionService);
+        this.statisticsService = new RequestStatisticsService(service);
         createButton.setDisable(false);
         searchBox.setDisable(false);
+        statisticsButton.setDisable(false);
+        try {
+            clientBox.setItems(FXCollections.observableArrayList(creationService.findClients()));
+            filterBox.setDisable(false);
+        } catch (DataAccessException exception) {
+            showLoadError();
+            return;
+        }
         loadRequests();
     }
 
     public void loadRequests() {
         try {
-            TransportationRequestSearchCriteria criteria = new TransportationRequestSearchCriteria();
-            criteria.setSearchText(activeSearchText);
-            var requests = queryService.search(criteria);
+            var requests = queryService.search(activeCriteria);
             requestTable.setItems(FXCollections.observableArrayList(requests));
-            requestTable.setPlaceholder(new Label(activeSearchText.isEmpty()
+            requestTable.setPlaceholder(new Label(noActiveFilters()
                 ? "Заявок пока нет" : "По запросу ничего не найдено"));
         } catch (DataAccessException exception) {
             showLoadError();
@@ -98,15 +128,80 @@ public final class MainController {
 
     @FXML
     private void onSearch() {
-        activeSearchText = searchField.getText().trim();
+        TransportationRequestSearchCriteria criteria = new TransportationRequestSearchCriteria();
+        criteria.setSearchText(searchField.getText().trim());
+        criteria.setStatus(statusBox.getValue());
+        ReferenceOption client = clientBox.getValue();
+        criteria.setClientId(client == null ? null : client.id());
+        criteria.setSortField(sortFieldBox.getValue());
+        criteria.setSortDirection(sortDirectionBox.getValue());
+        activeCriteria = criteria;
         loadRequests();
     }
 
     @FXML
     private void onClearSearch() {
         searchField.clear();
-        activeSearchText = "";
+        statusBox.setValue(null);
+        clientBox.setValue(null);
+        sortFieldBox.setValue(TransportationRequestSortField.PLANNED_DELIVERY_AT);
+        sortDirectionBox.setValue(SortDirection.ASC);
+        activeCriteria = new TransportationRequestSearchCriteria();
         loadRequests();
+    }
+
+    private boolean noActiveFilters() {
+        return (activeCriteria.getSearchText() == null || activeCriteria.getSearchText().isBlank())
+            && activeCriteria.getStatus() == null && activeCriteria.getClientId() == null;
+    }
+
+    @FXML
+    private void onShowStatistics() {
+        try {
+            RequestStatisticsSummary summary = statisticsService.summarize();
+            // Агрегаты вычислены в SQL по всей базе, поэтому фильтры таблицы их не меняют
+            String message = "Всего заявок: " + summary.requestCount()
+                + "\nОбщая стоимость: " + summary.totalPrice().toPlainString()
+                + "\nСредняя стоимость: " + summary.averagePrice().toPlainString()
+                + "\nОбщий вес, кг: " + summary.totalWeightKg().toPlainString()
+                + "\nДоставлено: " + summary.deliveredCount()
+                + "\nВ пути: " + summary.inTransitCount();
+            Alert statistics = new Alert(Alert.AlertType.INFORMATION, message);
+            statistics.initOwner(requestTable.getScene().getWindow());
+            statistics.setTitle("Статистика заявок");
+            statistics.setHeaderText("По всем заявкам в базе");
+            statistics.showAndWait();
+        } catch (DataAccessException exception) {
+            showError("Не удалось получить статистику", "Проверьте подключение к PostgreSQL.");
+        }
+    }
+
+    private String statusLabel(TransportationRequestStatus status) {
+        return switch (status) {
+            case CREATED -> "Создана";
+            case APPROVED -> "Подтверждена";
+            case IN_TRANSIT -> "В пути";
+            case DELIVERED -> "Доставлена";
+            case CANCELLED -> "Отменена";
+        };
+    }
+
+    private String sortFieldLabel(TransportationRequestSortField field) {
+        return switch (field) {
+            case ID -> "Номер";
+            case CREATED_AT -> "Дата создания";
+            case PLANNED_DELIVERY_AT -> "Дата доставки";
+            case PRICE -> "Стоимость";
+            case WEIGHT_KG -> "Вес";
+        };
+    }
+
+    // ComboBox хранит enum для запроса, а пользователю показывает понятное название
+    private <T> StringConverter<T> enumLabels(java.util.function.Function<T, String> label) {
+        return new StringConverter<>() {
+            @Override public String toString(T value) { return value == null ? "" : label.apply(value); }
+            @Override public T fromString(String value) { return null; }
+        };
     }
 
     @FXML
