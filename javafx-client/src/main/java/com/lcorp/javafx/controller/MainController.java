@@ -49,7 +49,7 @@ public final class MainController {
     @FXML private TextField searchField;
     @FXML private ComboBox<WorkingMode> modeBox;
     @FXML private Label driverLabel;
-    @FXML private ComboBox<NamedId> activeDriverBox;
+    @FXML private ComboBox<DriverChoice> activeDriverBox;
     @FXML private ComboBox<DriverView> driverViewBox;
     @FXML private HBox operatorFilterBox;
     @FXML private ComboBox<String> statusFilter;
@@ -127,7 +127,7 @@ public final class MainController {
         boolean draft = selected && row.status() == TransportationRequestStatus.CREATED && row.driverId() == null;
         boolean approved = selected && row.status() == TransportationRequestStatus.APPROVED;
         boolean assigned = selected && row.driverId() != null;
-        NamedId activeDriver = activeDriverBox.getValue();
+        DriverChoice activeDriver = activeDriverBox.getValue();
         boolean mine = activeDriver != null && selected && Objects.equals(row.driverId(), activeDriver.id());
         detailsButton.setDisable(!selected);
         editButton.setDisable(!draft);
@@ -138,7 +138,7 @@ public final class MainController {
         startButton.setDisable(!approved || !assigned);
         completeButton.setDisable(!selected || row.status() != TransportationRequestStatus.IN_TRANSIT || !assigned);
         cancelButton.setDisable(!selected || !(draft || approved));
-        takeButton.setDisable(!approved || assigned || activeDriver == null);
+        takeButton.setDisable(!approved || assigned || activeDriver == null || !activeDriver.active());
         rejectButton.setDisable(!approved || !mine);
         driverStartButton.setDisable(!approved || !mine);
         driverCompleteButton.setDisable(!selected || row.status() != TransportationRequestStatus.IN_TRANSIT || !mine);
@@ -153,11 +153,18 @@ public final class MainController {
 
     private void refreshDrivers() {
         Long previousId = activeDriverBox.getValue() == null ? null : activeDriverBox.getValue().id();
-        List<NamedId> drivers = context.drivers().findActive().stream()
-            .map(driver -> new NamedId(driver.getId(), driver.getFullName())).toList();
+        List<DriverChoice> drivers = context.drivers().findAll().stream()
+            .map(driver -> new DriverChoice(driver.getId(), driver.getFullName(), driver.isActive())).toList();
         activeDriverBox.getItems().setAll(drivers);
         activeDriverBox.setValue(drivers.stream().filter(driver -> Objects.equals(driver.id(), previousId))
             .findFirst().orElse(null));
+    }
+
+    @FXML
+    private void onDriverChanged() {
+        DriverChoice driver = activeDriverBox.getValue();
+        if (driver != null && !driver.active()) driverViewBox.setValue(DriverView.MINE);
+        refresh();
     }
 
     @FXML
@@ -208,13 +215,17 @@ public final class MainController {
             criteria.setSearchText(searchField.getText());
             boolean driverMode = modeBox.getValue() == WorkingMode.DRIVER;
             if (driverMode) {
-                NamedId driver = activeDriverBox.getValue();
+                DriverChoice driver = activeDriverBox.getValue();
                 if (driver == null) {
                     table.getSelectionModel().clearSelection();
                     rows.clear();
-                    resultLabel.setText("Выберите активного доставщика");
+                    resultLabel.setText("Выберите доставщика");
+                    driverHint.setText("Выберите доставщика, чтобы увидеть свободные или свои заявки.");
                     return;
                 }
+                driverHint.setText(driver.active()
+                    ? "Свободную заявку можно взять; от своей можно отказаться до начала перевозки."
+                    : "Доставщик неактивен: доступны его ранее назначенные заявки, новые брать нельзя.");
                 if (driverViewBox.getValue() == DriverView.MINE) {
                     criteria.setDriverId(driver.id());
                 } else {
@@ -279,7 +290,7 @@ public final class MainController {
             + "\nЦена: " + row.price().toPlainString()
             + "\nСоздана: " + row.createdAt().toString().replace('T', ' ')
             + "\nПлан доставки: " + row.plannedDeliveryAt().toString().replace('T', ' ')
-            + "\nСтатус: " + row.status()
+            + "\nСтатус: " + UiLabels.status(row.status())
             + "\nОткуда: " + row.pickupAddress()
             + "\nКуда: " + row.deliveryAddress());
         details.showAndWait();
@@ -346,8 +357,8 @@ public final class MainController {
     @FXML
     private void takeRequest() {
         TransportationRequestView row = selected();
-        NamedId driver = activeDriverBox.getValue();
-        if (modeBox.getValue() != WorkingMode.DRIVER || row == null || driver == null
+        DriverChoice driver = activeDriverBox.getValue();
+        if (modeBox.getValue() != WorkingMode.DRIVER || row == null || driver == null || !driver.active()
             || driverViewBox.getValue() != DriverView.AVAILABLE
             || row.status() != TransportationRequestStatus.APPROVED || row.driverId() != null) return;
         performDriverAction("Не удалось взять заявку", row.id(), DriverView.MINE,
@@ -357,7 +368,7 @@ public final class MainController {
     @FXML
     private void rejectRequest() {
         TransportationRequestView row = selected();
-        NamedId driver = activeDriverBox.getValue();
+        DriverChoice driver = activeDriverBox.getValue();
         if (modeBox.getValue() != WorkingMode.DRIVER || row == null || driver == null
             || row.status() != TransportationRequestStatus.APPROVED
             || !Objects.equals(row.driverId(), driver.id())) return;
@@ -371,7 +382,7 @@ public final class MainController {
         if (row == null) return;
         Long driverId = row.driverId();
         if (modeBox.getValue() == WorkingMode.DRIVER) {
-            NamedId driver = activeDriverBox.getValue();
+            DriverChoice driver = activeDriverBox.getValue();
             if (driver == null || !Objects.equals(driver.id(), driverId)) return;
             driverId = driver.id();
         }
@@ -395,7 +406,7 @@ public final class MainController {
         if (row == null) return;
         Long driverId = row.driverId();
         if (modeBox.getValue() == WorkingMode.DRIVER) {
-            NamedId driver = activeDriverBox.getValue();
+            DriverChoice driver = activeDriverBox.getValue();
             if (driver == null || !Objects.equals(driver.id(), driverId)) return;
             driverId = driver.id();
         }
@@ -525,6 +536,12 @@ public final class MainController {
 
     public record NamedId(Long id, String name) {
         @Override public String toString() { return name; }
+    }
+
+    private record DriverChoice(Long id, String name, boolean active) {
+        @Override public String toString() {
+            return active ? name : name + " (неактивен)";
+        }
     }
 
     private enum WorkingMode {

@@ -9,7 +9,7 @@
                 <Label text="Режим:" />
                 <ComboBox fx:id="modeBox" prefWidth="155" onAction="#onModeChanged" />
                 <Label fx:id="driverLabel" text="Доставщик:" visible="false" managed="false" />
-                <ComboBox fx:id="activeDriverBox" prefWidth="210" promptText="Выберите доставщика" onAction="#refresh" visible="false" managed="false" />
+                <ComboBox fx:id="activeDriverBox" prefWidth="255" promptText="Выберите доставщика" onAction="#onDriverChanged" visible="false" managed="false" />
                 <ComboBox fx:id="driverViewBox" prefWidth="175" onAction="#refresh" visible="false" managed="false" />
                 <Label text="Учебный выбор роли без авторизации" styleClass="hint" />
             </HBox>
