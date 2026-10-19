@@ -72,7 +72,7 @@
                 <Button fx:id="driverStartButton" text="Начать перевозку" onAction="#startTransportation" />
                 <Button fx:id="driverCompleteButton" text="Доставлено" onAction="#completeDelivery" />
             </HBox>
-            <Label fx:id="operatorHint" text="Редактирование и удаление разрешены только для заявки CREATED без доставщика." styleClass="hint" />
+            <Label fx:id="operatorHint" text="Редактирование и удаление разрешены только для заявки со статусом «Создана» без доставщика." styleClass="hint" />
             <Label fx:id="driverHint" text="Свободную заявку можно взять; от своей можно отказаться до начала перевозки." styleClass="hint" visible="false" managed="false" />
         </VBox>
     </bottom>
