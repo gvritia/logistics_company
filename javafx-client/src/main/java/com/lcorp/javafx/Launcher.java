@@ -2,7 +2,6 @@ package com.lcorp.javafx;
 
 import javafx.application.Application;
 
-/** Entry point for IDE and classpath launches. */
 public final class Launcher {
     private Launcher() {
     }
