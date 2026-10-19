@@ -6,9 +6,19 @@
         <VBox spacing="12">
             <Label text="Заявки на перевозку" styleClass="page-title" />
             <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Режим:" />
+                <ComboBox fx:id="modeBox" prefWidth="155" onAction="#onModeChanged" />
+                <Label fx:id="driverLabel" text="Доставщик:" visible="false" managed="false" />
+                <ComboBox fx:id="activeDriverBox" prefWidth="210" promptText="Выберите доставщика" onAction="#refresh" visible="false" managed="false" />
+                <ComboBox fx:id="driverViewBox" prefWidth="175" onAction="#refresh" visible="false" managed="false" />
+                <Label text="Учебный выбор роли без авторизации" styleClass="hint" />
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
                 <TextField fx:id="searchField" promptText="Груз, адрес или клиент" onAction="#refresh" HBox.hgrow="ALWAYS" />
-                <ComboBox fx:id="statusFilter" prefWidth="155" />
-                <ComboBox fx:id="clientFilter" prefWidth="190" />
+                <HBox fx:id="operatorFilterBox" spacing="8">
+                    <ComboBox fx:id="statusFilter" prefWidth="155" />
+                    <ComboBox fx:id="clientFilter" prefWidth="190" />
+                </HBox>
                 <Button text="Найти" onAction="#refresh" styleClass="primary-button" />
                 <Button text="Сбросить" onAction="#resetFilters" />
             </HBox>
@@ -19,7 +29,7 @@
                 <Button text="Применить" onAction="#refresh" />
                 <Region HBox.hgrow="ALWAYS" />
                 <Button text="Обновить" onAction="#refresh" />
-                <Button text="Статистика" onAction="#showStatistics" />
+                <Button fx:id="statisticsButton" text="Статистика" onAction="#showStatistics" />
                 <Button text="Экспорт CSV" onAction="#exportCsv" />
             </HBox>
         </VBox>
@@ -41,14 +51,14 @@
     <bottom>
         <VBox spacing="10">
             <HBox spacing="8">
-                <Button text="Добавить заявку" onAction="#createRequest" styleClass="primary-button" />
+                <Button fx:id="createButton" text="Добавить заявку" onAction="#createRequest" styleClass="primary-button" />
                 <Button fx:id="detailsButton" text="Подробнее" onAction="#showDetails" />
                 <Button fx:id="editButton" text="Редактировать" onAction="#editRequest" />
                 <Button fx:id="deleteButton" text="Удалить" onAction="#deleteRequest" styleClass="danger-button" />
                 <Region HBox.hgrow="ALWAYS" />
                 <Label fx:id="resultLabel" text="Найдено заявок: 0" />
             </HBox>
-            <HBox spacing="8">
+            <HBox fx:id="operatorStatusActions" spacing="8">
                 <Button fx:id="approveButton" text="Одобрить" onAction="#approveRequest" />
                 <Button fx:id="assignButton" text="Назначить доставщика" onAction="#assignDriver" />
                 <Button fx:id="releaseButton" text="Снять доставщика" onAction="#releaseDriver" />
@@ -56,7 +66,14 @@
                 <Button fx:id="completeButton" text="Доставлено" onAction="#completeDelivery" />
                 <Button fx:id="cancelButton" text="Отменить заявку" onAction="#cancelRequest" />
             </HBox>
-            <Label text="Редактирование и удаление разрешены только для заявки CREATED без доставщика." styleClass="hint" />
+            <HBox fx:id="driverActions" spacing="8" visible="false" managed="false">
+                <Button fx:id="takeButton" text="Взять заявку" onAction="#takeRequest" styleClass="primary-button" />
+                <Button fx:id="rejectButton" text="Отказаться от заявки" onAction="#rejectRequest" />
+                <Button fx:id="driverStartButton" text="Начать перевозку" onAction="#startTransportation" />
+                <Button fx:id="driverCompleteButton" text="Доставлено" onAction="#completeDelivery" />
+            </HBox>
+            <Label fx:id="operatorHint" text="Редактирование и удаление разрешены только для заявки CREATED без доставщика." styleClass="hint" />
+            <Label fx:id="driverHint" text="Свободную заявку можно взять; от своей можно отказаться до начала перевозки." styleClass="hint" visible="false" managed="false" />
         </VBox>
     </bottom>
 </BorderPane>

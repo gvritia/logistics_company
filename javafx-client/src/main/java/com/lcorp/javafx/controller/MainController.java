@@ -25,6 +25,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -32,6 +33,8 @@ import javafx.util.StringConverter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 
 public final class MainController {
     @FXML private TableView<TransportationRequestView> table;
@@ -44,11 +47,17 @@ public final class MainController {
     @FXML private TableColumn<TransportationRequestView, String> statusColumn;
     @FXML private TableColumn<TransportationRequestView, String> priceColumn;
     @FXML private TextField searchField;
+    @FXML private ComboBox<WorkingMode> modeBox;
+    @FXML private Label driverLabel;
+    @FXML private ComboBox<NamedId> activeDriverBox;
+    @FXML private ComboBox<DriverView> driverViewBox;
+    @FXML private HBox operatorFilterBox;
     @FXML private ComboBox<String> statusFilter;
     @FXML private ComboBox<NamedId> clientFilter;
     @FXML private ComboBox<TransportationRequestSortField> sortField;
     @FXML private ComboBox<SortDirection> sortDirection;
     @FXML private Label resultLabel;
+    @FXML private Button createButton;
     @FXML private Button detailsButton;
     @FXML private Button editButton;
     @FXML private Button deleteButton;
@@ -58,6 +67,15 @@ public final class MainController {
     @FXML private Button startButton;
     @FXML private Button completeButton;
     @FXML private Button cancelButton;
+    @FXML private HBox operatorStatusActions;
+    @FXML private HBox driverActions;
+    @FXML private Button takeButton;
+    @FXML private Button rejectButton;
+    @FXML private Button driverStartButton;
+    @FXML private Button driverCompleteButton;
+    @FXML private Button statisticsButton;
+    @FXML private Label operatorHint;
+    @FXML private Label driverHint;
     private final ObservableList<TransportationRequestView> rows = FXCollections.observableArrayList();
     private DesktopContext context;
 
@@ -76,6 +94,10 @@ public final class MainController {
         priceColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().price().toPlainString()));
         table.setItems(rows);
         table.getSelectionModel().selectedItemProperty().addListener((observable, previous, current) -> updateActions(current));
+        modeBox.getItems().setAll(WorkingMode.values());
+        modeBox.setValue(WorkingMode.OPERATOR);
+        driverViewBox.getItems().setAll(DriverView.values());
+        driverViewBox.setValue(DriverView.AVAILABLE);
         updateActions(null);
         statusFilter.getItems().add("Все статусы");
         for (TransportationRequestStatus status : TransportationRequestStatus.values()) {
@@ -105,6 +127,8 @@ public final class MainController {
         boolean draft = selected && row.status() == TransportationRequestStatus.CREATED && row.driverId() == null;
         boolean approved = selected && row.status() == TransportationRequestStatus.APPROVED;
         boolean assigned = selected && row.driverId() != null;
+        NamedId activeDriver = activeDriverBox.getValue();
+        boolean mine = activeDriver != null && selected && Objects.equals(row.driverId(), activeDriver.id());
         detailsButton.setDisable(!selected);
         editButton.setDisable(!draft);
         deleteButton.setDisable(!draft);
@@ -114,12 +138,54 @@ public final class MainController {
         startButton.setDisable(!approved || !assigned);
         completeButton.setDisable(!selected || row.status() != TransportationRequestStatus.IN_TRANSIT || !assigned);
         cancelButton.setDisable(!selected || !(draft || approved));
+        takeButton.setDisable(!approved || assigned || activeDriver == null);
+        rejectButton.setDisable(!approved || !mine);
+        driverStartButton.setDisable(!approved || !mine);
+        driverCompleteButton.setDisable(!selected || row.status() != TransportationRequestStatus.IN_TRANSIT || !mine);
     }
 
     public void setContext(DesktopContext context) {
         this.context = context;
         refreshClients();
+        refreshDrivers();
         refresh();
+    }
+
+    private void refreshDrivers() {
+        Long previousId = activeDriverBox.getValue() == null ? null : activeDriverBox.getValue().id();
+        List<NamedId> drivers = context.drivers().findActive().stream()
+            .map(driver -> new NamedId(driver.getId(), driver.getFullName())).toList();
+        activeDriverBox.getItems().setAll(drivers);
+        activeDriverBox.setValue(drivers.stream().filter(driver -> Objects.equals(driver.id(), previousId))
+            .findFirst().orElse(null));
+    }
+
+    @FXML
+    private void onModeChanged() {
+        boolean driverMode = modeBox.getValue() == WorkingMode.DRIVER;
+        setVisible(driverLabel, driverMode);
+        setVisible(activeDriverBox, driverMode);
+        setVisible(driverViewBox, driverMode);
+        setVisible(driverActions, driverMode);
+        setVisible(driverHint, driverMode);
+        setVisible(operatorFilterBox, !driverMode);
+        setVisible(operatorStatusActions, !driverMode);
+        setVisible(operatorHint, !driverMode);
+        setVisible(createButton, !driverMode);
+        setVisible(editButton, !driverMode);
+        setVisible(deleteButton, !driverMode);
+        setVisible(statisticsButton, !driverMode);
+        table.getSelectionModel().clearSelection();
+        updateActions(null);
+        if (context != null) {
+            if (driverMode) refreshDrivers();
+            refresh();
+        }
+    }
+
+    private void setVisible(javafx.scene.Node node, boolean visible) {
+        node.setVisible(visible);
+        node.setManaged(visible);
     }
 
     private void refreshClients() {
@@ -140,18 +206,40 @@ public final class MainController {
         try {
             TransportationRequestSearchCriteria criteria = new TransportationRequestSearchCriteria();
             criteria.setSearchText(searchField.getText());
-            if (statusFilter.getValue() != null && !statusFilter.getValue().equals("Все статусы")) {
-                for (TransportationRequestStatus status : TransportationRequestStatus.values()) {
-                    if (UiLabels.status(status).equals(statusFilter.getValue())) {
-                        criteria.setStatus(status);
-                        break;
+            boolean driverMode = modeBox.getValue() == WorkingMode.DRIVER;
+            if (driverMode) {
+                NamedId driver = activeDriverBox.getValue();
+                if (driver == null) {
+                    table.getSelectionModel().clearSelection();
+                    rows.clear();
+                    resultLabel.setText("Выберите активного доставщика");
+                    return;
+                }
+                if (driverViewBox.getValue() == DriverView.MINE) {
+                    criteria.setDriverId(driver.id());
+                } else {
+                    criteria.setStatus(TransportationRequestStatus.APPROVED);
+                }
+            } else {
+                if (statusFilter.getValue() != null && !statusFilter.getValue().equals("Все статусы")) {
+                    for (TransportationRequestStatus status : TransportationRequestStatus.values()) {
+                        if (UiLabels.status(status).equals(statusFilter.getValue())) {
+                            criteria.setStatus(status);
+                            break;
+                        }
                     }
                 }
+                if (clientFilter.getValue() != null) criteria.setClientId(clientFilter.getValue().id());
             }
-            if (clientFilter.getValue() != null) criteria.setClientId(clientFilter.getValue().id());
             criteria.setSortField(sortField.getValue());
             criteria.setSortDirection(sortDirection.getValue());
-            rows.setAll(context.queries().search(criteria));
+            List<TransportationRequestView> found = context.queries().search(criteria);
+            // В запросе null означает «без фильтра». Свободные заявки отбираем после поиска.
+            if (driverMode && driverViewBox.getValue() == DriverView.AVAILABLE) {
+                found = found.stream().filter(row -> row.driverId() == null).toList();
+            }
+            table.getSelectionModel().clearSelection();
+            rows.setAll(found);
             resultLabel.setText("Найдено заявок: " + rows.size());
         } catch (RuntimeException e) {
             error("Не удалось загрузить заявки", e);
@@ -256,27 +344,73 @@ public final class MainController {
     }
 
     @FXML
+    private void takeRequest() {
+        TransportationRequestView row = selected();
+        NamedId driver = activeDriverBox.getValue();
+        if (modeBox.getValue() != WorkingMode.DRIVER || row == null || driver == null
+            || driverViewBox.getValue() != DriverView.AVAILABLE
+            || row.status() != TransportationRequestStatus.APPROVED || row.driverId() != null) return;
+        performDriverAction("Не удалось взять заявку", row.id(), DriverView.MINE,
+            () -> context.requests().takeRequest(row.id(), driver.id()));
+    }
+
+    @FXML
+    private void rejectRequest() {
+        TransportationRequestView row = selected();
+        NamedId driver = activeDriverBox.getValue();
+        if (modeBox.getValue() != WorkingMode.DRIVER || row == null || driver == null
+            || row.status() != TransportationRequestStatus.APPROVED
+            || !Objects.equals(row.driverId(), driver.id())) return;
+        performDriverAction("Не удалось отказаться от заявки", row.id(), DriverView.AVAILABLE,
+            () -> context.requests().rejectAssignment(row.id(), driver.id()));
+    }
+
+    @FXML
     private void startTransportation() {
         TransportationRequestView row = selected();
         if (row == null) return;
-        if (row.driverId() == null) {
+        Long driverId = row.driverId();
+        if (modeBox.getValue() == WorkingMode.DRIVER) {
+            NamedId driver = activeDriverBox.getValue();
+            if (driver == null || !Objects.equals(driver.id(), driverId)) return;
+            driverId = driver.id();
+        }
+        if (driverId == null) {
             new Alert(Alert.AlertType.INFORMATION, "Сначала назначьте доставщика.").showAndWait();
             return;
         }
-        perform("Не удалось начать перевозку",
-            () -> context.requests().startTransportation(row.id(), row.driverId()));
+        Long actingDriverId = driverId;
+        if (modeBox.getValue() == WorkingMode.DRIVER) {
+            performDriverAction("Не удалось начать перевозку", row.id(), DriverView.MINE,
+                () -> context.requests().startTransportation(row.id(), actingDriverId));
+        } else {
+            perform("Не удалось начать перевозку",
+                () -> context.requests().startTransportation(row.id(), actingDriverId));
+        }
     }
 
     @FXML
     private void completeDelivery() {
         TransportationRequestView row = selected();
         if (row == null) return;
-        if (row.driverId() == null) {
+        Long driverId = row.driverId();
+        if (modeBox.getValue() == WorkingMode.DRIVER) {
+            NamedId driver = activeDriverBox.getValue();
+            if (driver == null || !Objects.equals(driver.id(), driverId)) return;
+            driverId = driver.id();
+        }
+        if (driverId == null) {
             new Alert(Alert.AlertType.INFORMATION, "У заявки нет доставщика.").showAndWait();
             return;
         }
-        perform("Не удалось завершить доставку",
-            () -> context.requests().completeDelivery(row.id(), row.driverId()));
+        Long actingDriverId = driverId;
+        if (modeBox.getValue() == WorkingMode.DRIVER) {
+            performDriverAction("Не удалось завершить доставку", row.id(), DriverView.MINE,
+                () -> context.requests().completeDelivery(row.id(), actingDriverId));
+        } else {
+            perform("Не удалось завершить доставку",
+                () -> context.requests().completeDelivery(row.id(), actingDriverId));
+        }
     }
 
     @FXML
@@ -295,6 +429,19 @@ public final class MainController {
         try {
             action.run();
             refresh();
+        } catch (RuntimeException e) {
+            error(errorTitle, e);
+        }
+    }
+
+    // После смены статуса обновляем выборку и снова выделяем ту же заявку, если она видна.
+    private void performDriverAction(String errorTitle, long requestId, DriverView nextView, Runnable action) {
+        try {
+            action.run();
+            driverViewBox.setValue(nextView);
+            refresh();
+            rows.stream().filter(row -> row.id() == requestId).findFirst()
+                .ifPresent(row -> table.getSelectionModel().select(row));
         } catch (RuntimeException e) {
             error(errorTitle, e);
         }
@@ -378,5 +525,19 @@ public final class MainController {
 
     public record NamedId(Long id, String name) {
         @Override public String toString() { return name; }
+    }
+
+    private enum WorkingMode {
+        OPERATOR("Оператор"), DRIVER("Доставщик");
+        private final String label;
+        WorkingMode(String label) { this.label = label; }
+        @Override public String toString() { return label; }
+    }
+
+    private enum DriverView {
+        AVAILABLE("Свободные заявки"), MINE("Мои заявки");
+        private final String label;
+        DriverView(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 }

@@ -17,7 +17,7 @@ public final class Main extends Application {
             scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
             MainController controller = loader.getController();
             controller.setContext(context);
-            stage.setTitle("Логистическая компания — заявки");
+            stage.setTitle("Логистическая компания — заявки (КР2)");
             stage.setMinWidth(900);
             stage.setMinHeight(580);
             stage.setScene(scene);
