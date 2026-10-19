@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.lcorp.javafx.controller.StatisticsController" spacing="15" styleClass="form-page">
+    <Label text="Статистика перевозок" styleClass="page-title" />
+    <GridPane hgap="24" vgap="12">
+        <Label text="Всего заявок" GridPane.rowIndex="0" />
+        <Label fx:id="countLabel" GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="metric" />
+        <Label text="Доставлено" GridPane.rowIndex="1" />
+        <Label fx:id="deliveredLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" styleClass="metric" />
+        <Label text="Общая стоимость" GridPane.rowIndex="2" />
+        <Label fx:id="totalPriceLabel" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="metric" />
+        <Label text="Средняя стоимость" GridPane.rowIndex="3" />
+        <Label fx:id="averagePriceLabel" GridPane.columnIndex="1" GridPane.rowIndex="3" styleClass="metric" />
+        <Label text="Общий вес, кг" GridPane.rowIndex="4" />
+        <Label fx:id="totalWeightLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" styleClass="metric" />
+    </GridPane>
+    <Label text="Количество по статусам" styleClass="section-title" />
+    <TextArea fx:id="breakdownArea" editable="false" prefRowCount="6" VBox.vgrow="ALWAYS" />
+</VBox>

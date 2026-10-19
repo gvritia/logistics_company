@@ -231,7 +231,7 @@ public class TransportationRequestService {
         if (request.getStatus() != TransportationRequestStatus.CREATED) {
             throw new InvalidRequestDataException(
                 "status",
-                "новая заявка должна иметь статус CREATED"
+                "новая заявка должна иметь статус «Создана»"
             );
         }
         if (request.getDriverId() != null) {
@@ -277,7 +277,7 @@ public class TransportationRequestService {
         if (request.getStatus() != TransportationRequestStatus.CREATED
             || request.getDriverId() != null) {
             throw new IllegalStateException(
-                operationName + " разрешено только для заявки CREATED без доставщика"
+                operationName + " разрешено только для заявки со статусом «Создана» без доставщика"
             );
         }
     }

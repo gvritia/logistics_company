@@ -48,12 +48,13 @@ public final class DatabaseConfig {
     }
 
     private static Map<String, String> readDotEnv() {
-        if (!Files.exists(DOT_ENV_PATH)) {
+        Path configPath = Files.exists(DOT_ENV_PATH) ? DOT_ENV_PATH : Path.of("..", ".env");
+        if (!Files.exists(configPath)) {
             return Map.of();
         }
 
         try {
-            List<String> lines = Files.readAllLines(DOT_ENV_PATH, StandardCharsets.UTF_8);
+            List<String> lines = Files.readAllLines(configPath, StandardCharsets.UTF_8);
             Map<String, String> values = new HashMap<>();
 
             for (String line : lines) {

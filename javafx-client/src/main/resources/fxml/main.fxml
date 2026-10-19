@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.lcorp.javafx.controller.MainController" styleClass="page">
+    <top>
+        <VBox spacing="12">
+            <Label text="Заявки на перевозку" styleClass="page-title" />
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Режим:" />
+                <ComboBox fx:id="modeBox" prefWidth="155" onAction="#onModeChanged" />
+                <Label fx:id="driverLabel" text="Доставщик:" visible="false" managed="false" />
+                <ComboBox fx:id="activeDriverBox" prefWidth="255" promptText="Выберите доставщика" onAction="#onDriverChanged" visible="false" managed="false" />
+                <ComboBox fx:id="driverViewBox" prefWidth="175" onAction="#refresh" visible="false" managed="false" />
+                <Label text="Учебный выбор роли без авторизации" styleClass="hint" />
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField" promptText="Груз, адрес или клиент" onAction="#refresh" HBox.hgrow="ALWAYS" />
+                <HBox fx:id="operatorFilterBox" spacing="8">
+                    <ComboBox fx:id="statusFilter" prefWidth="155" />
+                    <ComboBox fx:id="clientFilter" prefWidth="190" />
+                </HBox>
+                <Button text="Найти" onAction="#refresh" styleClass="primary-button" />
+                <Button text="Сбросить" onAction="#resetFilters" />
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Сортировка:" />
+                <ComboBox fx:id="sortField" prefWidth="195" />
+                <ComboBox fx:id="sortDirection" prefWidth="155" />
+                <Button text="Применить" onAction="#refresh" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="Обновить" onAction="#refresh" />
+                <Button fx:id="statisticsButton" text="Статистика" onAction="#showStatistics" />
+                <Button text="Экспорт CSV" onAction="#exportCsv" />
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <TableView fx:id="table" prefHeight="550" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="idColumn" text="№" prefWidth="58" />
+                <TableColumn fx:id="cargoColumn" text="Груз" prefWidth="170" />
+                <TableColumn fx:id="clientColumn" text="Клиент" prefWidth="145" />
+                <TableColumn fx:id="driverColumn" text="Доставщик" prefWidth="135" />
+                <TableColumn fx:id="routeColumn" text="Маршрут" prefWidth="250" />
+                <TableColumn fx:id="plannedColumn" text="План доставки" prefWidth="155" />
+                <TableColumn fx:id="statusColumn" text="Статус" prefWidth="115" />
+                <TableColumn fx:id="priceColumn" text="Цена" prefWidth="95" />
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <VBox spacing="10">
+            <HBox spacing="8">
+                <Button fx:id="createButton" text="Добавить заявку" onAction="#createRequest" styleClass="primary-button" />
+                <Button fx:id="detailsButton" text="Подробнее" onAction="#showDetails" />
+                <Button fx:id="editButton" text="Редактировать" onAction="#editRequest" />
+                <Button fx:id="deleteButton" text="Удалить" onAction="#deleteRequest" styleClass="danger-button" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="resultLabel" text="Найдено заявок: 0" />
+            </HBox>
+            <HBox fx:id="operatorStatusActions" spacing="8">
+                <Button fx:id="approveButton" text="Одобрить" onAction="#approveRequest" />
+                <Button fx:id="assignButton" text="Назначить доставщика" onAction="#assignDriver" />
+                <Button fx:id="releaseButton" text="Снять доставщика" onAction="#releaseDriver" />
+                <Button fx:id="startButton" text="Начать перевозку" onAction="#startTransportation" />
+                <Button fx:id="completeButton" text="Доставлено" onAction="#completeDelivery" />
+                <Button fx:id="cancelButton" text="Отменить заявку" onAction="#cancelRequest" />
+            </HBox>
+            <HBox fx:id="driverActions" spacing="8" visible="false" managed="false">
+                <Button fx:id="takeButton" text="Взять заявку" onAction="#takeRequest" styleClass="primary-button" />
+                <Button fx:id="rejectButton" text="Отказаться от заявки" onAction="#rejectRequest" />
+                <Button fx:id="driverStartButton" text="Начать перевозку" onAction="#startTransportation" />
+                <Button fx:id="driverCompleteButton" text="Доставлено" onAction="#completeDelivery" />
+            </HBox>
+            <Label fx:id="operatorHint" text="Редактирование и удаление разрешены только для заявки со статусом «Создана» без доставщика." styleClass="hint" />
+            <Label fx:id="driverHint" text="Свободную заявку можно взять; от своей можно отказаться до начала перевозки." styleClass="hint" visible="false" managed="false" />
+        </VBox>
+    </bottom>
+</BorderPane>
