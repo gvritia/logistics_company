@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// JDBC-реализация интерфейса операторов для сервисов КР1.
 public final class JdbcOperatorRepository implements OperatorRepository {
     private final DatabaseConnectionFactory database;
 
@@ -21,6 +22,7 @@ public final class JdbcOperatorRepository implements OperatorRepository {
         this.database = database;
     }
 
+    // @Override указывает, что метод реализует контракт OperatorRepository.
     @Override
     public Operator create(Operator operator) {
         try (Connection connection = database.openConnection();
@@ -72,6 +74,7 @@ public final class JdbcOperatorRepository implements OperatorRepository {
         }
     }
 
+    // Подставляет параметры запроса и преобразует ResultSet в список операторов.
     private List<Operator> select(String suffix, Object... args) {
         try (Connection connection = database.openConnection();
              PreparedStatement statement = connection.prepareStatement(

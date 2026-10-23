@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// JDBC-реализация интерфейса клиентов, который ожидают сервисы КР1.
 public final class JdbcClientRepository implements ClientRepository {
     private final DatabaseConnectionFactory database;
 
@@ -21,6 +22,7 @@ public final class JdbcClientRepository implements ClientRepository {
         this.database = database;
     }
 
+    // @Override указывает, что метод реализует контракт ClientRepository.
     @Override
     public Client create(Client client) {
         try (Connection connection = database.openConnection();
@@ -72,6 +74,7 @@ public final class JdbcClientRepository implements ClientRepository {
         }
     }
 
+    // Подставляет значения отдельно от SQL и собирает модели из ResultSet.
     private List<Client> select(String suffix, Object... args) {
         try (Connection connection = database.openConnection();
              PreparedStatement statement = connection.prepareStatement(

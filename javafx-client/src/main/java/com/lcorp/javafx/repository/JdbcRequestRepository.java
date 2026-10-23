@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// Выполняет CRUD заявок через JDBC; правила статусов остаются в сервисе КР1.
 public final class JdbcRequestRepository implements TransportationRequestRepository {
     private static final String COLUMNS = "id, client_id, driver_id, operator_id, cargo_description, "
         + "weight_kg, price, created_at, planned_delivery_at, status, pickup_address, delivery_address";
@@ -25,11 +26,14 @@ public final class JdbcRequestRepository implements TransportationRequestReposit
         this.database = database;
     }
 
+    // @Override отмечает реализацию метода интерфейса TransportationRequestRepository.
+    // После INSERT считываем сгенерированный базой ID обратно в объект заявки.
     @Override
     public TransportationRequest create(TransportationRequest request) {
         String sql = "INSERT INTO transportation_requests (client_id, driver_id, operator_id, "
             + "cargo_description, weight_kg, price, created_at, planned_delivery_at, status, "
             + "pickup_address, delivery_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // try-with-resources автоматически закрывает соединение, запрос и ResultSet.
         try (Connection connection = database.openConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             bind(statement, request, false);
@@ -92,6 +96,7 @@ public final class JdbcRequestRepository implements TransportationRequestReposit
         return select("WHERE driver_id = ? ORDER BY planned_delivery_at", driverId);
     }
 
+    // Выполняет выборки с параметрами PreparedStatement и преобразует строки в модели.
     private List<TransportationRequest> select(String suffix, Object... parameters) {
         String sql = "SELECT " + COLUMNS + " FROM transportation_requests " + suffix;
         try (Connection connection = database.openConnection();
@@ -111,6 +116,7 @@ public final class JdbcRequestRepository implements TransportationRequestReposit
         }
     }
 
+    // Порядок параметров совпадает с INSERT/UPDATE; withId добавляет ID для WHERE.
     private void bind(PreparedStatement statement, TransportationRequest request, boolean withId)
         throws SQLException {
         statement.setLong(1, request.getClientId());
@@ -129,6 +135,7 @@ public final class JdbcRequestRepository implements TransportationRequestReposit
         }
     }
 
+    // Преобразует SQL NULL и строковый статус в поля Java-модели.
     private TransportationRequest map(ResultSet rows) throws SQLException {
         Long driverId = (Long) rows.getObject("driver_id");
         return new TransportationRequest(

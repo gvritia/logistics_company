@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Objects;
 
 public final class MainController {
+    // @FXML связывает поля с fx:id, а методы с onAction в main.fxml.
     @FXML private TableView<TransportationRequestView> table;
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
@@ -79,6 +80,7 @@ public final class MainController {
     private final ObservableList<TransportationRequestView> rows = FXCollections.observableArrayList();
     private DesktopContext context;
 
+    // FXMLLoader вызывает метод после создания элементов из FXML: настраиваем таблицу и фильтры.
     @FXML
     private void initialize() {
         idColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().id()));
@@ -104,10 +106,12 @@ public final class MainController {
             statusFilter.getItems().add(UiLabels.status(status));
         }
         statusFilter.getSelectionModel().selectFirst();
+        // Конвертер показывает русские подписи, сохраняя значения enum для поиска.
         sortField.setConverter(new StringConverter<>() {
             @Override public String toString(TransportationRequestSortField value) {
                 return value == null ? "" : UiLabels.sortField(value);
             }
+            // Поле не редактируется вручную: обратное преобразование здесь не требуется.
             @Override public TransportationRequestSortField fromString(String value) { return null; }
         });
         sortField.getItems().setAll(TransportationRequestSortField.values());
@@ -122,6 +126,7 @@ public final class MainController {
         sortDirection.setValue(SortDirection.ASC);
     }
 
+    // Включает только действия, допустимые для статуса заявки и выбранного доставщика.
     private void updateActions(TransportationRequestView row) {
         boolean selected = row != null;
         boolean draft = selected && row.status() == TransportationRequestStatus.CREATED && row.driverId() == null;
@@ -144,6 +149,7 @@ public final class MainController {
         driverCompleteButton.setDisable(!selected || row.status() != TransportationRequestStatus.IN_TRANSIT || !mine);
     }
 
+    // Получает сервисы приложения и загружает начальные данные для экрана.
     public void setContext(DesktopContext context) {
         this.context = context;
         refreshClients();
@@ -151,6 +157,7 @@ public final class MainController {
         refresh();
     }
 
+    // Перезагружает список доставщиков, по возможности сохраняя прежний выбор.
     private void refreshDrivers() {
         Long previousId = activeDriverBox.getValue() == null ? null : activeDriverBox.getValue().id();
         List<DriverChoice> drivers = context.drivers().findAll().stream()
@@ -160,6 +167,7 @@ public final class MainController {
             .findFirst().orElse(null));
     }
 
+    // Для неактивного доставщика открывает историю его заявок вместо списка свободных.
     @FXML
     private void onDriverChanged() {
         DriverChoice driver = activeDriverBox.getValue();
@@ -167,6 +175,7 @@ public final class MainController {
         refresh();
     }
 
+    // Переключает элементы экрана между учебными режимами оператора и доставщика.
     @FXML
     private void onModeChanged() {
         boolean driverMode = modeBox.getValue() == WorkingMode.DRIVER;
@@ -190,11 +199,13 @@ public final class MainController {
         }
     }
 
+    // managed=false убирает скрытый элемент и из расчёта компоновки окна.
     private void setVisible(javafx.scene.Node node, boolean visible) {
         node.setVisible(visible);
         node.setManaged(visible);
     }
 
+    // Обновляет фильтр клиентов, сохраняя выбранный ID после перезагрузки.
     private void refreshClients() {
         NamedId previous = clientFilter.getValue();
         clientFilter.getItems().clear();
@@ -207,6 +218,7 @@ public final class MainController {
                 java.util.Objects.equals(c.id(), previous.id())).findFirst().orElse(clientFilter.getItems().getFirst()));
     }
 
+    // Собирает критерии поиска по режиму и показывает найденные заявки.
     @FXML
     private void refresh() {
         if (context == null) return;
@@ -276,6 +288,7 @@ public final class MainController {
         if (selected != null) openForm(selected.id());
     }
 
+    // Показывает все поля выбранной заявки с подписями для пользователя.
     @FXML
     private void showDetails() {
         TransportationRequestView row = selected();
@@ -296,6 +309,7 @@ public final class MainController {
         details.showAndWait();
     }
 
+    // Удаляет черновик только после подтверждения; правило дополнительно проверяет сервис.
     @FXML
     private void deleteRequest() {
         TransportationRequestView selected = selected();
@@ -319,6 +333,7 @@ public final class MainController {
         if (row != null) perform("Не удалось одобрить заявку", () -> context.requests().approve(row.id()));
     }
 
+    // Предлагает оператору только активных доставщиков для назначения.
     @FXML
     private void assignDriver() {
         TransportationRequestView row = selected();
@@ -354,6 +369,7 @@ public final class MainController {
             () -> context.requests().rejectAssignment(row.id(), row.driverId()));
     }
 
+    // Выбранный активный доставщик самостоятельно берёт свободную заявку.
     @FXML
     private void takeRequest() {
         TransportationRequestView row = selected();
@@ -365,6 +381,7 @@ public final class MainController {
             () -> context.requests().takeRequest(row.id(), driver.id()));
     }
 
+    // Освобождает свою заявку до начала перевозки и возвращает её в свободные.
     @FXML
     private void rejectRequest() {
         TransportationRequestView row = selected();
@@ -376,6 +393,7 @@ public final class MainController {
             () -> context.requests().rejectAssignment(row.id(), driver.id()));
     }
 
+    // Передаёт сервису ID выбранного доставщика и запускает перевозку.
     @FXML
     private void startTransportation() {
         TransportationRequestView row = selected();
@@ -400,6 +418,7 @@ public final class MainController {
         }
     }
 
+    // Завершает перевозку только для доставщика, назначенного на заявку.
     @FXML
     private void completeDelivery() {
         TransportationRequestView row = selected();
@@ -436,6 +455,7 @@ public final class MainController {
         }
     }
 
+    // Выполняет действие сервиса, затем обновляет таблицу или показывает ошибку.
     private void perform(String errorTitle, Runnable action) {
         try {
             action.run();
@@ -466,6 +486,7 @@ public final class MainController {
         return selected;
     }
 
+    // Открывает одну FXML-форму для создания (id=null) и редактирования заявки.
     private void openForm(Long id) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/request-form.fxml"));
@@ -506,6 +527,7 @@ public final class MainController {
         }
     }
 
+    // Передаёт текущую выборку CSV-сервису после выбора файла пользователем.
     @FXML
     private void exportCsv() {
         if (rows.isEmpty()) {
@@ -538,6 +560,7 @@ public final class MainController {
         @Override public String toString() { return name; }
     }
 
+    // Отдельная модель пункта списка показывает и неактивных доставщиков.
     private record DriverChoice(Long id, String name, boolean active) {
         @Override public String toString() {
             return active ? name : name + " (неактивен)";

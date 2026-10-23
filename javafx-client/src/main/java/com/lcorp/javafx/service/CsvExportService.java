@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public final class CsvExportService {
+    // Записывает текущую выборку в UTF-8 CSV вместе с заголовком колонок.
     public void export(Path path, List<TransportationRequestView> rows) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             writer.write("ID,Клиент,Оператор,Доставщик,Груз,Вес кг,Цена,Создана,План доставки,Статус,Откуда,Куда");
@@ -27,6 +28,7 @@ public final class CsvExportService {
         }
     }
 
+    // Кавычки внутри поля удваиваются, чтобы запятые и переносы не ломали CSV.
     private static String escape(String value) {
         return "\"" + value.replace("\"", "\"\"") + "\"";
     }

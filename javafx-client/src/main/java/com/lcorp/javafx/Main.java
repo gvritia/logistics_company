@@ -8,6 +8,7 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 public final class Main extends Application {
+    // @Override: JavaFX вызывает переопределённый start после запуска приложения.
     @Override
     public void start(Stage stage) {
         try {
