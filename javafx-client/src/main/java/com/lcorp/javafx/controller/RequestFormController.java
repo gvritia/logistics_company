@@ -36,7 +36,7 @@ public final class RequestFormController {
     private TransportationRequest existing;
     private boolean saved;
 
-    // Заполняет форму: без ID готовит новую заявку, с ID загружает существующую.
+    // Заполняет форму без ID готовит новую заявку, а с ID загружает существующую
     public void configure(DesktopContext context, Stage stage, Long requestId) {
         this.context = context;
         this.stage = stage;
@@ -67,7 +67,7 @@ public final class RequestFormController {
         box.getItems().stream().filter(item -> item.id().equals(id)).findFirst().ifPresent(box::setValue);
     }
 
-    // Проверяет ввод, создаёт или обновляет заявку через сервис и закрывает форму.
+    // Проверяет ввод, создаёт или обновляет заявку через сервис и закрывает форму
     @FXML
     private void save() {
         try {
@@ -89,7 +89,7 @@ public final class RequestFormController {
             }
             LocalDateTime planned = LocalDateTime.of(plannedDate.getValue(), time);
             LocalDateTime created = existing == null ? LocalDateTime.now() : existing.getCreatedAt();
-            // При редактировании служебные поля остаются из сохранённой заявки.
+            // При редактировании служебные поля остаются из сохранённой заявки
             TransportationRequest request = new TransportationRequest(
                 existing == null ? null : existing.getId(), client.id(),
                 existing == null ? null : existing.getDriverId(), operator.id(),
@@ -108,7 +108,7 @@ public final class RequestFormController {
         }
     }
 
-    // Убирает пробелы и проверяет обязательный текст с ограничением длины.
+    // Убирает пробелы и проверяет обязательный текст с ограничением длины
     private String text(String raw, String label, int maxLength) {
         String value = raw == null ? "" : raw.trim();
         if (value.isEmpty()) throw new IllegalArgumentException(label + ": заполните поле.");
@@ -118,7 +118,7 @@ public final class RequestFormController {
         return value;
     }
 
-    // Проверяет положительное число, число знаков после запятой и общую точность БД.
+    // Проверяет положительное число, число знаков после запятой и общую точность БД
     private BigDecimal positiveDecimal(String raw, String label, int maxScale, int maxPrecision) {
         try {
             BigDecimal value = new BigDecimal(raw.trim().replace(',', '.'));

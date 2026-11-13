@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// JDBC-реализация интерфейса операторов для сервисов КР1.
+// JDBC-реализация интерфейса операторов для сервисов КР1
 public final class JdbcOperatorRepository implements OperatorRepository {
     private final DatabaseConnectionFactory database;
 

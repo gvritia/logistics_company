@@ -35,9 +35,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public final class MainController {
-    // @FXML связывает поля с fx:id, а методы с onAction в main.fxml.
+
+    // @FXML связывает поля с fx:id, а методы с onAction в main.fxml
     @FXML private TableView<TransportationRequestView> table;
     @FXML private TableColumn<TransportationRequestView, Long> idColumn;
     @FXML private TableColumn<TransportationRequestView, String> cargoColumn;
@@ -80,9 +82,12 @@ public final class MainController {
     private final ObservableList<TransportationRequestView> rows = FXCollections.observableArrayList();
     private DesktopContext context;
 
-    // FXMLLoader вызывает метод после создания элементов из FXML: настраиваем таблицу и фильтры.
+    // FXMLLoader вызывает метод после создания элементов из FXML, настраиваем таблицу и фильтры
     @FXML
     private void initialize() {
+        // c содержит данные ячейки; getValue() возвращает заявку из строки
+        // ReadOnlyObjectWrapper превращает ID в ObservableValue, который ожидает TableColumn
+        // Остальные колонки настраиваются тем же способом, но берут другие поля заявки
         idColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().id()));
         cargoColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().cargoDescription()));
         clientColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().clientName()));
@@ -95,6 +100,7 @@ public final class MainController {
         statusColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(UiLabels.status(c.getValue().status())));
         priceColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().price().toPlainString()));
         table.setItems(rows);
+        // Лямбда-слушатель вызывается при смене выделенной строки; current — новая выбранная заявка
         table.getSelectionModel().selectedItemProperty().addListener((observable, previous, current) -> updateActions(current));
         modeBox.getItems().setAll(WorkingMode.values());
         modeBox.setValue(WorkingMode.OPERATOR);
@@ -106,12 +112,11 @@ public final class MainController {
             statusFilter.getItems().add(UiLabels.status(status));
         }
         statusFilter.getSelectionModel().selectFirst();
-        // Конвертер показывает русские подписи, сохраняя значения enum для поиска.
+        // Конвертер показывает русские подписи, сохраняя значения enum для поиска
         sortField.setConverter(new StringConverter<>() {
             @Override public String toString(TransportationRequestSortField value) {
                 return value == null ? "" : UiLabels.sortField(value);
             }
-            // Поле не редактируется вручную: обратное преобразование здесь не требуется.
             @Override public TransportationRequestSortField fromString(String value) { return null; }
         });
         sortField.getItems().setAll(TransportationRequestSortField.values());
@@ -126,7 +131,7 @@ public final class MainController {
         sortDirection.setValue(SortDirection.ASC);
     }
 
-    // Включает только действия, допустимые для статуса заявки и выбранного доставщика.
+    // Включает только действия, допустимые для статуса заявки и выбранного доставщика
     private void updateActions(TransportationRequestView row) {
         boolean selected = row != null;
         boolean draft = selected && row.status() == TransportationRequestStatus.CREATED && row.driverId() == null;
@@ -149,7 +154,7 @@ public final class MainController {
         driverCompleteButton.setDisable(!selected || row.status() != TransportationRequestStatus.IN_TRANSIT || !mine);
     }
 
-    // Получает сервисы приложения и загружает начальные данные для экрана.
+    // Получает сервисы приложения и загружает начальные данные для экрана
     public void setContext(DesktopContext context) {
         this.context = context;
         refreshClients();
@@ -157,9 +162,10 @@ public final class MainController {
         refresh();
     }
 
-    // Перезагружает список доставщиков, по возможности сохраняя прежний выбор.
+    // Перезагружает список доставщиков, по возможности сохраняя прежний выбор
     private void refreshDrivers() {
         Long previousId = activeDriverBox.getValue() == null ? null : activeDriverBox.getValue().id();
+        // stream().map(...) превращает модели Driver в пункты списка, toList() собирает результат.
         List<DriverChoice> drivers = context.drivers().findAll().stream()
             .map(driver -> new DriverChoice(driver.getId(), driver.getFullName(), driver.isActive())).toList();
         activeDriverBox.getItems().setAll(drivers);
@@ -167,7 +173,7 @@ public final class MainController {
             .findFirst().orElse(null));
     }
 
-    // Для неактивного доставщика открывает историю его заявок вместо списка свободных.
+    // Для неактивного доставщика открывает историю его заявок вместо списка свободных
     @FXML
     private void onDriverChanged() {
         DriverChoice driver = activeDriverBox.getValue();
@@ -175,7 +181,7 @@ public final class MainController {
         refresh();
     }
 
-    // Переключает элементы экрана между учебными режимами оператора и доставщика.
+    // Переключает элементы экрана между учебными режимами оператора и доставщика
     @FXML
     private void onModeChanged() {
         boolean driverMode = modeBox.getValue() == WorkingMode.DRIVER;
@@ -199,13 +205,13 @@ public final class MainController {
         }
     }
 
-    // managed=false убирает скрытый элемент и из расчёта компоновки окна.
+    // managed=false убирает скрытый элемент и из расчёта компоновки окна
     private void setVisible(javafx.scene.Node node, boolean visible) {
         node.setVisible(visible);
         node.setManaged(visible);
     }
 
-    // Обновляет фильтр клиентов, сохраняя выбранный ID после перезагрузки.
+    // Обновляет фильтр клиентов, сохраняя выбранный ID после перезагрузки
     private void refreshClients() {
         NamedId previous = clientFilter.getValue();
         clientFilter.getItems().clear();
@@ -218,7 +224,7 @@ public final class MainController {
                 java.util.Objects.equals(c.id(), previous.id())).findFirst().orElse(clientFilter.getItems().getFirst()));
     }
 
-    // Собирает критерии поиска по режиму и показывает найденные заявки.
+    // Собирает критерии поиска по режиму и показывает найденные заявки
     @FXML
     private void refresh() {
         if (context == null) return;
@@ -257,7 +263,7 @@ public final class MainController {
             criteria.setSortField(sortField.getValue());
             criteria.setSortDirection(sortDirection.getValue());
             List<TransportationRequestView> found = context.queries().search(criteria);
-            // В запросе null означает «без фильтра». Свободные заявки отбираем после поиска.
+            // В запросе null означает без фильтра. Свободные заявки отбираем после поиска
             if (driverMode && driverViewBox.getValue() == DriverView.AVAILABLE) {
                 found = found.stream().filter(row -> row.driverId() == null).toList();
             }
@@ -288,7 +294,7 @@ public final class MainController {
         if (selected != null) openForm(selected.id());
     }
 
-    // Показывает все поля выбранной заявки с подписями для пользователя.
+    // Показывает все поля выбранной заявки с подписями для пользователя
     @FXML
     private void showDetails() {
         TransportationRequestView row = selected();
@@ -309,7 +315,7 @@ public final class MainController {
         details.showAndWait();
     }
 
-    // Удаляет черновик только после подтверждения; правило дополнительно проверяет сервис.
+    // Удаляет черновик только после подтверждения правило дополнительно проверяет сервис
     @FXML
     private void deleteRequest() {
         TransportationRequestView selected = selected();
@@ -330,6 +336,7 @@ public final class MainController {
     @FXML
     private void approveRequest() {
         TransportationRequestView row = selected();
+        // () -> ... передаёт операцию в perform; тот выполнит её и обновит таблицу.
         if (row != null) perform("Не удалось одобрить заявку", () -> context.requests().approve(row.id()));
     }
 
@@ -350,6 +357,7 @@ public final class MainController {
             dialog.setTitle("Назначение доставщика");
             dialog.setHeaderText("Заявка №" + row.id());
             dialog.setContentText("Доставщик:");
+            // Optional.ifPresent вызывает назначение только если пользователь выбрал доставщика.
             dialog.showAndWait().ifPresent(choice -> perform("Не удалось назначить доставщика",
                 () -> context.requests().assignDriver(row.id(), choice.id())));
         } catch (RuntimeException e) {
@@ -365,11 +373,10 @@ public final class MainController {
             new Alert(Alert.AlertType.INFORMATION, "У заявки нет назначенного доставщика.").showAndWait();
             return;
         }
-        perform("Не удалось снять доставщика",
-            () -> context.requests().rejectAssignment(row.id(), row.driverId()));
+        perform("Не удалось снять доставщика", () -> context.requests().rejectAssignment(row.id(), row.driverId()));
     }
 
-    // Выбранный активный доставщик самостоятельно берёт свободную заявку.
+    // Выбранный активный доставщик самостоятельно берёт свободную заявку
     @FXML
     private void takeRequest() {
         TransportationRequestView row = selected();
@@ -381,7 +388,7 @@ public final class MainController {
             () -> context.requests().takeRequest(row.id(), driver.id()));
     }
 
-    // Освобождает свою заявку до начала перевозки и возвращает её в свободные.
+    // Освобождает свою заявку до начала перевозки и возвращает её в свободные
     @FXML
     private void rejectRequest() {
         TransportationRequestView row = selected();
@@ -393,7 +400,7 @@ public final class MainController {
             () -> context.requests().rejectAssignment(row.id(), driver.id()));
     }
 
-    // Передаёт сервису ID выбранного доставщика и запускает перевозку.
+    // Передаёт сервису ID выбранного доставщика и запускает перевозку
     @FXML
     private void startTransportation() {
         TransportationRequestView row = selected();
@@ -418,7 +425,7 @@ public final class MainController {
         }
     }
 
-    // Завершает перевозку только для доставщика, назначенного на заявку.
+    // Завершает перевозку только для доставщика, назначенного на заявку
     @FXML
     private void completeDelivery() {
         TransportationRequestView row = selected();
@@ -455,7 +462,7 @@ public final class MainController {
         }
     }
 
-    // Выполняет действие сервиса, затем обновляет таблицу или показывает ошибку.
+    // Выполняет действие сервиса, затем обновляет таблицу или показывает ошибку
     private void perform(String errorTitle, Runnable action) {
         try {
             action.run();
@@ -465,7 +472,7 @@ public final class MainController {
         }
     }
 
-    // После смены статуса обновляем выборку и снова выделяем ту же заявку, если она видна.
+    // После смены статуса обновляем выборку и снова выделяем ту же заявку, если она видна
     private void performDriverAction(String errorTitle, long requestId, DriverView nextView, Runnable action) {
         try {
             action.run();
@@ -486,7 +493,7 @@ public final class MainController {
         return selected;
     }
 
-    // Открывает одну FXML-форму для создания (id=null) и редактирования заявки.
+    // Открывает одну FXML-форму для создания (id=null) и редактирования заявки
     private void openForm(Long id) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/request-form.fxml"));
@@ -527,7 +534,7 @@ public final class MainController {
         }
     }
 
-    // Передаёт текущую выборку CSV-сервису после выбора файла пользователем.
+    // Передаёт текущую выборку CSV-сервису после выбора файла пользователем
     @FXML
     private void exportCsv() {
         if (rows.isEmpty()) {
@@ -560,7 +567,7 @@ public final class MainController {
         @Override public String toString() { return name; }
     }
 
-    // Отдельная модель пункта списка показывает и неактивных доставщиков.
+    // Отдельная модель пункта списка показывает и неактивных доставщиков
     private record DriverChoice(Long id, String name, boolean active) {
         @Override public String toString() {
             return active ? name : name + " (неактивен)";

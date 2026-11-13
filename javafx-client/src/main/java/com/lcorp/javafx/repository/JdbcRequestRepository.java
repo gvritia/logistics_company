@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Выполняет CRUD заявок через JDBC; правила статусов остаются в сервисе КР1.
+// Выполняет CRUD заявок через JDBC; правила статусов остаются в сервисе КР1
 public final class JdbcRequestRepository implements TransportationRequestRepository {
     private static final String COLUMNS = "id, client_id, driver_id, operator_id, cargo_description, "
         + "weight_kg, price, created_at, planned_delivery_at, status, pickup_address, delivery_address";
@@ -96,7 +96,7 @@ public final class JdbcRequestRepository implements TransportationRequestReposit
         return select("WHERE driver_id = ? ORDER BY planned_delivery_at", driverId);
     }
 
-    // Выполняет выборки с параметрами PreparedStatement и преобразует строки в модели.
+    // Выполняет выборки с параметрами PreparedStatement и преобразует строки в модели
     private List<TransportationRequest> select(String suffix, Object... parameters) {
         String sql = "SELECT " + COLUMNS + " FROM transportation_requests " + suffix;
         try (Connection connection = database.openConnection();
@@ -135,7 +135,7 @@ public final class JdbcRequestRepository implements TransportationRequestReposit
         }
     }
 
-    // Преобразует SQL NULL и строковый статус в поля Java-модели.
+    // Преобразует SQL NULL и строковый статус в поля Java-модели
     private TransportationRequest map(ResultSet rows) throws SQLException {
         Long driverId = (Long) rows.getObject("driver_id");
         return new TransportationRequest(
