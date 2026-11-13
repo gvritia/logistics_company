@@ -55,7 +55,7 @@ localhost используйте HTTPS и COOKIE_SECURE=true. Лимиты вх�
 Полный web-интерфейс будет добавлен следующим этапом. Hibernate использует
 ddl-auto: validate.
 
-Заявки: GET /api/requests (page, size до 50, archived), GET /api/requests/{id},
+Заявки: GET /api/requests, GET /api/requests/{id},
 POST /api/requests, PUT /api/requests/{id}, DELETE /api/requests/{id},
 POST /api/requests/{id}/restore. Идентификатор {id} — UUID; числовой id
 остаётся внутренним ключом БД. Запись создаётся в статусе CREATED и без
@@ -70,8 +70,19 @@ DELETE /api/requests/{id}/permanent доступен только ADMIN для �
 заявки и по умолчанию отключён. Для разрешения укажите
 PERMANENT_DELETE_ENABLED=true в локальном .env и перезапустите backend.
 Физическое удаление необратимо; для обычной работы используйте архив.
-Поиск, дополнительные сортировки, процесс перевозки, массовые операции,
-CSV и web-интерфейс — следующие части.
+GET /api/requests принимает q (текст по коду, грузу, адресам и клиенту),
+clientId, status, fragile, weightCategory, tag, archived, weightOp,
+weightValue, page, size и sort. По умолчанию archived=false, page=0,
+size=20, sort=createdAt,desc. Размер страницы — не более 50. sort задаётся
+в форме поле,направление; разрешены createdAt, plannedDeliveryAt, price,
+weightKg и requestCode, направления asc/desc. weightOp вместе с weightValue:
+eq, lt, lte, gt, gte. Значения weightCategory: LIGHT (меньше 1000 кг),
+MEDIUM (от 1000 до 5000 кг), HEAVY (от 5000 кг). Фильтры сочетаются по AND.
+Символы % и _ в текстовом поиске считаются обычными символами.
+
+Пример: GET /api/requests?status=APPROVED&fragile=true&sort=price,desc
+
+Процесс перевозки, массовые операции, CSV и web-интерфейс — следующие части.
 
 Существующую БД КР1/КР2 переводите по инструкции MIGRATIONS.txt после
 резервной копии. Автоматический baseline отключён. Для остановки без удаления

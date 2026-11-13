@@ -16,7 +16,6 @@ import com.lcorp.backend.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,14 +48,11 @@ public class RequestService {
     }
 
     @Transactional(readOnly = true)
-    public RequestDtos.PageResponse list(boolean archived, int page, int size) {
-        if (page < 0 || size < 1 || size > 50) {
-            throw new IllegalArgumentException("page должен быть >= 0, size — от 1 до 50");
-        }
-        Page<TransportationRequest> result = requests.findByArchived(archived,
-            PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+    public RequestDtos.PageResponse list(RequestSearch search) {
+        Page<TransportationRequest> result = requests.findAll(search.specification(),
+            PageRequest.of(search.page(), search.size(), search.safeSort()));
         return new RequestDtos.PageResponse(result.stream().map(RequestService::view).toList(),
-            page, size, result.getTotalElements(), result.getTotalPages());
+            search.page(), search.size(), result.getTotalElements(), result.getTotalPages());
     }
 
     @Transactional(readOnly = true)

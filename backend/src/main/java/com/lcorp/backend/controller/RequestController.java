@@ -1,7 +1,10 @@
 package com.lcorp.backend.controller;
 
 import com.lcorp.backend.dto.RequestDtos;
+import com.lcorp.backend.domain.TransportationRequestStatus;
+import com.lcorp.backend.domain.WeightCategory;
 import com.lcorp.backend.security.AuthPrincipal;
+import com.lcorp.backend.service.RequestSearch;
 import com.lcorp.backend.service.RequestService;
 import com.lcorp.backend.web.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -30,10 +34,20 @@ public class RequestController {
     public RequestController(RequestService requests) { this.requests = requests; }
 
     @GetMapping
-    public RequestDtos.PageResponse list(@RequestParam(defaultValue = "false") boolean archived,
+    public RequestDtos.PageResponse list(@RequestParam(required = false) String q,
+                                         @RequestParam(required = false) Long clientId,
+                                         @RequestParam(required = false) TransportationRequestStatus status,
+                                         @RequestParam(required = false) Boolean fragile,
+                                         @RequestParam(required = false) WeightCategory weightCategory,
+                                         @RequestParam(required = false) String tag,
+                                         @RequestParam(defaultValue = "false") boolean archived,
+                                         @RequestParam(required = false) String weightOp,
+                                         @RequestParam(required = false) BigDecimal weightValue,
                                          @RequestParam(defaultValue = "0") int page,
-                                         @RequestParam(defaultValue = "20") int size) {
-        return requests.list(archived, page, size);
+                                         @RequestParam(defaultValue = "20") int size,
+                                         @RequestParam(defaultValue = "createdAt,desc") String sort) {
+        return requests.list(new RequestSearch(q, clientId, status, fragile, weightCategory,
+            tag, archived, weightOp, weightValue, page, size, sort));
     }
 
     @GetMapping("/{id}")
