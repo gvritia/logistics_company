@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -28,6 +30,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> invalid(IllegalArgumentException ex, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", ex.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(NotFoundFailure.class)
+    public ResponseEntity<ApiError> missing(NotFoundFailure ex, HttpServletRequest request) {
+        return error(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler({ConflictFailure.class, ObjectOptimisticLockingFailureException.class,
+        DataIntegrityViolationException.class})
+    public ResponseEntity<ApiError> conflict(Exception ex, HttpServletRequest request) {
+        String message = ex instanceof ConflictFailure ? ex.getMessage() : "Данные изменились или нарушено ограничение БД";
+        return error(HttpStatus.CONFLICT, "CONFLICT", message, request, Map.of());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

@@ -46,3 +46,5 @@ app:
     lock-minutes: 15
   cookie:
     secure: ${COOKIE_SECURE:false}
+  requests:
+    permanent-delete-enabled: ${PERMANENT_DELETE_ENABLED:false}
