@@ -1,8 +1,17 @@
 КР3: первый запуск backend
 
 Требуются Docker Desktop, JDK 21 и Maven 3.9 для локальной сборки.
-Корневой .env должен содержать POSTGRES_DB, POSTGRES_USER и
-POSTGRES_PASSWORD. Пример значений без секретов — в .env.example.
+Корневой .env должен содержать POSTGRES_DB, POSTGRES_USER,
+POSTGRES_PASSWORD, JWT_SECRET_BASE64, BOOTSTRAP_ADMIN_EMAIL и
+BOOTSTRAP_ADMIN_PASSWORD. Пример без секретов — в .env.example.
+Для JWT_SECRET_BASE64 нужен случайный ключ (не менее 32 байт). Например,
+в PowerShell его можно получить командой:
+
+  [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+
+Вставьте результат в локальный .env. Задайте уникальный пароль администратора
+длиной от 12 до 72 байт UTF-8. Файл .env игнорируется Git. При первом запуске
+на пустой базе создаётся только ADMIN с обязательной сменой пароля.
 
 Из корня репозитория в PowerShell:
 
@@ -10,8 +19,8 @@ POSTGRES_PASSWORD. Пример значений без секретов — в 
 
 Скрипт собирает backend и запускает PostgreSQL 17 и Spring Boot в Docker.
 Compose КР3 использует отдельные проект и том `logistics-kr3`. Он не меняет
-том и данные Compose КР2. В пустой базе Flyway автоматически выполняет V1
-и V2. Проверка:
+том и данные Compose КР2. В пустой базе Flyway автоматически выполняет V1,
+V2 и V3. Проверка:
 
   http://localhost:8080/api/system/info
   http://localhost:8080/actuator/health
@@ -21,9 +30,30 @@ Compose КР3 использует отдельные проект и том `lo
 PostgreSQL КР3 опубликован только на 127.0.0.1:55433; backend — только на
 127.0.0.1:8080. Порты можно изменить через KR3_POSTGRES_PORT и APP_PORT.
 
-В этой части API содержит только служебный /api/system/info. Авторизация,
-заявки и полный web-интерфейс будут добавлены следующими этапами; пока
-Swagger доступен без входа. Hibernate использует ddl-auto: validate.
+Авторизация доступна через POST /api/auth/login. Тело JSON:
+
+  {"email":"адрес из BOOTSTRAP_ADMIN_EMAIL","password":"пароль из .env"}
+
+Ответ содержит accessToken (JWT, по умолчанию 15 минут), refreshToken
+(по умолчанию 14 дней) и признак passwordChangeRequired. Передайте JWT как
+Authorization: Bearer <accessToken>. Временный пароль меняется через
+POST /api/auth/change-password с полями currentPassword и newPassword.
+После смены все прежние токены недействительны: выполните вход заново.
+POST /api/auth/refresh меняет refresh-токен на новую пару; старый токен
+повторно использовать нельзя. POST /api/auth/logout отзывает refresh-токен.
+GET /api/auth/me возвращает текущего пользователя.
+
+Swagger и остальные служебные маршруты доступны только ADMIN после смены
+пароля. Для Swagger при входе также выдаётся короткая HttpOnly cookie;
+в будущей web-форме входа она позволит открыть документацию в браузере.
+Основное API принимает JWT только из заголовка Authorization. Пароли и
+refresh-токены не сохраняйте в браузерном localStorage. Для доступа вне
+localhost используйте HTTPS и COOKIE_SECURE=true. Лимиты входа: 20 попыток
+за 5 минут с одного IP и блокировка учётной записи на 15 минут после пяти
+ошибок. Не доверяйте произвольному X-Forwarded-For при публикации за прокси.
+
+Заявки и полный web-интерфейс будут добавлены следующими этапами. Hibernate
+использует ddl-auto: validate.
 
 Существующую БД КР1/КР2 переводите по инструкции MIGRATIONS.txt после
 резервной копии. Автоматический baseline отключён. Для остановки без удаления

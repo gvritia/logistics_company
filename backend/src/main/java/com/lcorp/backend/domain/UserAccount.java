@@ -49,6 +49,9 @@ public class UserAccount {
     @Column(nullable = false)
     private long version;
 
+    @Column(name = "auth_version", nullable = false)
+    private long authVersion;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "app_user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", nullable = false, length = 20)
@@ -84,6 +87,8 @@ public class UserAccount {
     public Instant getLockedUntil() { return lockedUntil; }
     public void setLockedUntil(Instant lockedUntil) { this.lockedUntil = lockedUntil; }
     public long getVersion() { return version; }
+    public long getAuthVersion() { return authVersion; }
+    public void incrementAuthVersion() { authVersion++; }
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = new LinkedHashSet<>(roles); }
 }
