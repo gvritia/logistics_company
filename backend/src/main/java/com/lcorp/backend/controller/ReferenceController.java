@@ -1,6 +1,5 @@
 package com.lcorp.backend.controller;
 
-import com.lcorp.backend.repository.ClientRepository;
 import com.lcorp.backend.repository.DriverRepository;
 import com.lcorp.backend.repository.OperatorRepository;
 import org.springframework.data.domain.Sort;
@@ -11,20 +10,12 @@ import java.util.List;
 
 @RestController
 public class ReferenceController {
-    private final ClientRepository clients;
     private final OperatorRepository operators;
     private final DriverRepository drivers;
 
-    public ReferenceController(ClientRepository clients, OperatorRepository operators, DriverRepository drivers) {
-        this.clients = clients;
+    public ReferenceController(OperatorRepository operators, DriverRepository drivers) {
         this.operators = operators;
         this.drivers = drivers;
-    }
-
-    @GetMapping("/api/clients")
-    public List<ClientView> clients() {
-        return clients.findAll(Sort.by("fullName")).stream()
-            .map(c -> new ClientView(c.getId(), c.getFullName(), c.isActive())).toList();
     }
 
     @GetMapping("/api/operators")
@@ -37,9 +28,6 @@ public class ReferenceController {
     public List<DriverView> drivers() {
         return drivers.findAll(Sort.by("fullName")).stream()
             .map(d -> new DriverView(d.getId(), d.getFullName(), d.isActive())).toList();
-    }
-
-    public record ClientView(long id, String fullName, boolean active) {
     }
 
     public record PersonView(long id, String fullName) {
