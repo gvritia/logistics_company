@@ -188,6 +188,20 @@ public class RequestService {
         return view(request);
     }
 
+    @Transactional
+    public RequestDtos.Item changeTag(UUID id, long version, String tag, boolean add,
+                                      UUID actorId, String correlationId) {
+        TransportationRequest request = find(id);
+        checkVersion(request, version);
+        if (request.isArchived()) throw new ConflictFailure("Архивную заявку сначала восстановите");
+        boolean changed = add ? request.getTags().add(tag) : request.getTags().remove(tag);
+        if (!changed) throw new ConflictFailure(add ? "Тег уже добавлен" : "Тег не найден");
+        requests.flush();
+        record(actorId, add ? "REQUEST_TAG_ADDED" : "REQUEST_TAG_REMOVED", id,
+            (add ? "Добавлен тег: " : "Удалён тег: ") + tag, correlationId);
+        return view(request);
+    }
+
     private static void requireStatus(TransportationRequest request, TransportationRequestStatus required) {
         if (request.getStatus() != required) {
             throw new ConflictFailure("Для действия нужен статус " + required);
