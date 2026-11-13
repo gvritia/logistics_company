@@ -2,6 +2,7 @@ package com.lcorp.backend.service;
 
 import com.lcorp.backend.domain.AuditEvent;
 import com.lcorp.backend.domain.Client;
+import com.lcorp.backend.domain.Driver;
 import com.lcorp.backend.domain.Operator;
 import com.lcorp.backend.domain.TransportationRequest;
 import com.lcorp.backend.domain.TransportationRequestStatus;
@@ -10,6 +11,7 @@ import com.lcorp.backend.error.ConflictFailure;
 import com.lcorp.backend.error.NotFoundFailure;
 import com.lcorp.backend.repository.AuditEventRepository;
 import com.lcorp.backend.repository.ClientRepository;
+import com.lcorp.backend.repository.DriverRepository;
 import com.lcorp.backend.repository.OperatorRepository;
 import com.lcorp.backend.repository.TransportationRequestRepository;
 import com.lcorp.backend.repository.UserAccountRepository;
@@ -31,17 +33,19 @@ public class RequestService {
     private final TransportationRequestRepository requests;
     private final ClientRepository clients;
     private final OperatorRepository operators;
+    private final DriverRepository drivers;
     private final UserAccountRepository users;
     private final AuditEventRepository audit;
     private final boolean permanentDeleteEnabled;
 
     public RequestService(TransportationRequestRepository requests, ClientRepository clients,
-                          OperatorRepository operators, UserAccountRepository users,
+                          OperatorRepository operators, DriverRepository drivers, UserAccountRepository users,
                           AuditEventRepository audit,
                           @Value("${app.requests.permanent-delete-enabled:false}") boolean permanentDeleteEnabled) {
         this.requests = requests;
         this.clients = clients;
         this.operators = operators;
+        this.drivers = drivers;
         this.users = users;
         this.audit = audit;
         this.permanentDeleteEnabled = permanentDeleteEnabled;
@@ -133,6 +137,61 @@ public class RequestService {
         requests.delete(request);
         requests.flush();
         record(actorId, "REQUEST_DELETED", id, "Заявка окончательно удалена", correlationId);
+    }
+
+    public enum Action { APPROVE, CANCEL, ASSIGN, UNASSIGN, START, DELIVER }
+
+    @Transactional
+    public RequestDtos.Item act(UUID id, long version, Action action, Long driverId,
+                                UUID actorId, String correlationId) {
+        TransportationRequest request = find(id);
+        checkVersion(request, version);
+        if (request.isArchived()) throw new ConflictFailure("Архивную заявку сначала восстановите");
+        switch (action) {
+            case APPROVE -> {
+                requireStatus(request, TransportationRequestStatus.CREATED);
+                request.setStatus(TransportationRequestStatus.APPROVED);
+            }
+            case CANCEL -> {
+                if (request.getStatus() != TransportationRequestStatus.CREATED
+                    && request.getStatus() != TransportationRequestStatus.APPROVED) {
+                    throw new ConflictFailure("Отменить можно только новую или одобренную заявку");
+                }
+                request.setStatus(TransportationRequestStatus.CANCELLED);
+            }
+            case ASSIGN -> {
+                requireStatus(request, TransportationRequestStatus.APPROVED);
+                if (request.getDriver() != null) throw new ConflictFailure("Доставщик уже назначен");
+                Driver driver = drivers.findById(driverId)
+                    .orElseThrow(() -> new NotFoundFailure("Доставщик не найден"));
+                if (!driver.isActive()) throw new ConflictFailure("Доставщик отключён");
+                request.setDriver(driver);
+            }
+            case UNASSIGN -> {
+                requireStatus(request, TransportationRequestStatus.APPROVED);
+                if (request.getDriver() == null) throw new ConflictFailure("Доставщик не назначен");
+                request.setDriver(null);
+            }
+            case START -> {
+                requireStatus(request, TransportationRequestStatus.APPROVED);
+                if (request.getDriver() == null) throw new ConflictFailure("Сначала назначьте доставщика");
+                request.setStatus(TransportationRequestStatus.IN_TRANSIT);
+            }
+            case DELIVER -> {
+                requireStatus(request, TransportationRequestStatus.IN_TRANSIT);
+                if (request.getDriver() == null) throw new ConflictFailure("Доставщик не назначен");
+                request.setStatus(TransportationRequestStatus.DELIVERED);
+            }
+        }
+        requests.flush();
+        record(actorId, "REQUEST_" + action.name(), id, "Действие с заявкой: " + action.name(), correlationId);
+        return view(request);
+    }
+
+    private static void requireStatus(TransportationRequest request, TransportationRequestStatus required) {
+        if (request.getStatus() != required) {
+            throw new ConflictFailure("Для действия нужен статус " + required);
+        }
     }
 
     private TransportationRequest find(UUID id) {

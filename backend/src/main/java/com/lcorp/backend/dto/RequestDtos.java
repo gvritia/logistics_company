@@ -48,6 +48,9 @@ public final class RequestDtos {
                          @Size(max = 20) Set<@NotBlank @Size(max = 50) String> tags) {
     }
 
+    public record Assignment(@NotNull @Positive Long driverId, @NotNull @PositiveOrZero Long version) {
+    }
+
     public record Item(UUID id, String requestCode,
                        Long clientId, String clientName,
                        Long operatorId, String operatorName,

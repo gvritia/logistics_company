@@ -6,6 +6,7 @@ import com.lcorp.backend.domain.WeightCategory;
 import com.lcorp.backend.security.AuthPrincipal;
 import com.lcorp.backend.service.RequestSearch;
 import com.lcorp.backend.service.RequestService;
+import com.lcorp.backend.service.RequestService.Action;
 import com.lcorp.backend.web.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -90,5 +91,52 @@ public class RequestController {
                                                 HttpServletRequest request) {
         requests.permanentDelete(id, version, actor.id(), CorrelationIdFilter.get(request));
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")
+    public RequestDtos.Item approve(@PathVariable UUID id, @RequestParam long version,
+                                    @AuthenticationPrincipal AuthPrincipal actor, HttpServletRequest request) {
+        return act(id, version, Action.APPROVE, null, actor, request);
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")
+    public RequestDtos.Item cancel(@PathVariable UUID id, @RequestParam long version,
+                                   @AuthenticationPrincipal AuthPrincipal actor, HttpServletRequest request) {
+        return act(id, version, Action.CANCEL, null, actor, request);
+    }
+
+    @PostMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")
+    public RequestDtos.Item assign(@PathVariable UUID id, @Valid @RequestBody RequestDtos.Assignment body,
+                                   @AuthenticationPrincipal AuthPrincipal actor, HttpServletRequest request) {
+        return act(id, body.version(), Action.ASSIGN, body.driverId(), actor, request);
+    }
+
+    @PostMapping("/{id}/unassign")
+    @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")
+    public RequestDtos.Item unassign(@PathVariable UUID id, @RequestParam long version,
+                                     @AuthenticationPrincipal AuthPrincipal actor, HttpServletRequest request) {
+        return act(id, version, Action.UNASSIGN, null, actor, request);
+    }
+
+    @PostMapping("/{id}/start")
+    @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")
+    public RequestDtos.Item start(@PathVariable UUID id, @RequestParam long version,
+                                  @AuthenticationPrincipal AuthPrincipal actor, HttpServletRequest request) {
+        return act(id, version, Action.START, null, actor, request);
+    }
+
+    @PostMapping("/{id}/deliver")
+    @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")
+    public RequestDtos.Item deliver(@PathVariable UUID id, @RequestParam long version,
+                                    @AuthenticationPrincipal AuthPrincipal actor, HttpServletRequest request) {
+        return act(id, version, Action.DELIVER, null, actor, request);
+    }
+
+    private RequestDtos.Item act(UUID id, long version, Action action, Long driverId,
+                                 AuthPrincipal actor, HttpServletRequest request) {
+        return requests.act(id, version, action, driverId, actor.id(), CorrelationIdFilter.get(request));
     }
 }

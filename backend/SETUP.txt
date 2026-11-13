@@ -87,7 +87,17 @@ MEDIUM (от 1000 до 5000 кг), HEAVY (от 5000 кг). Фильтры соч
 
 Пример: GET /api/requests?status=APPROVED&fragile=true&sort=price,desc
 
-Процесс перевозки, массовые операции, CSV и web-интерфейс — следующие части.
+Процесс перевозки: POST /api/requests/{id}/approve, /cancel, /unassign,
+/start и /deliver принимают ожидаемую version параметром URL. POST
+/api/requests/{id}/assign принимает JSON {"driverId": 1, "version": 0}.
+Нужна роль EDITOR или ADMIN. Переходы: CREATED → APPROVED/CANCELLED,
+APPROVED → IN_TRANSIT/CANCELLED, IN_TRANSIT → DELIVERED. Назначить можно
+только активного доставщика на свободную APPROVED-заявку; снять его можно
+до начала перевозки. Для START и DELIVER доставщик должен быть назначен.
+Архивную заявку сначала восстановите. Недопустимый переход или устаревшая
+version возвращает 409. Каждое успешное действие записывается в аудит.
+
+Массовые операции, CSV и web-интерфейс — следующие части.
 
 Существующую БД КР1/КР2 переводите по инструкции MIGRATIONS.txt после
 резервной копии. Автоматический baseline отключён. Для остановки без удаления
