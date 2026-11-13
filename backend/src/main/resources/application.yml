@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: logistics-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:55433/logistics_company}
+    username: ${SPRING_DATASOURCE_USERNAME:logistics_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:change_me}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

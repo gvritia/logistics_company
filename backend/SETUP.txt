@@ -1,0 +1,34 @@
+КР3: первый запуск backend
+
+Требуются Docker Desktop, JDK 21 и Maven 3.9 для локальной сборки.
+Корневой .env должен содержать POSTGRES_DB, POSTGRES_USER и
+POSTGRES_PASSWORD. Пример значений без секретов — в .env.example.
+
+Из корня репозитория в PowerShell:
+
+  powershell -ExecutionPolicy Bypass -File .\backend\start-compose.ps1
+
+Скрипт собирает backend и запускает PostgreSQL 17 и Spring Boot в Docker.
+Compose КР3 использует отдельные проект и том `logistics-kr3`. Он не меняет
+том и данные Compose КР2. В пустой базе Flyway автоматически выполняет V1
+и V2. Проверка:
+
+  http://localhost:8080/api/system/info
+  http://localhost:8080/actuator/health
+  http://localhost:8080/swagger-ui.html
+  http://localhost:8080/v3/api-docs
+
+PostgreSQL КР3 опубликован только на 127.0.0.1:55433; backend — только на
+127.0.0.1:8080. Порты можно изменить через KR3_POSTGRES_PORT и APP_PORT.
+
+В этой части API содержит только служебный /api/system/info. Авторизация,
+заявки и полный web-интерфейс будут добавлены следующими этапами; пока
+Swagger доступен без входа. Hibernate использует ddl-auto: validate.
+
+Существующую БД КР1/КР2 переводите по инструкции MIGRATIONS.txt после
+резервной копии. Автоматический baseline отключён. Для остановки без удаления
+данных:
+
+  powershell -ExecutionPolicy Bypass -File .\backend\stop-compose.ps1
+
+Команда docker compose down без -v сохраняет том PostgreSQL.
