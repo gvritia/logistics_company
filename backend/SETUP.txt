@@ -24,6 +24,7 @@ V2 и V3. Проверка:
 
   http://localhost:8080/api/system/info
   http://localhost:8080/actuator/health
+  http://localhost:8080/docs-login.html
   http://localhost:8080/swagger-ui.html
   http://localhost:8080/v3/api-docs
 
@@ -44,8 +45,12 @@ POST /api/auth/refresh меняет refresh-токен на новую пару;
 GET /api/auth/me возвращает текущего пользователя.
 
 Swagger и остальные служебные маршруты доступны только ADMIN после смены
-пароля. Для Swagger при входе также выдаётся короткая HttpOnly cookie;
-в будущей web-форме входа она позволит открыть документацию в браузере.
+пароля. Откройте /docs-login.html в браузере, введите ADMIN email и пароль
+из локального .env. При временном пароле форма предложит сменить его.
+После входа короткая HttpOnly cookie откроет Swagger в том же браузере.
+На странице входа также показан access JWT: скопируйте его, откройте Swagger
+по ссылке в новой вкладке, нажмите Authorize и вставьте JWT. В поле Swagger
+достаточно самого токена, без слова Bearer. После истечения JWT войдите снова.
 Основное API принимает JWT только из заголовка Authorization. Пароли и
 refresh-токены не сохраняйте в браузерном localStorage. Для доступа вне
 localhost используйте HTTPS и COOKIE_SECURE=true. Лимиты входа: 20 попыток
