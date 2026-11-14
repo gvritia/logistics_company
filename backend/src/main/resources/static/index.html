@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>Логистическая компания · Панель управления</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-brand">
+      <div class="brand-mark" aria-hidden="true">LC</div>
+      <p class="eyebrow">Логистическая компания</p>
+      <h1>Перевозки под контролем.</h1>
+      <p>Заявки, сотрудники и аналитика в одной рабочей панели.</p>
+      <div class="auth-illustration" aria-hidden="true"><span>01</span><i></i><span>02</span><i></i><span>03</span></div>
+    </div>
+    <main class="auth-panel">
+      <div class="auth-card">
+        <p class="eyebrow">Рабочее пространство</p>
+        <form id="login-form">
+          <h2>Вход в систему</h2>
+          <p class="muted">Используйте учётную запись, выданную администратором.</p>
+          <label>Email <input id="login-email" type="email" autocomplete="username" maxlength="254" required></label>
+          <label>Пароль <input id="login-password" type="password" autocomplete="current-password" required></label>
+          <button class="button primary full" type="submit">Войти <span aria-hidden="true">→</span></button>
+        </form>
+        <form id="required-password-form" hidden>
+          <h2>Смените временный пароль</h2>
+          <p class="muted">После смены пароля панель откроется автоматически.</p>
+          <label>Новый пароль <input id="required-new-password" type="password" autocomplete="new-password" minlength="12" required></label>
+          <label>Повторите пароль <input id="required-confirm-password" type="password" autocomplete="new-password" minlength="12" required></label>
+          <button class="button primary full" type="submit">Сохранить пароль</button>
+          <button id="other-account" class="button subtle full" type="button">Войти под другим пользователем</button>
+        </form>
+        <p id="auth-message" class="form-message" role="alert" aria-live="polite"></p>
+      </div>
+    </main>
+  </div>
+
+  <div id="app-screen" class="app-shell" hidden>
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark small" aria-hidden="true">LC</div><div><strong>Логистическая<br>компания</strong><small>Рабочая панель</small></div></div>
+      <p class="nav-caption">РАБОЧЕЕ ПРОСТРАНСТВО</p>
+      <nav id="main-nav" aria-label="Основная навигация">
+        <button class="nav-link active" data-view="dashboard" type="button"><span aria-hidden="true">◫</span> Обзор</button>
+        <button class="nav-link" data-view="requests" type="button"><span aria-hidden="true">▣</span> Заявки</button>
+        <button class="nav-link" data-view="clients" type="button"><span aria-hidden="true">♙</span> Клиенты</button>
+        <button class="nav-link" data-view="staff" type="button"><span aria-hidden="true">♧</span> Сотрудники</button>
+        <button class="nav-link admin-only" data-view="users" type="button"><span aria-hidden="true">♙</span> Пользователи</button>
+        <button class="nav-link admin-only" data-view="audit" type="button"><span aria-hidden="true">◷</span> Аудит</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="side-user"><span class="avatar" id="sidebar-avatar">У</span><div><strong id="sidebar-name">Пользователь</strong><small id="sidebar-role">—</small></div></div>
+        <button id="change-password-button" class="side-action" type="button">Сменить пароль</button>
+        <button id="logout-button" class="side-action" type="button">Выйти</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar"><div><p class="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</p><h1 id="page-title">Обзор</h1><p id="page-subtitle" class="muted">Сводка по перевозкам</p></div><div class="topbar-right"><span class="live-dot" aria-hidden="true"></span><span id="connection-label">На связи</span><span class="topbar-divider"></span><strong id="topbar-user">Пользователь</strong><button id="topbar-password" class="topbar-action" type="button" title="Сменить пароль">Пароль</button><button id="topbar-logout" class="topbar-action" type="button" title="Выйти">Выход</button></div></header>
+
+      <section id="page-dashboard" class="page active" aria-labelledby="page-title">
+        <div class="section-head"><div><h2>Состояние перевозок</h2><p class="muted">Показатели по активным заявкам и архиву</p></div><button id="refresh-dashboard" class="button subtle" type="button">Обновить</button></div>
+        <div id="metric-grid" class="metric-grid"></div>
+        <div class="chart-grid"><article class="card"><div class="card-head"><h3>Клиенты</h3><span class="subtle-text">Активные заявки</span></div><div id="chart-clients" class="bar-list"></div></article><article class="card"><div class="card-head"><h3>Статусы</h3><span class="subtle-text">По этапам</span></div><div id="chart-statuses" class="bar-list"></div></article><article class="card"><div class="card-head"><h3>Весовые категории</h3><span class="subtle-text">По массе груза</span></div><div id="chart-weights" class="bar-list"></div></article></div>
+      </section>
+
+      <section id="page-requests" class="page" aria-labelledby="page-title">
+        <div class="section-head"><div><h2>Заявки на перевозку</h2><p class="muted">Поиск, маршрут и состояние каждой доставки</p></div><div class="button-group"><button id="new-request" class="button primary editor-only" type="button">+ Новая заявка</button><button id="export-csv" class="button secondary" type="button">Экспорт CSV</button><button id="import-csv" class="button secondary editor-only" type="button">Импорт CSV</button></div></div>
+        <form id="request-filters" class="card filter-card">
+          <div class="filter-grid">
+            <label class="wide">Поиск <input name="q" type="search" maxlength="100" placeholder="Код, груз, адрес или клиент"></label>
+            <label>Клиент <select name="clientId"><option value="">Все клиенты</option></select></label>
+            <label>Статус <select name="status"><option value="">Все статусы</option><option value="CREATED">Создана</option><option value="APPROVED">Одобрена</option><option value="IN_TRANSIT">В пути</option><option value="DELIVERED">Доставлена</option><option value="CANCELLED">Отменена</option></select></label>
+            <label>Хрупкий груз <select name="fragile"><option value="">Любой</option><option value="true">Да</option><option value="false">Нет</option></select></label>
+            <label>Весовая категория <select name="weightCategory"><option value="">Любая</option><option value="LIGHT">До 1000 кг</option><option value="MEDIUM">1000–4999 кг</option><option value="HEAVY">От 5000 кг</option></select></label>
+            <label>Тег <input name="tag" maxlength="50" placeholder="Например, срочно"></label>
+            <label>Вес, сравнение <select name="weightOp"><option value="">Не задано</option><option value="eq">Равен</option><option value="lt">Меньше</option><option value="lte">Не больше</option><option value="gt">Больше</option><option value="gte">Не меньше</option></select></label>
+            <label>Вес, кг <input name="weightValue" type="number" min="0.001" step="0.001" placeholder="0.000"></label>
+            <label>Сортировка <select name="sort"><option value="createdAt,desc">Сначала новые</option><option value="createdAt,asc">Сначала старые</option><option value="plannedDeliveryAt,asc">Скоро доставка</option><option value="plannedDeliveryAt,desc">Позже доставка</option><option value="price,asc">Цена ↑</option><option value="price,desc">Цена ↓</option><option value="weightKg,asc">Вес ↑</option><option value="weightKg,desc">Вес ↓</option><option value="requestCode,asc">Код А–Я</option></select></label>
+          </div>
+          <div class="filter-footer"><label class="checkline"><input name="archived" type="checkbox"> Показать архив</label><div class="button-group"><button id="reset-filters" class="button subtle" type="button">Сбросить</button><button class="button primary" type="submit">Применить фильтры</button></div></div>
+        </form>
+        <div id="bulk-toolbar" class="bulk-toolbar editor-only" hidden><span id="selected-count">Выбрано: 0</span><button id="open-bulk" class="button secondary" type="button">Массовое действие</button><button id="clear-selection" class="button subtle" type="button">Снять выбор</button></div>
+        <div class="card table-card"><div class="table-scroll"><table><thead><tr><th class="editor-only"><input id="select-page" type="checkbox" aria-label="Выбрать всю страницу"></th><th>Заявка</th><th>Клиент и маршрут</th><th>Груз</th><th>Статус</th><th>Доставка</th><th>Действие</th></tr></thead><tbody id="requests-body"></tbody></table></div><div id="requests-empty" class="empty-state" hidden>Заявок по этим условиям пока нет.</div><div class="pager"><span id="requests-count">—</span><div><button id="requests-prev" class="button subtle" type="button">← Назад</button><span id="requests-page">1 / 1</span><button id="requests-next" class="button subtle" type="button">Далее →</button></div></div></div>
+      </section>
+
+      <section id="page-clients" class="page" aria-labelledby="page-title"><div class="section-head"><div><h2>Клиенты</h2><p class="muted">Справочник заказчиков перевозок</p></div><button id="new-client" class="button primary admin-only" type="button">+ Добавить клиента</button></div><div class="card table-card"><div class="table-scroll"><table><thead><tr><th>Клиент</th><th>Контакты</th><th>Состояние</th><th class="admin-only">Действия</th></tr></thead><tbody id="clients-body"></tbody></table></div><div id="clients-empty" class="empty-state" hidden>Клиентов пока нет.</div></div></section>
+
+      <section id="page-staff" class="page" aria-labelledby="page-title"><div class="section-head"><div><h2>Сотрудники</h2><p class="muted">Операторы принимают заявки, доставщики выполняют рейсы</p></div></div><div class="two-grid"><article class="card"><div class="card-head"><h3>Операторы</h3><button id="new-operator" class="button small primary admin-only" type="button">+ Добавить</button></div><div id="operators-list" class="simple-list"></div></article><article class="card"><div class="card-head"><h3>Доставщики</h3><button id="new-driver" class="button small primary admin-only" type="button">+ Добавить</button></div><div id="drivers-list" class="simple-list"></div></article></div></section>
+
+      <section id="page-users" class="page admin-only" aria-labelledby="page-title"><div class="section-head"><div><h2>Пользователи</h2><p class="muted">Роли и доступ к системе</p></div><button id="new-user" class="button primary" type="button">+ Создать пользователя</button></div><div class="card table-card"><div class="table-scroll"><table><thead><tr><th>Пользователь</th><th>Роли</th><th>Состояние</th><th>Версия</th><th>Действия</th></tr></thead><tbody id="users-body"></tbody></table></div><div id="users-empty" class="empty-state" hidden>Пользователей нет.</div><div class="pager"><span id="users-count">—</span><div><button id="users-prev" class="button subtle" type="button">← Назад</button><span id="users-page">1 / 1</span><button id="users-next" class="button subtle" type="button">Далее →</button></div></div></div></section>
+
+      <section id="page-audit" class="page admin-only" aria-labelledby="page-title"><div class="section-head"><div><h2>Журнал аудита</h2><p class="muted">Входы и важные изменения данных</p></div></div><form id="audit-search-form" class="card audit-search"><label>Поиск по событию, пользователю, описанию или correlation ID<input id="audit-query" type="search" maxlength="100" placeholder="Например, REQUEST_CREATED"></label><button class="button primary" type="submit">Найти</button></form><div class="card table-card"><div class="table-scroll"><table><thead><tr><th>Время</th><th>Пользователь</th><th>Событие</th><th>Сущность</th><th>Описание</th><th>Correlation ID</th></tr></thead><tbody id="audit-body"></tbody></table></div><div id="audit-empty" class="empty-state" hidden>Событий по этому запросу нет.</div><div class="pager"><span id="audit-count">—</span><div><button id="audit-prev" class="button subtle" type="button">← Назад</button><span id="audit-page">1 / 1</span><button id="audit-next" class="button subtle" type="button">Далее →</button></div></div></div></section>
+    </main>
+  </div>
+
+  <dialog id="editor-dialog" class="modal"><form id="editor-form"><div class="modal-head"><div><p class="eyebrow">РЕДАКТИРОВАНИЕ</p><h2 id="editor-title">Форма</h2></div><button class="icon-button" type="button" data-close="editor-dialog" aria-label="Закрыть">×</button></div><div id="editor-fields" class="editor-fields"></div><p id="editor-message" class="form-message" role="alert"></p><div class="modal-actions"><button class="button subtle" type="button" data-close="editor-dialog">Отмена</button><button id="editor-save" class="button primary" type="submit">Сохранить</button></div></form></dialog>
+
+  <dialog id="detail-dialog" class="modal wide-modal"><div class="modal-head"><div><p class="eyebrow">КАРТОЧКА ЗАЯВКИ</p><h2 id="detail-title">Заявка</h2></div><button class="icon-button" type="button" data-close="detail-dialog" aria-label="Закрыть">×</button></div><div id="detail-body"></div><div class="modal-section"><div class="card-head"><h3>Заметки</h3><span class="subtle-text">История работы с заявкой</span></div><div id="notes-list" class="notes-list"></div><form id="note-form" class="note-form editor-only"><label>Новая заметка<textarea id="note-body" maxlength="4000" rows="3" required placeholder="Напишите заметку"></textarea></label><div class="button-group"><label class="checkline"><input id="note-pinned" type="checkbox"> Закрепить</label><button class="button secondary" type="submit">Добавить</button></div></form></div></dialog>
+
+  <dialog id="csv-dialog" class="modal"><div class="modal-head"><div><p class="eyebrow">ОБМЕН ДАННЫМИ</p><h2>Импорт CSV</h2></div><button class="icon-button" type="button" data-close="csv-dialog" aria-label="Закрыть">×</button></div><p class="muted">Сначала проверьте файл, затем примените тот же файл. До 2 МБ и 1000 строк.</p><label>CSV-файл<input id="csv-file" type="file" accept=".csv,text/csv"></label><label>Режим<select id="csv-mode"><option value="CREATE_ONLY">Только новые записи</option><option value="UPSERT_BY_CODE">Обновить по коду заявки</option></select></label><div class="button-group csv-actions"><button id="csv-preview" class="button secondary" type="button">Проверить</button><button id="csv-apply" class="button primary" type="button" disabled>Применить</button></div><div id="csv-result" class="result-panel" aria-live="polite"></div></dialog>
+
+  <dialog id="bulk-dialog" class="modal"><form id="bulk-form"><div class="modal-head"><div><p class="eyebrow">МАССОВОЕ ДЕЙСТВИЕ</p><h2>Выбранные заявки</h2></div><button class="icon-button" type="button" data-close="bulk-dialog" aria-label="Закрыть">×</button></div><p id="bulk-count" class="muted"></p><label>Действие<select id="bulk-action"><option value="ARCHIVE">В архив</option><option value="RESTORE">Восстановить</option><option value="CHANGE_STATUS">Изменить статус</option><option value="ADD_TAG">Добавить тег</option><option value="REMOVE_TAG">Удалить тег</option></select></label><label id="bulk-status-wrap" hidden>Новый статус<select id="bulk-status"><option value="APPROVED">Одобрена</option><option value="CANCELLED">Отменена</option><option value="IN_TRANSIT">В пути</option><option value="DELIVERED">Доставлена</option></select></label><label id="bulk-tag-wrap" hidden>Тег<input id="bulk-tag" maxlength="50"></label><div class="modal-actions"><button class="button subtle" type="button" data-close="bulk-dialog">Отмена</button><button class="button primary" type="submit">Применить</button></div><div id="bulk-result" class="result-panel" aria-live="polite"></div></form></dialog>
+
+  <dialog id="secret-dialog" class="modal"><div class="modal-head"><div><p class="eyebrow">ОДНОРАЗОВЫЙ ПАРОЛЬ</p><h2>Временный пароль</h2></div><button class="icon-button" type="button" data-close="secret-dialog" aria-label="Закрыть">×</button></div><p class="muted">Пароль показан только сейчас. Сохраните его и передайте пользователю безопасным способом.</p><label>Пароль<input id="secret-value" type="text" readonly></label><div class="modal-actions"><button id="copy-secret" class="button secondary" type="button">Скопировать</button><button class="button primary" type="button" data-close="secret-dialog">Готово</button></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
