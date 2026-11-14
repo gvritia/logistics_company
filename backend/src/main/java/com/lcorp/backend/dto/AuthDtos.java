@@ -14,14 +14,19 @@ public final class AuthDtos {
     }
 
     public record LoginRequest(@NotBlank @Email @Size(max = 254) String email,
-                               @NotBlank @Size(max = 128) String password) {
+                               @NotBlank @Size(max = 256) String password) {
+    }
+
+    public record RegisterRequest(@NotBlank @Email @Size(max = 254) String email,
+                                  @NotBlank @Size(max = 160) String displayName,
+                                  @NotBlank @Size(max = 256) String password) {
     }
 
     public record RefreshRequest(@NotBlank @Size(max = 256) String refreshToken) {
     }
 
-    public record ChangePasswordRequest(@NotBlank @Size(max = 128) String currentPassword,
-                                        @NotBlank @Size(max = 128) String newPassword) {
+    public record ChangePasswordRequest(@NotBlank @Size(max = 256) String currentPassword,
+                                        @NotBlank @Size(max = 256) String newPassword) {
     }
 
     public record CurrentUser(UUID id, String email, String displayName,

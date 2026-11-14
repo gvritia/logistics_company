@@ -17,7 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
-// Поле passwordHash содержит только BCrypt-хеш и никогда не выдаётся в REST DTO.
+// Поле passwordHash содержит только хеш пароля и никогда не выдаётся в REST DTO.
 @Entity
 @Table(name = "app_users", schema = "public")
 public class UserAccount {

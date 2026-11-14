@@ -53,7 +53,17 @@ h3{font-size:1rem;letter-spacing:-.01em;margin-bottom:0}
 .auth-card label{margin-bottom:18px}
 .auth-card input{padding:13px 14px}
 .auth-card .button{margin-top:8px;padding:13px}
+.auth-card .password-hint{font-size:.78rem;margin:-3px 0 10px}
 .form-message{min-height:20px;margin:12px 0 0;color:#b94037;font-size:.85rem;line-height:1.4}
+.profile-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start;max-width:1000px}
+.profile-card{padding:24px}
+.profile-card h3{font-size:1.12rem;margin-bottom:20px}
+.profile-card label{margin:0 0 15px}
+.profile-card .muted{font-size:.83rem;margin-bottom:20px}
+.profile-line{display:grid;gap:4px;padding:13px 0;border-top:1px solid #e6eeee;overflow-wrap:anywhere}
+.profile-line span{color:#738a8e;font-size:.76rem}
+.profile-line strong{font-size:.89rem}
+@media(max-width:800px){.profile-layout{grid-template-columns:1fr}}
 .app-shell{display:grid;grid-template-columns:245px minmax(0,1fr);min-height:100vh}
 .sidebar{position:sticky;top:0;display:flex;flex-direction:column;height:100vh;padding:27px 16px 18px;background:#102a32;color:#d9e8e8;box-shadow:6px 0 20px #12323b0b}
 .sidebar-brand{display:flex;align-items:center;gap:12px;padding:0 11px 32px;border-bottom:1px solid #ffffff1b}

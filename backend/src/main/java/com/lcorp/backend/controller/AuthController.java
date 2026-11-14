@@ -4,15 +4,18 @@ import com.lcorp.backend.dto.AuthDtos.AuthResponse;
 import com.lcorp.backend.dto.AuthDtos.ChangePasswordRequest;
 import com.lcorp.backend.dto.AuthDtos.CurrentUser;
 import com.lcorp.backend.dto.AuthDtos.LoginRequest;
+import com.lcorp.backend.dto.AuthDtos.RegisterRequest;
 import com.lcorp.backend.dto.AuthDtos.RefreshRequest;
 import com.lcorp.backend.domain.Role;
 import com.lcorp.backend.security.AuthPrincipal;
 import com.lcorp.backend.security.LoginRateLimiter;
+import com.lcorp.backend.security.RegistrationRateLimiter;
 import com.lcorp.backend.service.AuthService;
 import com.lcorp.backend.web.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,12 +34,15 @@ import java.time.Instant;
 public class AuthController {
     private final AuthService auth;
     private final LoginRateLimiter limiter;
+    private final RegistrationRateLimiter registrationLimiter;
     private final boolean cookieSecure;
 
     public AuthController(AuthService auth, LoginRateLimiter limiter,
+                          RegistrationRateLimiter registrationLimiter,
                           @Value("${app.cookie.secure:false}") boolean cookieSecure) {
         this.auth = auth;
         this.limiter = limiter;
+        this.registrationLimiter = registrationLimiter;
         this.cookieSecure = cookieSecure;
     }
 
@@ -44,6 +50,15 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest body, HttpServletRequest request) {
         limiter.check(request.getRemoteAddr());
         return withSwaggerCookie(auth.login(body.email(), body.password(), CorrelationIdFilter.get(request)), request);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<CurrentUser> register(@Valid @RequestBody RegisterRequest body,
+                                                HttpServletRequest request) {
+        registrationLimiter.check(request.getRemoteAddr());
+        CurrentUser user = auth.register(body.email(), body.displayName(), body.password(),
+            CorrelationIdFilter.get(request));
+        return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.CACHE_CONTROL, "no-store").body(user);
     }
 
     @PostMapping("/refresh")

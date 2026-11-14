@@ -5,15 +5,39 @@ const state = {
   accessToken: null, refreshToken: null, user: null, temporaryPassword: null,
   view: 'dashboard', requestPage: 0, requestData: null, selected: new Map(),
   currentRequest: null, notes: [], clients: [], operators: [], drivers: [],
-  usersPage: 0, auditPage: 0, csvPreview: null, editorAction: null
+  usersPage: 0, usersData: null, auditPage: 0, auditData: null,
+  csvPreview: null, editorAction: null
 };
 const statusNames = {CREATED:'Создана', APPROVED:'Одобрена', IN_TRANSIT:'В пути', DELIVERED:'Доставлена', CANCELLED:'Отменена'};
 const weightNames = {LIGHT:'Лёгкий', MEDIUM:'Средний', HEAVY:'Тяжёлый'};
 const roleNames = {VIEWER:'Просмотр', EDITOR:'Редактирование', ADMIN:'Администратор'};
+const auditEvents = {
+  LOGIN_SUCCESS:'Вход', LOGIN_FAILED:'Ошибка входа', LOGOUT:'Выход',
+  REFRESH_REUSE:'Сессия завершена', PASSWORD_CHANGED:'Смена пароля',
+  USER_REGISTERED:'Регистрация', USER_CREATED:'Создание пользователя',
+  USER_UPDATED:'Изменение пользователя', USER_PASSWORD_RESET:'Сброс пароля',
+  CLIENT_CREATED:'Создание клиента', CLIENT_UPDATED:'Изменение клиента',
+  CLIENT_ACTIVATED:'Включение клиента', CLIENT_DEACTIVATED:'Отключение клиента',
+  OPERATOR_CREATED:'Создание оператора', DRIVER_CREATED:'Создание доставщика',
+  REQUEST_CREATED:'Создание заявки', REQUEST_UPDATED:'Изменение заявки',
+  REQUEST_ARCHIVED:'Архивирование заявки', REQUEST_RESTORED:'Восстановление заявки',
+  REQUEST_DELETED:'Удаление заявки', REQUEST_APPROVE:'Одобрение заявки',
+  REQUEST_CANCEL:'Отмена заявки', REQUEST_ASSIGN:'Назначение доставщика',
+  REQUEST_UNASSIGN:'Снятие доставщика', REQUEST_START:'Начало рейса',
+  REQUEST_DELIVER:'Доставка', REQUEST_TAG_ADDED:'Добавление тега',
+  REQUEST_TAG_REMOVED:'Удаление тега', NOTE_CREATED:'Добавление заметки',
+  NOTE_UPDATED:'Изменение заметки', NOTE_DELETED:'Удаление заметки'
+};
+const auditEntities = {
+  USER_ACCOUNT:'Пользователь', CLIENT:'Клиент', OPERATOR:'Оператор',
+  DRIVER:'Доставщик', TRANSPORTATION_REQUEST:'Заявка',
+  TRANSPORTATION_REQUEST_NOTE:'Заметка'
+};
 const viewNames = {
   dashboard:['Обзор','Сводка по перевозкам'], requests:['Заявки','Поиск и работа с перевозками'],
   clients:['Клиенты','Справочник заказчиков'], staff:['Сотрудники','Операторы и доставщики'],
-  users:['Пользователи','Управление доступом'], audit:['Аудит','Журнал важных действий']
+  users:['Пользователи','Управление доступом'], audit:['Аудит','Журнал важных действий'],
+  profile:['Личный кабинет','Данные и безопасность учётной записи']
 };
 let refreshPromise = null;
 let toastTimer = null;
@@ -51,7 +75,23 @@ async function run(task, control) {
   if (control) control.disabled = true;
   try { return await task(); }
   catch (error) { toast(error.message || 'Не удалось выполнить действие', true); }
-  finally { if (control) control.disabled = false; }
+  finally { if (control) control.disabled = false; syncActionStates(); }
+}
+function syncActionStates() {
+  const pages = [
+    ['requests',state.requestData], ['users',state.usersData], ['audit',state.auditData]
+  ];
+  pages.forEach(([name,data]) => {
+    $(`${name}-prev`).disabled = !data || data.page <= 0;
+    $(`${name}-next`).disabled = !data || data.page + 1 >= data.totalPages;
+  });
+  $('csv-apply').disabled = !state.csvPreview?.canApply;
+}
+function validatePassword(password) {
+  const length = Array.from(password).length;
+  if (length < 12 || length > 72 || !password.trim()) {
+    throw new Error('Пароль должен содержать от 12 до 72 символов.');
+  }
 }
 function queryString(values) {
   const params = new URLSearchParams();
@@ -88,7 +128,8 @@ async function refreshAccess() {
   return refreshPromise;
 }
 async function api(path, options = {}) {
-  const {method='GET', json, form, blob=false, anonymous=false, retry=true} = options;
+  const {method='GET', json, form, blob=false, anonymous=false, retry=true,
+    keepSessionOnUnauthorized=false} = options;
   const headers = {};
   if (!anonymous && state.accessToken) headers.Authorization = `Bearer ${state.accessToken}`;
   if (json !== undefined) headers['Content-Type'] = 'application/json';
@@ -102,7 +143,7 @@ async function api(path, options = {}) {
   }
   if (!response.ok) {
     const error = await parseError(response);
-    if (response.status === 401 && !anonymous) showLogin();
+    if (response.status === 401 && !anonymous && !keepSessionOnUnauthorized) showLogin();
     throw error;
   }
   if (blob) return response.blob();
@@ -114,8 +155,12 @@ function showLogin() {
   state.temporaryPassword = null; state.currentRequest = null; state.selected.clear();
   document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
   $('app-screen').hidden = true; $('auth-screen').hidden = false;
-  $('login-form').hidden = false; $('required-password-form').hidden = true;
+  $('login-form').hidden = false; $('register-form').hidden = true;
+  $('required-password-form').hidden = true;
   $('login-password').value = '';
+  $('register-form').reset(); $('required-password-form').reset();
+  $('profile-password-form').reset(); $('profile-message').textContent = '';
+  $('auth-message').textContent = '';
 }
 function setAuth(result) {
   state.accessToken = result.accessToken;
@@ -155,6 +200,13 @@ async function switchView(view) {
   if (view === 'staff') await loadStaff();
   if (view === 'users') await loadUsers();
   if (view === 'audit') await loadAudit();
+  if (view === 'profile') loadProfile();
+}
+function loadProfile() {
+  $('profile-name').textContent = state.user.displayName;
+  $('profile-email').textContent = state.user.email;
+  $('profile-roles').textContent = state.user.roles.map(role => roleNames[role] || role).join(', ');
+  $('profile-password-form').reset(); $('profile-message').textContent = '';
 }
 function metric(label, value, note, color) {
   const card = node('article', `metric ${color || ''}`);
@@ -242,9 +294,10 @@ function renderRequestRow(item) {
   return row;
 }
 async function loadRequests() {
+  state.requestData = null; syncActionStates();
   const data = await api(requestUrl(state.requestPage));
-  if (data.totalPages > 0 && state.requestPage >= data.totalPages) {
-    state.requestPage = data.totalPages-1;
+  if (state.requestPage >= Math.max(1,data.totalPages)) {
+    state.requestPage = Math.max(0,data.totalPages-1);
     return loadRequests();
   }
   state.requestData = data;
@@ -553,7 +606,13 @@ function openStaffEditor(kind) {
   },'Добавить');
 }
 async function loadUsers() {
+  state.usersData = null; syncActionStates();
   const data = await api(`/api/admin/users?${queryString({page:state.usersPage,size:20,sort:'email,asc'})}`);
+  if (state.usersPage >= Math.max(1,data.totalPages)) {
+    state.usersPage = Math.max(0,data.totalPages-1);
+    return loadUsers();
+  }
+  state.usersData = data;
   const body = $('users-body'); clear(body);
   $('users-empty').hidden = data.items.length > 0;
   data.items.forEach(user => {
@@ -616,9 +675,15 @@ function showSecret(password) {
   $('secret-value').select();
 }
 async function loadAudit() {
+  state.auditData = null; syncActionStates();
   const data = await api(`/api/admin/audit?${queryString({
     q:$('audit-query').value.trim(),page:state.auditPage,size:20,sort:'occurredAt,desc'
   })}`);
+  if (state.auditPage >= Math.max(1,data.totalPages)) {
+    state.auditPage = Math.max(0,data.totalPages-1);
+    return loadAudit();
+  }
+  state.auditData = data;
   const body = $('audit-body'); clear(body);
   $('audit-empty').hidden = data.items.length > 0;
   data.items.forEach(event => {
@@ -626,9 +691,9 @@ async function loadAudit() {
     add(row,cell(fmtDate(event.occurredAt)),
       cell(add(node('span','cell-main'),strong(event.userEmail || 'Неизвестен')),
         sub(event.userId || 'Без пользователя')),
-      cell(node('span','pill',event.eventType)),
-      cell(event.entityType || '—',sub(event.entityId || '—')),
-      cell(event.description),cell(event.correlationId));
+      cell(node('span','pill',auditEvents[event.eventType] || event.eventType)),
+      cell(auditEntities[event.entityType] || event.entityType || '—',sub(event.entityId || '—')),
+      cell(auditEvents[event.description] || event.description),cell(event.correlationId));
     body.append(row);
   });
   $('audit-count').textContent = `Событий: ${fmtNumber(data.totalElements)}`;
@@ -636,19 +701,6 @@ async function loadAudit() {
   $('audit-prev').disabled = data.page <= 0; $('audit-next').disabled = data.page+1 >= data.totalPages;
 }
 
-function openPasswordEditor() {
-  openEditor('Сменить пароль',[
-    formField('Текущий пароль','currentPassword','',{type:'password',required:true,wide:true,autocomplete:'current-password'}),
-    formField('Новый пароль','newPassword','',{type:'password',required:true,wide:true,autocomplete:'new-password'}),
-    formField('Повторите пароль','confirmPassword','',{type:'password',required:true,wide:true,autocomplete:'new-password'})
-  ],async data => {
-    if (data.get('newPassword') !== data.get('confirmPassword')) throw new Error('Пароли не совпадают.');
-    await api('/api/auth/change-password',{method:'POST',json:{
-      currentPassword:data.get('currentPassword'),newPassword:data.get('newPassword')
-    }});
-    showLogin(); $('auth-message').textContent = 'Пароль изменён. Войдите с новым паролем.';
-  },'Сменить пароль');
-}
 function csvMessage(result, applied = false) {
   const lines = applied
     ? [`Строк: ${result.totalRows}. Создано: ${result.created}. Обновлено: ${result.updated}. Пропущено: ${result.skipped}.`]
@@ -669,8 +721,8 @@ async function previewCsv() {
   const form = new FormData(); form.append('file',file);
   const result = await api(`/api/requests/import/preview?${queryString({mode})}`,
     {method:'POST',form});
-  state.csvPreview = {file,mode,sha256:result.sha256};
-  $('csv-apply').disabled = result.validRows === 0;
+  state.csvPreview = {file,mode,sha256:result.sha256,canApply:result.validRows > 0};
+  $('csv-apply').disabled = !state.csvPreview.canApply;
   $('csv-result').textContent = csvMessage(result);
 }
 async function applyCsv() {
@@ -736,6 +788,32 @@ $('login-form').addEventListener('submit', event => {
     finally { submit.disabled = false; }
   })();
 });
+$('show-register').addEventListener('click', () => {
+  $('auth-message').textContent = '';
+  $('login-form').hidden = true; $('register-form').hidden = false;
+  $('register-email').value = $('login-email').value;
+  $('register-name').focus();
+});
+$('back-to-login').addEventListener('click', showLogin);
+$('register-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const submit = $('register-form').querySelector('button[type=submit]');
+  (async () => {
+    submit.disabled = true; $('auth-message').textContent = '';
+    try {
+      const email = $('register-email').value.trim();
+      const password = $('register-password').value;
+      validatePassword(password);
+      if (password !== $('register-confirm-password').value) throw new Error('Пароли не совпадают.');
+      await api('/api/auth/register',{method:'POST',anonymous:true,json:{
+        email,displayName:$('register-name').value.trim(),password
+      }});
+      showLogin(); $('login-email').value = email;
+      $('auth-message').textContent = 'Учётная запись создана. Теперь войдите.';
+    } catch (error) { $('auth-message').textContent = error.message; }
+    finally { submit.disabled = false; }
+  })();
+});
 $('other-account').addEventListener('click',showLogin);
 $('required-password-form').addEventListener('submit', event => {
   event.preventDefault();
@@ -744,6 +822,7 @@ $('required-password-form').addEventListener('submit', event => {
     submit.disabled = true; $('auth-message').textContent = '';
     try {
       const newPassword = $('required-new-password').value;
+      validatePassword(newPassword);
       if (newPassword !== $('required-confirm-password').value) throw new Error('Пароли не совпадают.');
       await api('/api/auth/change-password',{method:'POST',json:{
         currentPassword:state.temporaryPassword,newPassword
@@ -772,8 +851,23 @@ document.querySelectorAll('.nav-link').forEach(item => item.addEventListener('cl
 $('refresh-dashboard').addEventListener('click', event => run(loadDashboard,event.currentTarget));
 $('logout-button').addEventListener('click', event => run(logout,event.currentTarget));
 $('topbar-logout').addEventListener('click', event => run(logout,event.currentTarget));
-$('change-password-button').addEventListener('click',openPasswordEditor);
-$('topbar-password').addEventListener('click',openPasswordEditor);
+$('profile-password-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const submit = event.currentTarget.querySelector('button[type=submit]');
+  (async () => {
+    submit.disabled = true; $('profile-message').textContent = '';
+    try {
+      const newPassword = $('profile-new-password').value;
+      validatePassword(newPassword);
+      if (newPassword !== $('profile-confirm-password').value) throw new Error('Пароли не совпадают.');
+      await api('/api/auth/change-password',{method:'POST',keepSessionOnUnauthorized:true,json:{
+        currentPassword:$('profile-current-password').value,newPassword
+      }});
+      showLogin(); $('auth-message').textContent = 'Пароль изменён. Войдите с новым паролем.';
+    } catch (error) { $('profile-message').textContent = error.message; }
+    finally { submit.disabled = false; }
+  })();
+});
 $('request-filters').addEventListener('submit', event => {
   event.preventDefault(); state.requestPage = 0; state.selected.clear();
   run(loadRequests,event.submitter);

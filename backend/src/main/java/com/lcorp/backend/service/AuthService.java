@@ -2,10 +2,12 @@ package com.lcorp.backend.service;
 
 import com.lcorp.backend.domain.AuditEvent;
 import com.lcorp.backend.domain.RefreshSession;
+import com.lcorp.backend.domain.Role;
 import com.lcorp.backend.domain.UserAccount;
 import com.lcorp.backend.dto.AuthDtos.AuthResponse;
 import com.lcorp.backend.dto.AuthDtos.CurrentUser;
 import com.lcorp.backend.error.AuthFailure;
+import com.lcorp.backend.error.ConflictFailure;
 import com.lcorp.backend.repository.AuditEventRepository;
 import com.lcorp.backend.repository.RefreshSessionRepository;
 import com.lcorp.backend.repository.UserAccountRepository;
@@ -81,6 +83,21 @@ public class AuthService {
         user.setLockedUntil(null);
         record(user, "LOGIN_SUCCESS", "Успешный вход", correlationId);
         return issue(user, now);
+    }
+
+    @Transactional
+    public CurrentUser register(String email, String displayName, String password, String correlationId) {
+        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        passwordPolicy.validate(password);
+        if (users.existsByEmailIgnoreCase(normalizedEmail)) {
+            throw new ConflictFailure("Этот адрес уже зарегистрирован");
+        }
+        UserAccount user = new UserAccount(UUID.randomUUID(), normalizedEmail, displayName.trim(),
+            encoder.encode(password), Set.of(Role.VIEWER));
+        user.setPasswordChangeRequired(false);
+        users.saveAndFlush(user);
+        record(user, "USER_REGISTERED", "Самостоятельная регистрация", correlationId);
+        return current(user);
     }
 
     @Transactional(noRollbackFor = AuthFailure.class)

@@ -7,6 +7,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Base64;
 import java.util.Date;
@@ -15,6 +16,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class AuthSecurityTest {
     @Test
@@ -43,13 +46,27 @@ class AuthSecurityTest {
     }
 
     @Test
-    void requiresLongPasswordsWithinBcryptByteLimit() {
+    void acceptsPasswordsFromTwelveToSeventyTwoCharacters() {
         PasswordPolicy policy = new PasswordPolicy();
         policy.validate("0123456789ab");
         policy.validate("a".repeat(72));
+        policy.validate("я".repeat(72));
+        policy.validate("🔒".repeat(72));
         assertThrows(IllegalArgumentException.class, () -> policy.validate("short"));
         assertThrows(IllegalArgumentException.class, () -> policy.validate("a".repeat(73)));
-        assertThrows(IllegalArgumentException.class, () -> policy.validate("я".repeat(37)));
+        assertThrows(IllegalArgumentException.class, () -> policy.validate("я".repeat(73)));
+        assertThrows(IllegalArgumentException.class, () -> policy.validate("🔒".repeat(11)));
+    }
+
+    @Test
+    void verifiesLegacyHashesAndFullUnicodePasswords() {
+        var encoder = new CompatiblePasswordEncoder(4);
+        String legacy = new BCryptPasswordEncoder(4).encode("old-password-123");
+        assertTrue(encoder.matches("old-password-123", legacy));
+        String password = "я".repeat(72);
+        String encoded = encoder.encode(password);
+        assertTrue(encoder.matches(password, encoded));
+        assertFalse(encoder.matches("я".repeat(71) + "ю", encoded));
     }
 
     @Test
@@ -58,5 +75,9 @@ class AuthSecurityTest {
         for (int i = 0; i < 20; i++) limiter.check("192.0.2.10");
         assertThrows(RateLimitFailure.class, () -> limiter.check("192.0.2.10"));
         limiter.check("192.0.2.11");
+        RegistrationRateLimiter registrations = new RegistrationRateLimiter();
+        for (int i = 0; i < 5; i++) registrations.check("192.0.2.10");
+        assertThrows(RateLimitFailure.class, () -> registrations.check("192.0.2.10"));
+        registrations.check("192.0.2.11");
     }
 }

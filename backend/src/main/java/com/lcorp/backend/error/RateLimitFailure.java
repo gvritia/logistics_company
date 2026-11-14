@@ -4,4 +4,8 @@ public class RateLimitFailure extends RuntimeException {
     public RateLimitFailure() {
         super("Слишком много попыток входа. Повторите позже");
     }
+
+    public RateLimitFailure(String message) {
+        super(message);
+    }
 }

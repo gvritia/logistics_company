@@ -22,14 +22,26 @@
         <p class="eyebrow">Рабочее пространство</p>
         <form id="login-form">
           <h2>Вход в систему</h2>
-          <p class="muted">Используйте учётную запись, выданную администратором.</p>
+          <p class="muted">Войдите в свою учётную запись или создайте новую.</p>
           <label>Email <input id="login-email" type="email" autocomplete="username" maxlength="254" required></label>
           <label>Пароль <input id="login-password" type="password" autocomplete="current-password" required></label>
           <button class="button primary full" type="submit">Войти <span aria-hidden="true">→</span></button>
+          <button id="show-register" class="button subtle full" type="button">Зарегистрироваться</button>
+        </form>
+        <form id="register-form" hidden>
+          <h2>Регистрация</h2>
+          <p class="muted">После регистрации доступен просмотр. Дополнительные права может выдать администратор.</p>
+          <label>Имя <input id="register-name" type="text" autocomplete="name" maxlength="160" required></label>
+          <label>Email <input id="register-email" type="email" autocomplete="email" maxlength="254" required></label>
+          <label>Пароль <input id="register-password" type="password" autocomplete="new-password" minlength="12" required></label>
+          <label>Повторите пароль <input id="register-confirm-password" type="password" autocomplete="new-password" minlength="12" required></label>
+          <p class="muted password-hint">Пароль: от 12 до 72 символов.</p>
+          <button class="button primary full" type="submit">Создать учётную запись</button>
+          <button id="back-to-login" class="button subtle full" type="button">Вернуться ко входу</button>
         </form>
         <form id="required-password-form" hidden>
           <h2>Смените временный пароль</h2>
-          <p class="muted">После смены пароля панель откроется автоматически.</p>
+          <p class="muted">Пароль должен содержать от 12 до 72 символов. После смены панель откроется автоматически.</p>
           <label>Новый пароль <input id="required-new-password" type="password" autocomplete="new-password" minlength="12" required></label>
           <label>Повторите пароль <input id="required-confirm-password" type="password" autocomplete="new-password" minlength="12" required></label>
           <button class="button primary full" type="submit">Сохранить пароль</button>
@@ -51,16 +63,16 @@
         <button class="nav-link" data-view="staff" type="button"><span aria-hidden="true">♧</span> Сотрудники</button>
         <button class="nav-link admin-only" data-view="users" type="button"><span aria-hidden="true">♙</span> Пользователи</button>
         <button class="nav-link admin-only" data-view="audit" type="button"><span aria-hidden="true">◷</span> Аудит</button>
+        <button class="nav-link" data-view="profile" type="button"><span aria-hidden="true">●</span> Личный кабинет</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="side-user"><span class="avatar" id="sidebar-avatar">У</span><div><strong id="sidebar-name">Пользователь</strong><small id="sidebar-role">—</small></div></div>
-        <button id="change-password-button" class="side-action" type="button">Сменить пароль</button>
         <button id="logout-button" class="side-action" type="button">Выйти</button>
       </div>
     </aside>
 
     <main class="main-content">
-      <header class="topbar"><div><p class="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</p><h1 id="page-title">Обзор</h1><p id="page-subtitle" class="muted">Сводка по перевозкам</p></div><div class="topbar-right"><span class="live-dot" aria-hidden="true"></span><span id="connection-label">На связи</span><span class="topbar-divider"></span><strong id="topbar-user">Пользователь</strong><button id="topbar-password" class="topbar-action" type="button" title="Сменить пароль">Пароль</button><button id="topbar-logout" class="topbar-action" type="button" title="Выйти">Выход</button></div></header>
+      <header class="topbar"><div><p class="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</p><h1 id="page-title">Обзор</h1><p id="page-subtitle" class="muted">Сводка по перевозкам</p></div><div class="topbar-right"><span class="live-dot" aria-hidden="true"></span><span id="connection-label">На связи</span><span class="topbar-divider"></span><strong id="topbar-user">Пользователь</strong><button id="topbar-logout" class="topbar-action" type="button" title="Выйти">Выход</button></div></header>
 
       <section id="page-dashboard" class="page active" aria-labelledby="page-title">
         <div class="section-head"><div><h2>Состояние перевозок</h2><p class="muted">Показатели по активным заявкам и архиву</p></div><button id="refresh-dashboard" class="button subtle" type="button">Обновить</button></div>
@@ -94,7 +106,14 @@
 
       <section id="page-users" class="page admin-only" aria-labelledby="page-title"><div class="section-head"><div><h2>Пользователи</h2><p class="muted">Роли и доступ к системе</p></div><button id="new-user" class="button primary" type="button">+ Создать пользователя</button></div><div class="card table-card"><div class="table-scroll"><table><thead><tr><th>Пользователь</th><th>Роли</th><th>Состояние</th><th>Версия</th><th>Действия</th></tr></thead><tbody id="users-body"></tbody></table></div><div id="users-empty" class="empty-state" hidden>Пользователей нет.</div><div class="pager"><span id="users-count">—</span><div><button id="users-prev" class="button subtle" type="button">← Назад</button><span id="users-page">1 / 1</span><button id="users-next" class="button subtle" type="button">Далее →</button></div></div></div></section>
 
-      <section id="page-audit" class="page admin-only" aria-labelledby="page-title"><div class="section-head"><div><h2>Журнал аудита</h2><p class="muted">Входы и важные изменения данных</p></div></div><form id="audit-search-form" class="card audit-search"><label>Поиск по событию, пользователю, описанию или correlation ID<input id="audit-query" type="search" maxlength="100" placeholder="Например, REQUEST_CREATED"></label><button class="button primary" type="submit">Найти</button></form><div class="card table-card"><div class="table-scroll"><table><thead><tr><th>Время</th><th>Пользователь</th><th>Событие</th><th>Сущность</th><th>Описание</th><th>Correlation ID</th></tr></thead><tbody id="audit-body"></tbody></table></div><div id="audit-empty" class="empty-state" hidden>Событий по этому запросу нет.</div><div class="pager"><span id="audit-count">—</span><div><button id="audit-prev" class="button subtle" type="button">← Назад</button><span id="audit-page">1 / 1</span><button id="audit-next" class="button subtle" type="button">Далее →</button></div></div></div></section>
+      <section id="page-audit" class="page admin-only" aria-labelledby="page-title"><div class="section-head"><div><h2>Журнал аудита</h2><p class="muted">Входы и важные изменения данных</p></div></div><form id="audit-search-form" class="card audit-search"><label>Поиск по событию, пользователю, описанию или коду операции<input id="audit-query" type="search" maxlength="100" placeholder="Например, заявка"></label><button class="button primary" type="submit">Найти</button></form><div class="card table-card"><div class="table-scroll"><table><thead><tr><th>Время</th><th>Пользователь</th><th>Событие</th><th>Сущность</th><th>Описание</th><th>Код операции</th></tr></thead><tbody id="audit-body"></tbody></table></div><div id="audit-empty" class="empty-state" hidden>Событий по этому запросу нет.</div><div class="pager"><span id="audit-count">—</span><div><button id="audit-prev" class="button subtle" type="button">← Назад</button><span id="audit-page">1 / 1</span><button id="audit-next" class="button subtle" type="button">Далее →</button></div></div></div></section>
+      <section id="page-profile" class="page" aria-labelledby="page-title">
+        <div class="section-head"><div><h2>Личный кабинет</h2><p class="muted">Ваши данные и безопасность учётной записи</p></div></div>
+        <div class="profile-layout">
+          <article class="card profile-card"><h3>Учётная запись</h3><div class="profile-line"><span>Имя</span><strong id="profile-name">—</strong></div><div class="profile-line"><span>Email</span><strong id="profile-email">—</strong></div><div class="profile-line"><span>Доступ</span><strong id="profile-roles">—</strong></div></article>
+          <form id="profile-password-form" class="card profile-card"><h3>Сменить пароль</h3><p class="muted">Новый пароль должен содержать от 12 до 72 символов. После смены войдите снова.</p><label>Текущий пароль <input id="profile-current-password" type="password" autocomplete="current-password" required></label><label>Новый пароль <input id="profile-new-password" type="password" autocomplete="new-password" minlength="12" required></label><label>Повторите новый пароль <input id="profile-confirm-password" type="password" autocomplete="new-password" minlength="12" required></label><p id="profile-message" class="form-message" role="alert"></p><button class="button primary" type="submit">Сменить пароль</button></form>
+        </div>
+      </section>
     </main>
   </div>
 
