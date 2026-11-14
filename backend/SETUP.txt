@@ -167,7 +167,34 @@ nonFragile и averageWeightKg рассчитываются только по а�
 LIGHT — вес меньше 1000 кг, MEDIUM — от 1000 до менее 5000 кг,
 HEAVY — от 5000 кг.
 
-Администрирование пользователей и полный web-интерфейс — следующие части.
+Администрирование пользователей доступно только ADMIN:
+
+  GET  /api/admin/users?page=0&size=20&sort=email,asc
+  GET  /api/admin/users/{id}
+  POST /api/admin/users
+  PUT  /api/admin/users/{id}
+  POST /api/admin/users/{id}/reset-password
+
+Для списка допустимы page от 0 до 1000000, size от 1 до 50 и сортировка
+email, displayName или enabled с направлением asc/desc. Ответ списка:
+items, page, size, totalElements, totalPages. В ответах нет хеша пароля.
+
+Создание принимает JSON {"email":"viewer@example.org","displayName":"Имя",
+"roles":["VIEWER"]}. Роли: VIEWER, EDITOR, ADMIN; хотя бы одна обязательна.
+Сервер создаёт случайный временный пароль и возвращает его только один раз в
+поле temporaryPassword ответа POST вместе с объектом user. Сохраните его и
+передайте новому пользователю. До смены временного пароля ему доступны только
+маршруты авторизации. Ответы с временным паролем имеют Cache-Control: no-store.
+
+Изменение принимает JSON {"email":"viewer@example.org",
+"displayName":"Новое имя","enabled":true,"roles":["EDITOR"],"version":0}.
+Сброс пароля принимает {"version":0} и снова возвращает temporaryPassword
+один раз. После смены логина, ролей, активности или сброса пароля прежние
+access JWT и refresh-сессии отзываются. Отключённая учётная запись не может
+войти. Администратор не может отключить себя или снять у себя роль ADMIN.
+Повторный email или устаревшая version дают 409.
+
+Журнал аудита и полный web-интерфейс — следующие части.
 
 Существующую БД КР1/КР2 переводите по инструкции MIGRATIONS.txt после
 резервной копии. Автоматический baseline отключён. Для остановки без удаления
