@@ -239,3 +239,19 @@ userId и userEmail могут быть null. Email пользователя п�
   powershell -ExecutionPolicy Bypass -File .\backend\stop-compose.ps1
 
 Команда docker compose down без -v сохраняет том PostgreSQL.
+
+Проверка перед защитой:
+
+  mvn -f backend/pom.xml test
+
+Если команда mvn недоступна в PowerShell, запустите фазу test для backend
+через панель Maven в IntelliJ IDEA.
+Выполняются модульные тесты и интеграционный smoke-тест запуска Spring.
+Последний использует отдельную временную H2-базу: рабочие данные PostgreSQL
+не меняются; переопределение схемы действует только внутри теста, а обычный
+запуск сохраняет `ddl-auto: validate`. Он проверяет публичный healthcheck,
+закрытый API, регистрацию
+с правом просмотра, запрет административных действий и обязательную смену
+временного пароля администратора. После запуска Docker дополнительно откройте
+/, /actuator/health, /swagger-ui.html и проверьте сценарии в web-интерфейсе.
+Состояние миграций смотрите по инструкции MIGRATIONS.txt.
