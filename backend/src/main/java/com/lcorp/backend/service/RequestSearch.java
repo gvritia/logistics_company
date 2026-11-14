@@ -23,8 +23,6 @@ public record RequestSearch(String q, Long clientId, TransportationRequestStatus
     private static final Map<String, String> SORT_FIELDS = Map.of(
         "createdAt", "createdAt", "plannedDeliveryAt", "plannedDeliveryAt",
         "price", "price", "weightKg", "weightKg", "requestCode", "requestCode");
-    private static final BigDecimal MEDIUM = new BigDecimal("1000");
-    private static final BigDecimal HEAVY = new BigDecimal("5000");
 
     public RequestSearch {
         if (page < 0 || page > 1_000_000 || size < 1 || size > 50) {
@@ -64,10 +62,10 @@ public record RequestSearch(String q, Long clientId, TransportationRequestStatus
             if (fragile != null) filters.add(cb.equal(root.get("fragile"), fragile));
             if (weightCategory != null) {
                 switch (weightCategory) {
-                    case LIGHT -> filters.add(cb.lessThan(root.get("weightKg"), MEDIUM));
-                    case MEDIUM -> filters.add(cb.and(cb.greaterThanOrEqualTo(root.get("weightKg"), MEDIUM),
-                        cb.lessThan(root.get("weightKg"), HEAVY)));
-                    case HEAVY -> filters.add(cb.greaterThanOrEqualTo(root.get("weightKg"), HEAVY));
+                    case LIGHT -> filters.add(cb.lessThan(root.get("weightKg"), WeightCategory.MEDIUM_FROM_KG));
+                    case MEDIUM -> filters.add(cb.and(cb.greaterThanOrEqualTo(root.get("weightKg"), WeightCategory.MEDIUM_FROM_KG),
+                        cb.lessThan(root.get("weightKg"), WeightCategory.HEAVY_FROM_KG)));
+                    case HEAVY -> filters.add(cb.greaterThanOrEqualTo(root.get("weightKg"), WeightCategory.HEAVY_FROM_KG));
                 }
             }
             if (weightValue != null) {

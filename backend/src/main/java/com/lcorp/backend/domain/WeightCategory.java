@@ -8,8 +8,8 @@ public enum WeightCategory {
     MEDIUM,
     HEAVY;
 
-    private static final BigDecimal MEDIUM_FROM_KG = new BigDecimal("1000");
-    private static final BigDecimal HEAVY_FROM_KG = new BigDecimal("5000");
+    public static final BigDecimal MEDIUM_FROM_KG = new BigDecimal("1000");
+    public static final BigDecimal HEAVY_FROM_KG = new BigDecimal("5000");
 
     public static WeightCategory fromWeightKg(BigDecimal weightKg) {
         if (weightKg == null) {

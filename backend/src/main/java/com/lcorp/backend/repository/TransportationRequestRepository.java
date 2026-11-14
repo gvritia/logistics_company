@@ -6,7 +6,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,4 +25,24 @@ public interface TransportationRequestRepository extends JpaRepository<Transport
 
     boolean existsByRequestCodeIgnoreCase(String requestCode);
     Optional<TransportationRequest> findByRequestCodeIgnoreCase(String requestCode);
+
+    long countByArchivedFalse();
+    long countByArchivedTrue();
+    long countByArchivedFalseAndFragileTrue();
+    long countByArchivedFalseAndWeightKgLessThan(BigDecimal maximum);
+    long countByArchivedFalseAndWeightKgGreaterThanEqualAndWeightKgLessThan(BigDecimal minimum,
+                                                                             BigDecimal maximum);
+    long countByArchivedFalseAndWeightKgGreaterThanEqual(BigDecimal minimum);
+
+    @Query("select sum(r.weightKg) from TransportationRequest r where r.archived = false")
+    BigDecimal sumActiveWeightKg();
+
+    @Query("select c.id, c.fullName, count(r) from TransportationRequest r join r.client c "
+        + "where r.archived = false group by c.id, c.fullName "
+        + "order by count(r) desc, c.fullName asc, c.id asc")
+    List<Object[]> countActiveByClient();
+
+    @Query("select r.status, count(r) from TransportationRequest r where r.archived = false "
+        + "group by r.status")
+    List<Object[]> countActiveByStatus();
 }
