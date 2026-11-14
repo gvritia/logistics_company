@@ -21,4 +21,5 @@ public interface TransportationRequestRepository extends JpaRepository<Transport
     Page<TransportationRequest> findAll(Specification<TransportationRequest> specification, Pageable pageable);
 
     boolean existsByRequestCodeIgnoreCase(String requestCode);
+    Optional<TransportationRequest> findByRequestCodeIgnoreCase(String requestCode);
 }

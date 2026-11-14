@@ -128,7 +128,36 @@ CANCELLED, IN_TRANSIT или DELIVERED), ADD_TAG и REMOVE_TAG (поле tag).
 (id, version, status, archived) и failures (id, code, message). Дубли UUID
 и неверная комбинация action/status/tag дают 400 для всего запроса.
 
-CSV и web-интерфейс — следующие части.
+CSV: GET /api/requests/export принимает те же фильтры и sort, что список
+заявок (page/size к экспорту не применяются). Ответ — UTF-8 CSV с BOM и
+заголовками в точном порядке:
+
+  request_code,client_id,operator_id,cargo_description,weight_kg,price,pickup_address,delivery_address,planned_delivery_at,fragile,status,tags,version
+
+Экспорт доступен всем авторизованным ролям. Текстовые значения, похожие на
+формулы таблиц, защищены при экспорте. Теги разделяются |; символы | и \
+внутри тега экранируются обратной косой чертой.
+
+POST /api/requests/import/preview и /apply доступны EDITOR и ADMIN. В обоих
+запросах передайте CSV как multipart-поле file и mode=CREATE_ONLY либо
+mode=UPSERT_BY_CODE. Максимум: 2 МБ и 1000 строк. В preview сервер ничего
+не записывает, а возвращает totalRows, validRows, invalidRows, ошибки с
+номерами строк и sha256. Для apply приложите тот же файл и передайте
+expectedSha256=<sha256 из preview>. Apply повторно проверяет данные и
+возвращает created, updated, skipped и ошибки. Корректные строки
+применяются отдельно; ошибка одной строки не отменяет остальные.
+
+Новые записи имеют пустую колонку version. Для обновления по request_code
+укажите текущую version; после изменения она возрастёт. Импорт создаёт и
+обновляет только активные заявки в статусе CREATED: изменение других
+статусов выполняйте через процесс перевозки. Колонка planned_delivery_at
+использует ISO-формат, например 2026-11-16T14:30:00. client_id и
+operator_id должны существовать, клиент должен быть активен. Заголовки и
+их порядок должны совпадать с экспортом. В Swagger для импорта выберите
+файл в поле file, затем выполните preview и apply отдельными запросами.
+
+Аналитика, администрирование пользователей и полный web-интерфейс —
+следующие части.
 
 Существующую БД КР1/КР2 переводите по инструкции MIGRATIONS.txt после
 резервной копии. Автоматический baseline отключён. Для остановки без удаления

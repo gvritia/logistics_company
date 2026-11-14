@@ -8,6 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -54,6 +56,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, MissingServletRequestParameterException.class})
     public ResponseEntity<ApiError> invalidParameter(Exception ex, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, "INVALID_PARAMETER", "Неверный параметр запроса", request, Map.of());
+    }
+
+    @ExceptionHandler({MaxUploadSizeExceededException.class, MissingServletRequestPartException.class})
+    public ResponseEntity<ApiError> invalidFile(Exception ex, HttpServletRequest request) {
+        return error(HttpStatus.BAD_REQUEST, "INVALID_FILE", "Файл отсутствует или превышает 2 МБ", request, Map.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
