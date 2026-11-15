@@ -1,8 +1,8 @@
 package com.lcorp.backend.controller;
 
 import com.lcorp.backend.dto.AuditDtos;
+import com.lcorp.backend.filter.AuditSearch;
 import com.lcorp.backend.service.AuditReadService;
-import com.lcorp.backend.service.AuditSearch;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

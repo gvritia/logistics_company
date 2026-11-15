@@ -1,4 +1,4 @@
-package com.lcorp.backend.service;
+package com.lcorp.backend.filter;
 
 import org.junit.jupiter.api.Test;
 

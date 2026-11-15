@@ -16,6 +16,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -69,7 +70,7 @@ class BackendHttpSmokeTest {
     }
 
     @Test
-    void bootstrapAdminCanChangeTemporaryPasswordAndOpenAudit() throws Exception {
+    void bootstrapAdminCanChangeTemporaryPasswordAndManageUsers() throws Exception {
         String initialToken = login("smoke-admin@example.org", "temporary-admin-password-2026");
         mvc.perform(get("/api/admin/audit").header("Authorization", "Bearer " + initialToken))
             .andExpect(status().isForbidden());
@@ -83,6 +84,23 @@ class BackendHttpSmokeTest {
         String newToken = login("smoke-admin@example.org", "new-admin-password-2026");
         mvc.perform(get("/api/admin/audit").header("Authorization", "Bearer " + newToken))
             .andExpect(status().isOk());
+
+        String email = "managed-" + UUID.randomUUID() + "@example.org";
+        String createBody = mapper.writeValueAsString(Map.of(
+            "email", email, "displayName", "Smoke User", "roles", List.of("VIEWER")));
+        String createdBody = mvc.perform(post("/api/admin/users").header("Authorization", "Bearer " + newToken)
+                .contentType(MediaType.APPLICATION_JSON).content(createBody))
+            .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        JsonNode created = mapper.readTree(createdBody).required("user");
+        String updateBody = mapper.writeValueAsString(Map.of(
+            "email", email, "displayName", "Updated User", "roles", List.of("EDITOR"),
+            "enabled", true, "version", created.required("version").longValue()));
+        mvc.perform(put("/api/admin/users/{id}", created.required("id").asText())
+                .header("Authorization", "Bearer " + newToken)
+                .contentType(MediaType.APPLICATION_JSON).content(updateBody))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.displayName", is("Updated User")))
+            .andExpect(jsonPath("$.roles[0]", is("EDITOR")));
     }
 
     private String login(String email, String password) throws Exception {

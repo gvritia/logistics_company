@@ -7,6 +7,7 @@ import com.lcorp.backend.dto.CsvDtos;
 import com.lcorp.backend.dto.RequestDtos;
 import com.lcorp.backend.error.ConflictFailure;
 import com.lcorp.backend.error.NotFoundFailure;
+import com.lcorp.backend.filter.RequestSearch;
 import com.lcorp.backend.repository.ClientRepository;
 import com.lcorp.backend.repository.OperatorRepository;
 import com.lcorp.backend.repository.TransportationRequestRepository;

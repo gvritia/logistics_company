@@ -60,7 +60,7 @@ public final class RequestDtos {
                        LocalDateTime plannedDeliveryAt, TransportationRequestStatus status,
                        WeightCategory weightCategory, boolean fragile, boolean archived,
                        Set<String> tags, LocalDateTime createdAt, LocalDateTime updatedAt,
-                       long version) {
+                       long version, boolean permanentDeleteEnabled) {
     }
 
     public record PageResponse(List<Item> items, int page, int size,

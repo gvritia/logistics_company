@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +38,7 @@ class UserAdminServiceTest {
 
     @Test
     void createAndResetGenerateDifferentTemporaryPasswordsAndRevokeSessions() {
+        when(users.saveAndFlush(any(UserAccount.class))).thenAnswer(call -> call.getArgument(0));
         UserAdminDtos.TemporaryPassword created = service.create(
             new UserAdminDtos.Create(" USER@EXAMPLE.ORG ", " User ", Set.of(Role.VIEWER)),
             actorId, "test");

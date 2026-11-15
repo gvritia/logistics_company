@@ -1,4 +1,4 @@
-package com.lcorp.backend.service;
+package com.lcorp.backend.filter;
 
 import com.lcorp.backend.domain.AuditEvent;
 import com.lcorp.backend.domain.UserAccount;

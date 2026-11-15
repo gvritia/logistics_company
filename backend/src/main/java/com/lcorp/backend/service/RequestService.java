@@ -9,6 +9,7 @@ import com.lcorp.backend.domain.TransportationRequestStatus;
 import com.lcorp.backend.dto.RequestDtos;
 import com.lcorp.backend.error.ConflictFailure;
 import com.lcorp.backend.error.NotFoundFailure;
+import com.lcorp.backend.filter.RequestSearch;
 import com.lcorp.backend.repository.AuditEventRepository;
 import com.lcorp.backend.repository.ClientRepository;
 import com.lcorp.backend.repository.DriverRepository;
@@ -55,7 +56,7 @@ public class RequestService {
     public RequestDtos.PageResponse list(RequestSearch search) {
         Page<TransportationRequest> result = requests.findAll(search.specification(),
             PageRequest.of(search.page(), search.size(), search.safeSort()));
-        return new RequestDtos.PageResponse(result.stream().map(RequestService::view).toList(),
+        return new RequestDtos.PageResponse(result.stream().map(this::view).toList(),
             search.page(), search.size(), result.getTotalElements(), result.getTotalPages());
     }
 
@@ -255,7 +256,7 @@ public class RequestService {
         return result;
     }
 
-    private static RequestDtos.Item view(TransportationRequest request) {
+    private RequestDtos.Item view(TransportationRequest request) {
         return new RequestDtos.Item(request.getPublicId(), request.getRequestCode(),
             request.getClient().getId(), request.getClient().getFullName(),
             request.getOperator().getId(), request.getOperator().getFullName(),
@@ -264,6 +265,7 @@ public class RequestService {
             request.getCargoDescription(), request.getWeightKg(), request.getPrice(),
             request.getPickupAddress(), request.getDeliveryAddress(), request.getPlannedDeliveryAt(),
             request.getStatus(), request.getWeightCategory(), request.isFragile(), request.isArchived(),
-            Set.copyOf(request.getTags()), request.getCreatedAt(), request.getUpdatedAt(), request.getVersion());
+            Set.copyOf(request.getTags()), request.getCreatedAt(), request.getUpdatedAt(), request.getVersion(),
+            permanentDeleteEnabled);
     }
 }

@@ -72,9 +72,9 @@ public class UserAdminService {
         String temporaryPassword = temporaryPassword();
         UserAccount user = new UserAccount(UUID.randomUUID(), email, body.displayName().trim(),
             encoder.encode(temporaryPassword), Set.copyOf(body.roles()));
-        users.saveAndFlush(user);
-        record(actorId, "USER_CREATED", user.getId(), correlationId);
-        return new UserAdminDtos.TemporaryPassword(view(user), temporaryPassword);
+        UserAccount saved = users.saveAndFlush(user);
+        record(actorId, "USER_CREATED", saved.getId(), correlationId);
+        return new UserAdminDtos.TemporaryPassword(view(saved), temporaryPassword);
     }
 
     @Transactional

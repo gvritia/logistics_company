@@ -88,7 +88,7 @@
             <label>Клиент <select name="clientId"><option value="">Все клиенты</option></select></label>
             <label>Статус <select name="status"><option value="">Все статусы</option><option value="CREATED">Создана</option><option value="APPROVED">Одобрена</option><option value="IN_TRANSIT">В пути</option><option value="DELIVERED">Доставлена</option><option value="CANCELLED">Отменена</option></select></label>
             <label>Хрупкий груз <select name="fragile"><option value="">Любой</option><option value="true">Да</option><option value="false">Нет</option></select></label>
-            <label>Весовая категория <select name="weightCategory"><option value="">Любая</option><option value="LIGHT">До 1000 кг</option><option value="MEDIUM">1000–4999 кг</option><option value="HEAVY">От 5000 кг</option></select></label>
+            <label>Весовая категория <select name="weightCategory"><option value="">Любая</option><option value="LIGHT">Менее 1000 кг</option><option value="MEDIUM">От 1000 до менее 5000 кг</option><option value="HEAVY">От 5000 кг</option></select></label>
             <label>Тег <input name="tag" maxlength="50" placeholder="Например, срочно"></label>
             <label>Вес, сравнение <select name="weightOp"><option value="">Не задано</option><option value="eq">Равен</option><option value="lt">Меньше</option><option value="lte">Не больше</option><option value="gt">Больше</option><option value="gte">Не меньше</option></select></label>
             <label>Вес, кг <input name="weightValue" type="number" min="0.001" step="0.001" placeholder="0.000"></label>

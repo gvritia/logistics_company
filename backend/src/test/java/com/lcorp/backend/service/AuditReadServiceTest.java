@@ -3,6 +3,7 @@ package com.lcorp.backend.service;
 import com.lcorp.backend.domain.AuditEvent;
 import com.lcorp.backend.domain.Role;
 import com.lcorp.backend.domain.UserAccount;
+import com.lcorp.backend.filter.AuditSearch;
 import com.lcorp.backend.repository.AuditEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;

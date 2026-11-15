@@ -1,4 +1,4 @@
-package com.lcorp.backend.service;
+package com.lcorp.backend.filter;
 
 import com.lcorp.backend.domain.TransportationRequest;
 import com.lcorp.backend.domain.TransportationRequestStatus;

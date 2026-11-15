@@ -153,6 +153,9 @@ async function api(path, options = {}) {
 function showLogin() {
   state.accessToken = null; state.refreshToken = null; state.user = null;
   state.temporaryPassword = null; state.currentRequest = null; state.selected.clear();
+  state.requestPage = 0; state.requestData = null;
+  state.usersPage = 0; state.usersData = null;
+  state.auditPage = 0; state.auditData = null;
   document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
   $('app-screen').hidden = true; $('auth-screen').hidden = false;
   $('login-form').hidden = false; $('register-form').hidden = true;
@@ -160,6 +163,10 @@ function showLogin() {
   $('login-password').value = '';
   $('register-form').reset(); $('required-password-form').reset();
   $('profile-password-form').reset(); $('profile-message').textContent = '';
+  $('request-filters').reset();
+  $('audit-search-form').reset();
+  updateSelection();
+  syncActionStates();
   $('auth-message').textContent = '';
 }
 function setAuth(result) {
@@ -373,7 +380,9 @@ function renderRequestDetail() {
       actions.append(detailAction('В архив',() => requestAction('archive'),'button subtle'));
     } else {
       actions.append(detailAction('Восстановить',() => requestAction('restore')));
-      if (isAdmin()) actions.append(detailAction('Удалить навсегда',() => requestAction('permanent'),'button danger'));
+      if (isAdmin() && item.permanentDeleteEnabled) {
+        actions.append(detailAction('Удалить навсегда',() => requestAction('permanent'),'button danger'));
+      }
     }
   }
   body.append(actions);
