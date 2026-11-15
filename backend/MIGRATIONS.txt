@@ -1,0 +1,68 @@
+КР3: переход схемы PostgreSQL на Flyway
+
+V1__kr1_schema.sql — снимок исходной схемы КР1 для ПУСТОЙ базы.
+V2__backend_schema.sql — расширение схемы для backend КР3.
+V3__auth_version.sql — версия авторизации для отзыва JWT после смены пароля.
+
+Миграции не меняют числовые первичные ключи КР1/КР2. Старые приложения
+продолжают читать и записывать основные поля. Новые UUID и код заявки
+заполняются при миграции существующих строк и при последующих JDBC-вставках.
+Триггеры повышают version при старых JDBC UPDATE и не дублируют повышение,
+которое уже сделал Hibernate.
+
+Flyway запускается из backend/pom.xml. Имя базы задаёт FLYWAY_URL,
+учётные данные — FLYWAY_USER и FLYWAY_PASSWORD. Не кладите пароль в POM,
+историю команд или Git. В этой конфигурации baselineOnMigrate=false:
+существующая непустая БД не получает baseline автоматически.
+
+Пример подготовки окружения в PowerShell из корня репозитория:
+
+  $env:JAVA_HOME = 'C:\Users\user\.jdks\ms-21.0.12.1'
+  $env:FLYWAY_USER = ((Get-Content .env | Where-Object { $_ -match '^POSTGRES_USER=' }) -split '=', 2)[1]
+  $env:FLYWAY_PASSWORD = ((Get-Content .env | Where-Object { $_ -match '^POSTGRES_PASSWORD=' }) -split '=', 2)[1]
+  $env:FLYWAY_URL = 'jdbc:postgresql://127.0.0.1:55432/logistics_company'
+
+В командах ниже используйте mvn из PATH. На текущем учебном ПК Maven также
+доступен в IntelliJ IDEA по пути
+C:\Users\user\AppData\Local\Programs\IntelliJ IDEA\plugins\maven-plugin\lib\maven3\bin\mvn.cmd.
+
+Новая пустая база:
+
+  mvn -f backend/pom.xml -B flyway:migrate
+
+Flyway выполнит V1, V2 и V3. Демонстрационные данные из database/seed/
+при необходимости загружаются отдельно после миграций; сами миграции
+не добавляют учебных клиентов и заявок.
+
+Уже существующая база КР1/КР2:
+
+1. Сделайте дамп и убедитесь, что его можно открыть через pg_restore -l.
+   Не применяйте миграцию к единственной копии важных данных.
+2. Проверьте, что это именно схема КР1: таблицы public.clients,
+   public.drivers, public.operators и public.transportation_requests,
+   а таблицы public.flyway_schema_history ещё нет. Зафиксируйте количество
+   заявок и максимальные числовые ID до миграции.
+3. Укажите FLYWAY_URL этой базы. Выполните:
+
+     mvn -f backend/pom.xml -B flyway:baseline
+     mvn -f backend/pom.xml -B flyway:migrate
+
+   baseline отмечает существующую схему как версию 1 и НЕ повторяет V1.
+   Затем Flyway выполняет V2 и V3. Не используйте baseline на пустой базе.
+4. Проверьте flyway_schema_history: успешные версии 1, 2 и 3, прежнее количество
+   заявок и ID, заполненные public_id/request_code, прежние связи и статусы.
+   Проверьте создание и редактирование заявки через КР2.
+
+Для проверки состояния миграций:
+
+  mvn -f backend/pom.xml -B flyway:info
+  mvn -f backend/pom.xml -B flyway:validate
+
+Не запускайте flyway:clean или docker compose down -v на рабочей базе.
+
+Верификация разработки: V1+V2 выполнены на пустой временной PostgreSQL 17;
+на другой временной базе исходная схема и seed КР1 были baselined как V1,
+затем выполнена V2. В обоих случаях сохранены 10 заявок, все UUID и коды
+уникальны. JDBC-вставка без новых полей и оба способа обновления version
+проверены в транзакции с ROLLBACK. V3 применена при последующем запуске
+Compose КР3. Рабочая база КР2 не мигрирована.

@@ -27,6 +27,7 @@ public final class CsvExportService {
         }
     }
 
+    // Кавычки внутри поля удваиваются, чтобы запятые и переносы не ломали CSV.
     private static String escape(String value) {
         return "\"" + value.replace("\"", "\"\"") + "\"";
     }

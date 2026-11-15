@@ -1,0 +1,275 @@
+КР3: первый запуск backend
+
+Требуются Docker Desktop, JDK 21 и Maven 3.9 для локальной сборки.
+Корневой .env должен содержать POSTGRES_DB, POSTGRES_USER,
+POSTGRES_PASSWORD, JWT_SECRET_BASE64, BOOTSTRAP_ADMIN_EMAIL и
+BOOTSTRAP_ADMIN_PASSWORD. Пример без секретов — в .env.example.
+Для JWT_SECRET_BASE64 нужен случайный ключ (не менее 32 байт). Например,
+в PowerShell его можно получить командой:
+
+  [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+
+Вставьте результат в локальный .env. Задайте уникальный пароль администратора
+длиной от 12 до 72 символов. Файл .env игнорируется Git. При первом запуске
+на пустой базе создаётся только ADMIN с обязательной сменой пароля.
+
+Из корня репозитория в PowerShell:
+
+  powershell -ExecutionPolicy Bypass -File .\backend\start-compose.ps1
+
+Скрипт собирает backend и запускает PostgreSQL 17 и Spring Boot в Docker.
+Compose КР3 использует отдельные проект и том `logistics-kr3`. Он не меняет
+том и данные Compose КР2. В пустой базе Flyway автоматически выполняет V1,
+V2 и V3. Проверка:
+
+  http://localhost:8080/api/system/info
+  http://localhost:8080/actuator/health
+  http://localhost:8080/
+  http://localhost:8080/docs-login.html
+  http://localhost:8080/swagger-ui.html
+  http://localhost:8080/v3/api-docs
+
+PostgreSQL КР3 опубликован только на 127.0.0.1:55433; backend — только на
+127.0.0.1:8080. Порты можно изменить через KR3_POSTGRES_PORT и APP_PORT.
+
+Авторизация доступна через POST /api/auth/login. Тело JSON:
+
+  {"email":"адрес из BOOTSTRAP_ADMIN_EMAIL","password":"пароль из .env"}
+
+Ответ содержит accessToken (JWT, по умолчанию 15 минут), refreshToken
+(по умолчанию 14 дней) и признак passwordChangeRequired. Передайте JWT как
+Authorization: Bearer <accessToken>. Временный пароль меняется через
+POST /api/auth/change-password с полями currentPassword и newPassword.
+После смены все прежние токены недействительны: выполните вход заново.
+POST /api/auth/refresh меняет refresh-токен на новую пару; старый токен
+повторно использовать нельзя. POST /api/auth/logout отзывает refresh-токен.
+GET /api/auth/me возвращает текущего пользователя.
+
+Самостоятельная регистрация: POST /api/auth/register принимает email,
+displayName и password (от 12 до 72 символов). Создаётся активная учётная
+запись только с ролью VIEWER. После регистрации выполните обычный вход.
+Изменить права может только ADMIN через /api/admin/users. Регистрация
+ограничена пятью попытками с одного IP за час. Новые пароли хранятся как
+BCrypt-хеш от SHA-256-представления, чтобы длина кириллических паролей
+считалась в символах. Существующие BCrypt-хеши остаются совместимыми.
+
+Swagger и остальные служебные маршруты доступны только ADMIN после смены
+пароля. Откройте /docs-login.html в браузере, введите ADMIN email и пароль
+из локального .env. При временном пароле форма предложит сменить его.
+После входа короткая HttpOnly cookie откроет Swagger в том же браузере.
+На странице входа также показан access JWT: скопируйте его, откройте Swagger
+по ссылке в новой вкладке, нажмите Authorize и вставьте JWT. В поле Swagger
+достаточно самого токена, без слова Bearer. После истечения JWT войдите снова.
+Основное API принимает JWT только из заголовка Authorization. Пароли и
+refresh-токены не сохраняйте в браузерном localStorage. Для доступа вне
+localhost используйте HTTPS и COOKIE_SECURE=true. Лимиты входа: 20 попыток
+за 5 минут с одного IP и блокировка учётной записи на 15 минут после пяти
+ошибок. Не доверяйте произвольному X-Forwarded-For при публикации за прокси.
+
+Главная страница / открывает web-интерфейс на HTML, CSS и JavaScript. Войдите
+под учётной записью ADMIN из .env; при первом входе смените временный пароль.
+Затем доступны сводка, заявки, фильтры и сортировка, карточка заявки с
+переходами статусов и заметками, клиенты, сотрудники, CSV, массовые операции,
+пользователи, аудит и личный кабинет со сменой пароля. Разделы пользователей и аудита видит только ADMIN;
+редактирование зависит от роли. Access и refresh-токены хранятся только в
+памяти страницы, поэтому после перезагрузки браузера нужен повторный вход.
+Для создания первой заявки в пустой базе сначала добавьте клиента и оператора
+через разделы «Клиенты» и «Сотрудники». Доставщик нужен для начала рейса.
+Создание оператора и доставщика доступно только ADMIN через POST /api/operators
+и POST /api/drivers с полями fullName и phone. Hibernate использует
+ddl-auto: validate.
+
+Заявки: GET /api/requests, GET /api/requests/{id},
+POST /api/requests, PUT /api/requests/{id}, DELETE /api/requests/{id},
+POST /api/requests/{id}/restore. Идентификатор {id} — UUID; числовой id
+остаётся внутренним ключом БД. Запись создаётся в статусе CREATED и без
+доставщика. Редактируется только активная заявка в статусе CREATED.
+PUT передаёт version в JSON. Архив и восстановление передают ожидаемую
+version параметром URL; неверная версия возвращает 409. VIEWER читает,
+EDITOR и ADMIN меняют. GET /api/clients, /api/operators и /api/drivers
+дают данные для формы. Справочники могут быть пустыми в новой БД.
+
+Справочник клиентов: GET /api/clients (необязательный фильтр active=true/false),
+GET /api/clients/{id} доступны авторизованным пользователям. Только ADMIN
+может вызвать POST /api/clients с fullName, phone и/или email, PUT
+/api/clients/{id} с теми же полями и ожидаемой version, POST
+/api/clients/{id}/activate?version=... и /deactivate?version=.... Нужен
+хотя бы один контакт. Клиент с заявками сохраняется в справочнике после
+отключения; для новой заявки его выбрать нельзя. Конфликт версии даёт 409.
+Ключ клиента остаётся числовым для совместимости с КР1/КР2.
+
+DELETE /api/requests/{id}/permanent доступен только ADMIN для архивной
+заявки и по умолчанию отключён. Для разрешения укажите
+PERMANENT_DELETE_ENABLED=true в локальном .env и перезапустите backend.
+Физическое удаление необратимо; для обычной работы используйте архив.
+GET /api/requests принимает q (текст по коду, грузу, адресам и клиенту),
+clientId, status, fragile, weightCategory, tag, archived, weightOp,
+weightValue, page, size и sort. По умолчанию archived=false, page=0,
+size=20, sort=createdAt,desc. Размер страницы — не более 50. sort задаётся
+в форме поле,направление; разрешены createdAt, plannedDeliveryAt, price,
+weightKg и requestCode, направления asc/desc. weightOp вместе с weightValue:
+eq, lt, lte, gt, gte. Значения weightCategory: LIGHT (меньше 1000 кг),
+MEDIUM (от 1000 до 5000 кг), HEAVY (от 5000 кг). Фильтры сочетаются по AND.
+Символы % и _ в текстовом поиске считаются обычными символами.
+
+Пример: GET /api/requests?status=APPROVED&fragile=true&sort=price,desc
+
+Процесс перевозки: POST /api/requests/{id}/approve, /cancel, /unassign,
+/start и /deliver принимают ожидаемую version параметром URL. POST
+/api/requests/{id}/assign принимает JSON {"driverId": 1, "version": 0}.
+Нужна роль EDITOR или ADMIN. Переходы: CREATED → APPROVED/CANCELLED,
+APPROVED → IN_TRANSIT/CANCELLED, IN_TRANSIT → DELIVERED. Назначить можно
+только активного доставщика на свободную APPROVED-заявку; снять его можно
+до начала перевозки. Для START и DELIVER доставщик должен быть назначен.
+Архивную заявку сначала восстановите. Недопустимый переход или устаревшая
+version возвращает 409. Каждое успешное действие записывается в аудит.
+
+Заметки заявки: GET /api/requests/{id}/notes возвращает историю, сначала
+закреплённые, затем новые. POST /api/requests/{id}/notes принимает JSON
+{"body":"Текст заметки","pinned":false}; ответ содержит UUID, автора,
+время создания/изменения и version. PUT /api/requests/{id}/notes/{noteId}
+принимает body, pinned и ожидаемую version. DELETE по этому же адресу
+принимает version параметром URL. Читать может VIEWER, писать — EDITOR и
+ADMIN; EDITOR меняет и удаляет только свои заметки, ADMIN — любые.
+У архивной заявки заметки доступны для чтения, но не для изменений.
+Старая версия даёт 409, отсутствие заявки/заметки — 404.
+
+Массовые операции: POST /api/requests/bulk для EDITOR и ADMIN. Пример:
+
+  {"action":"ADD_TAG","tag":"priority","items":[{"id":"UUID","version":0}]}
+
+За один запрос — от 1 до 100 разных UUID с ожидаемой version у каждого.
+Действия: ARCHIVE, RESTORE, CHANGE_STATUS (поле status: APPROVED,
+CANCELLED, IN_TRANSIT или DELIVERED), ADD_TAG и REMOVE_TAG (поле tag).
+Правила переходов и архива те же, что у одиночных операций. Каждый элемент
+обрабатывается отдельно: успешные изменения сохраняются, даже если другой
+элемент не прошёл проверку. Ответ содержит succeeded, failed, successes
+(id, version, status, archived) и failures (id, code, message). Дубли UUID
+и неверная комбинация action/status/tag дают 400 для всего запроса.
+
+CSV: GET /api/requests/export принимает те же фильтры и sort, что список
+заявок (page/size к экспорту не применяются). Ответ — UTF-8 CSV с BOM и
+заголовками в точном порядке:
+
+  request_code,client_id,operator_id,cargo_description,weight_kg,price,pickup_address,delivery_address,planned_delivery_at,fragile,status,tags,version
+
+Экспорт доступен всем авторизованным ролям. Текстовые значения, похожие на
+формулы таблиц, защищены при экспорте. Теги разделяются |; символы | и \
+внутри тега экранируются обратной косой чертой.
+
+POST /api/requests/import/preview и /apply доступны EDITOR и ADMIN. В обоих
+запросах передайте CSV как multipart-поле file и mode=CREATE_ONLY либо
+mode=UPSERT_BY_CODE. Максимум: 2 МБ и 1000 строк. В preview сервер ничего
+не записывает, а возвращает totalRows, validRows, invalidRows, ошибки с
+номерами строк и sha256. Для apply приложите тот же файл и передайте
+expectedSha256=<sha256 из preview>. Apply повторно проверяет данные и
+возвращает created, updated, skipped и ошибки. Корректные строки
+применяются отдельно; ошибка одной строки не отменяет остальные.
+
+Новые записи имеют пустую колонку version. Для обновления по request_code
+укажите текущую version; после изменения она возрастёт. Импорт создаёт и
+обновляет только активные заявки в статусе CREATED: изменение других
+статусов выполняйте через процесс перевозки. Колонка planned_delivery_at
+использует ISO-формат, например 2026-11-16T14:30:00. client_id и
+operator_id должны существовать, клиент должен быть активен. Заголовки и
+их порядок должны совпадать с экспортом. В Swagger для импорта выберите
+файл в поле file, затем выполните preview и apply отдельными запросами.
+
+Аналитика: GET /api/analytics/summary доступен VIEWER, EDITOR и ADMIN.
+total — все заявки; active и archived — разделение по архиву. Поля fragile,
+nonFragile и averageWeightKg рассчитываются только по активным заявкам;
+средний вес округляется до 2 знаков и равен 0 при отсутствии активных.
+Массив byClient содержит clientId, clientName и count; byStatus — status
+и count; byWeightCategory — category и count. Все группировки считают
+только активные заявки. Статусы и весовые категории с нулевым количеством
+также присутствуют; клиенты без активных заявок не выводятся. Категории:
+LIGHT — вес меньше 1000 кг, MEDIUM — от 1000 до менее 5000 кг,
+HEAVY — от 5000 кг.
+
+Администрирование пользователей доступно только ADMIN:
+
+  GET  /api/admin/users?page=0&size=20&sort=email,asc
+  GET  /api/admin/users/{id}
+  POST /api/admin/users
+  PUT  /api/admin/users/{id}
+  POST /api/admin/users/{id}/reset-password
+
+Для списка допустимы page от 0 до 1000000, size от 1 до 50 и сортировка
+email, displayName или enabled с направлением asc/desc. Ответ списка:
+items, page, size, totalElements, totalPages. В ответах нет хеша пароля.
+
+Создание принимает JSON {"email":"viewer@example.org","displayName":"Имя",
+"roles":["VIEWER"]}. Роли: VIEWER, EDITOR, ADMIN; хотя бы одна обязательна.
+Сервер создаёт случайный временный пароль и возвращает его только один раз в
+поле temporaryPassword ответа POST вместе с объектом user. Сохраните его и
+передайте новому пользователю. До смены временного пароля ему доступны только
+маршруты авторизации. Ответы с временным паролем имеют Cache-Control: no-store.
+
+Изменение принимает JSON {"email":"viewer@example.org",
+"displayName":"Новое имя","enabled":true,"roles":["EDITOR"],"version":0}.
+Сброс пароля принимает {"version":0} и снова возвращает temporaryPassword
+один раз. После смены логина, ролей, активности или сброса пароля прежние
+access JWT и refresh-сессии отзываются. Отключённая учётная запись не может
+войти. Администратор не может отключить себя или снять у себя роль ADMIN.
+Повторный email или устаревшая version дают 409.
+
+Журнал аудита доступен только ADMIN:
+
+  GET /api/admin/audit?q=REQUEST&page=0&size=20&sort=occurredAt,desc
+
+Ответ содержит items, page, size, totalElements, totalPages. У события:
+id, userId, userEmail, eventType, entityType, entityId, occurredAt,
+description и correlationId. У неудачного входа неизвестного пользователя
+userId и userEmail могут быть null. Email пользователя показывается текущий.
+
+Поиск q (до 100 символов) без учёта регистра проверяет тип события,
+тип сущности, описание, email пользователя и correlation ID. Символы % и _
+считаются обычными символами. Размер страницы: от 1 до 50, page — от 0
+до 1000000. Сортировка разрешена по occurredAt, eventType или entityType
+с направлением asc/desc. По умолчанию сначала новые события.
+
+В аудит уже попадают входы и ошибки входа, смена пароля, операции над
+заявками, клиентами, сотрудниками, заметками и пользователями. Пароли и
+токены в событие не записываются.
+
+Существующую БД КР1/КР2 переводите по инструкции MIGRATIONS.txt после
+резервной копии. Автоматический baseline отключён. Для остановки без удаления
+данных:
+
+  powershell -ExecutionPolicy Bypass -File .\backend\stop-compose.ps1
+
+Команда docker compose down без -v сохраняет том PostgreSQL.
+
+Проверка перед защитой:
+
+  mvn -f backend/pom.xml test
+
+Если команда mvn недоступна в PowerShell, запустите фазу test для backend
+через панель Maven в IntelliJ IDEA.
+Выполняются модульные тесты и интеграционный smoke-тест запуска Spring.
+Последний использует отдельную временную H2-базу: рабочие данные PostgreSQL
+не меняются; переопределение схемы действует только внутри теста, а обычный
+запуск сохраняет `ddl-auto: validate`. Он проверяет публичный healthcheck,
+закрытый API, регистрацию
+с правом просмотра, запрет административных действий и обязательную смену
+временного пароля администратора. После запуска Docker дополнительно откройте
+/, /actuator/health, /swagger-ui.html и проверьте сценарии в web-интерфейсе.
+Состояние миграций смотрите по инструкции MIGRATIONS.txt.
+
+Полный прогон перед защитой (15.11.2026): Compose поднял здоровые backend и
+PostgreSQL; Flyway применил V1, V2, V3, Hibernate проверил схему. На работающем
+сервисе проверены публичный экран и healthcheck, отказ без авторизации,
+вход ADMIN, доступ к Swagger и OpenAPI по JWT и браузерной cookie, создание
+клиента, оператора, доставщика и заявки. Проверены поиск с фильтрами,
+массовое добавление тега, заметка, переходы заявки до доставки, архив и
+восстановление, предварительный просмотр и применение CSV, экспорт CSV,
+аналитика, поиск в аудите и список пользователей. Тестовые записи удалены;
+после прогона в отдельной БД КР3 осталось 0 заявок и 0 клиентов.
+
+Для показа преподавателю откройте /, зарегистрируйте пользователя и проверьте,
+что он видит данные без права изменения. Затем войдите как ADMIN и покажите
+изменение роли в разделе «Пользователи», создание справочников и заявки,
+её фильтрацию, заметку, массовое действие, изменение статуса, архив,
+CSV и аналитику. Журнал аудита покажет совершённые действия. Для Swagger
+откройте /docs-login.html, войдите как ADMIN и перейдите по ссылке на страницу
+API. Перезагрузка страницы основного интерфейса требует повторного входа.

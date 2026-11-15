@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: logistics-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:55433/logistics_company}
+    username: ${SPRING_DATASOURCE_USERNAME:logistics_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:change_me}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  jwt:
+    secret-base64: ${JWT_SECRET_BASE64}
+    issuer: ${JWT_ISSUER:logistics-company}
+    access-minutes: ${ACCESS_TOKEN_MINUTES:15}
+    refresh-days: ${REFRESH_TOKEN_DAYS:14}
+  bootstrap:
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    name: ${BOOTSTRAP_ADMIN_NAME:System Administrator}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  auth:
+    max-failed-attempts: 5
+    lock-minutes: 15
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+  requests:
+    permanent-delete-enabled: ${PERMANENT_DELETE_ENABLED:false}

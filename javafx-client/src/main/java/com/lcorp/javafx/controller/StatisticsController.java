@@ -13,6 +13,7 @@ import java.math.RoundingMode;
 import java.util.List;
 
 public final class StatisticsController {
+    // @FXML связывает подписи с fx:id в statistics.fxml
     @FXML private Label countLabel;
     @FXML private Label deliveredLabel;
     @FXML private Label totalPriceLabel;
@@ -20,16 +21,20 @@ public final class StatisticsController {
     @FXML private Label totalWeightLabel;
     @FXML private TextArea breakdownArea;
 
+    // Собирает итоги по статусам и заполняет поля окна статистики
     public void setContext(DesktopContext context) {
         List<RequestStatusStatistics> data = context.queries().getStatisticsByStatus();
+        // Поток проходит по строкам статистики и суммирует requestCount; :: — ссылка на метод.
         long count = data.stream().mapToLong(RequestStatusStatistics::requestCount).sum();
         long delivered = data.stream()
             .filter(s -> s.status() == TransportationRequestStatus.DELIVERED)
             .mapToLong(RequestStatusStatistics::requestCount).sum();
+        // reduce начинает с ZERO и складывает суммы каждой строки, сохраняя точность BigDecimal.
         BigDecimal totalPrice = data.stream().map(RequestStatusStatistics::totalPrice)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalWeight = data.stream().map(RequestStatusStatistics::totalWeightKg)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // При пустой базе избегаем деления на ноль
         BigDecimal averagePrice = count == 0 ? BigDecimal.ZERO
             : totalPrice.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
         countLabel.setText(String.valueOf(count));

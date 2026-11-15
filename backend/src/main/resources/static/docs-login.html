@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход в документацию API</title>
+  <style>
+    body { font: 16px system-ui, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f3f6fa; color: #17212f; }
+    main { width: min(420px, calc(100% - 40px)); padding: 30px; background: white; border-radius: 12px; box-shadow: 0 8px 30px #17212f17; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    p { line-height: 1.5; }
+    label { display: block; margin-top: 18px; font-weight: 600; }
+    input { box-sizing: border-box; display: block; width: 100%; margin-top: 6px; padding: 11px; border: 1px solid #9caaba; border-radius: 6px; font: inherit; }
+    button { width: 100%; margin-top: 22px; padding: 12px; border: 0; border-radius: 6px; background: #155e91; color: white; font: inherit; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    textarea { box-sizing: border-box; width: 100%; min-height: 100px; margin-top: 8px; padding: 10px; font: 12px ui-monospace, monospace; overflow-wrap: anywhere; }
+    a { color: #155e91; }
+    #message { min-height: 24px; color: #a02525; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Вход в документацию API</h1>
+  <p>Войдите как администратор, чтобы открыть Swagger.</p>
+  <form id="login">
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="password">Пароль</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Войти</button>
+  </form>
+  <form id="change" hidden>
+    <p>Временный пароль нужно сменить перед открытием Swagger.</p>
+    <label for="new-password">Новый пароль (от 12 до 72 символов)</label>
+    <input id="new-password" type="password" autocomplete="new-password" minlength="12" required>
+    <label for="confirm-password">Повторите пароль</label>
+    <input id="confirm-password" type="password" autocomplete="new-password" minlength="12" required>
+    <button type="submit">Сменить пароль и открыть Swagger</button>
+  </form>
+  <section id="token-panel" hidden>
+    <p>Скопируйте JWT и вставьте его в кнопку <strong>Authorize</strong> в Swagger. Токен действует примерно 15 минут.</p>
+    <label for="access-token">Access JWT</label>
+    <textarea id="access-token" readonly></textarea>
+    <button id="copy-token" type="button">Скопировать токен</button>
+    <p><a href="/swagger-ui.html" target="_blank" rel="noopener">Открыть Swagger в новой вкладке</a></p>
+  </section>
+  <p id="message" role="alert" aria-live="polite"></p>
+</main>
+<script>
+  const loginForm = document.getElementById('login');
+  const changeForm = document.getElementById('change');
+  const message = document.getElementById('message');
+  let temporaryToken = null;
+  let temporaryPassword = null;
+
+  function showToken(token) {
+    document.getElementById('access-token').value = token;
+    document.getElementById('password').value = '';
+    changeForm.hidden = true;
+    document.getElementById('token-panel').hidden = false;
+  }
+
+  document.getElementById('copy-token').addEventListener('click', async () => {
+    const field = document.getElementById('access-token');
+    try {
+      await navigator.clipboard.writeText(field.value);
+    } catch {
+      field.select();
+      message.textContent = 'Скопируйте выделенный токен вручную';
+    }
+  });
+
+  async function post(path, body, token) {
+    const response = await fetch(path, {
+      method: 'POST', credentials: 'same-origin', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Ошибка HTTP ${response.status}`);
+    }
+    return response.status === 204 ? null : response.json();
+  }
+
+  loginForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    message.textContent = '';
+    const button = loginForm.querySelector('button');
+    button.disabled = true;
+    try {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const result = await post('/api/auth/login', { email, password });
+      if (!result.user.roles.includes('ADMIN')) throw new Error('Доступ к Swagger есть только у администратора');
+      if (result.user.passwordChangeRequired) {
+        temporaryToken = result.accessToken;
+        temporaryPassword = password;
+        document.getElementById('password').value = '';
+        loginForm.hidden = true;
+        changeForm.hidden = false;
+      } else {
+        showToken(result.accessToken);
+      }
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  changeForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    message.textContent = '';
+    const button = changeForm.querySelector('button');
+    button.disabled = true;
+    try {
+      const newPassword = document.getElementById('new-password').value;
+      if (newPassword !== document.getElementById('confirm-password').value) {
+        throw new Error('Пароли не совпадают');
+      }
+      await post('/api/auth/change-password',
+        { currentPassword: temporaryPassword, newPassword }, temporaryToken);
+      temporaryToken = null;
+      temporaryPassword = null;
+      const result = await post('/api/auth/login',
+        { email: document.getElementById('email').value.trim(), password: newPassword });
+      showToken(result.accessToken);
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
