@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-// В БД хранится хеш refresh-токена, а не исходное значение токена.
+// В БД хранится хеш refresh-токена, а не исходное значение токена
 @Entity
 @Table(name = "refresh_sessions", schema = "public")
 public class RefreshSession {

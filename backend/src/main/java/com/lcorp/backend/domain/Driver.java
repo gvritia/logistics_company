@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-// Доставщик остаётся отдельной сущностью существующей схемы.
 @Entity
 @Table(name = "drivers", schema = "public")
 public class Driver {

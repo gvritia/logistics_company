@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
-// Справочник клиентов использует прежний числовой ключ, знакомый КР1 и КР2.
 @Entity
 @Table(name = "clients", schema = "public")
 public class Client {

@@ -2,7 +2,6 @@ package com.lcorp.backend.domain;
 
 import java.math.BigDecimal;
 
-// Категория рассчитывается из веса и не хранится в отдельной колонке
 public enum WeightCategory {
     LIGHT,
     MEDIUM,

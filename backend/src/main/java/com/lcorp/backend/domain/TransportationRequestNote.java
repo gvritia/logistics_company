@@ -14,7 +14,7 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
 
-// История заметок остаётся связанной с заявкой и автором.
+
 @Entity
 @Table(name = "transportation_request_notes", schema = "public")
 public class TransportationRequestNote {

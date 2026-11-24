@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-// Оператор КР1/КР2 пока не приравнивается автоматически к учётной записи.
 @Entity
 @Table(name = "operators", schema = "public")
 public class Operator {

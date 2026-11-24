@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-// У события входа user может быть null: неуспешный логин не определяет пользователя.
+
 @Entity
 @Table(name = "audit_events", schema = "public")
 public class AuditEvent {
