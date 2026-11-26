@@ -93,8 +93,8 @@ function syncActionStates() {
 }
 function validatePassword(password) {
   const length = Array.from(password).length;
-  if (length > 72 || !password.trim()) {
-    throw new Error('Пароль должен содержать от 1 до 72 символов.');
+  if (length < 12 || length > 72 || !password.trim()) {
+    throw new Error('Пароль должен содержать от 12 до 72 символов.');
   }
 }
 function queryString(values) {

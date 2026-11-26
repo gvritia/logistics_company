@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// Небольшой REST маршрут подтверждает, что web-слой подключён к приложению
 @RestController
 @RequestMapping("/api/system")
 public class SystemController {

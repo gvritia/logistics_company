@@ -46,14 +46,14 @@ class AuthSecurityTest {
     }
 
     @Test
-    void acceptsPasswordsFromOneToSeventyTwoCharacters() {
+    void acceptsPasswordsFromTwelveToSeventyTwoCharacters() {
         PasswordPolicy policy = new PasswordPolicy();
-        policy.validate("short");
-        policy.validate("🔒".repeat(11));
         policy.validate("0123456789ab");
         policy.validate("a".repeat(72));
         policy.validate("я".repeat(72));
         policy.validate("🔒".repeat(72));
+        assertThrows(IllegalArgumentException.class, () -> policy.validate("short"));
+        assertThrows(IllegalArgumentException.class, () -> policy.validate("🔒".repeat(11)));
         assertThrows(IllegalArgumentException.class, () -> policy.validate(" "));
         assertThrows(IllegalArgumentException.class, () -> policy.validate("a".repeat(73)));
         assertThrows(IllegalArgumentException.class, () -> policy.validate("я".repeat(73)));

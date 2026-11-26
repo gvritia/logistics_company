@@ -10,9 +10,9 @@ BOOTSTRAP_ADMIN_PASSWORD. Пример без секретов — в .env.examp
   [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 
 Set JWT_SECRET_BASE64 in the root .env to the generated value. Git ignores this file.
-Set BOOTSTRAP_ADMIN_PASSWORD to a nonblank temporary password of up to 72 characters.
+Set BOOTSTRAP_ADMIN_PASSWORD to a temporary password of 12 to 72 characters.
 An empty database starts with one ADMIN account. On first login, choose a different
-nonblank password of up to 72 characters.
+password of 12 to 72 characters.
 
 From the repository root, start the services using the root .env:
 
@@ -54,7 +54,7 @@ GET /api/auth/me возвращает текущего пользователя.
 When email authentication is enabled, enter an email on the main page and verify it
 with the code from the inbox. New users can choose a password and receive the VIEWER
 role. With email authentication disabled, POST /api/auth/register accepts an email,
-a display name (displayName) and a nonblank password of up to 72 characters.
+a display name (displayName) and a password of 12 to 72 characters.
 Изменить права может только ADMIN через /api/admin/users. Регистрация
 ограничена пятью попытками с одного IP за час. Новые пароли хранятся как
 BCrypt-хеш от SHA-256-представления, чтобы длина кириллических паролей

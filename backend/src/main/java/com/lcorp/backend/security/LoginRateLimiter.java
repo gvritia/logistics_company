@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.concurrent.ConcurrentHashMap;
 
-
+// Ограничение по реальному адресу соединения; X-Forwarded-For не принимается на веру
 @Component
 public class LoginRateLimiter {
     private static final int MAX_ATTEMPTS = 20;

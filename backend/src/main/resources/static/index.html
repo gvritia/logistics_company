@@ -41,10 +41,10 @@
                 </label>
                 <div id="email-signup-password-fields" hidden>
                     <label>Новый пароль
-                        <input id="email-signup-password" type="password" autocomplete="new-password" required disabled>
+                        <input id="email-signup-password" type="password" autocomplete="new-password" minlength="12" required disabled>
                     </label>
                     <label>Повторите пароль
-                        <input id="email-signup-confirm-password" type="password" autocomplete="new-password" required disabled>
+                        <input id="email-signup-confirm-password" type="password" autocomplete="new-password" minlength="12" required disabled>
                     </label>
                 </div>
                 <label id="email-login-code-label" hidden>Код из письма
@@ -65,21 +65,21 @@
                 <label>Email <input id="register-email" type="email" autocomplete="email" maxlength="254"
                                     required></label>
                 <label>Пароль <input id="register-password" type="password" autocomplete="new-password"
-                                     required></label>
+                                     minlength="12" required></label>
                 <label>Повторите пароль <input id="register-confirm-password" type="password"
-                                               autocomplete="new-password" required></label>
-                <p class="muted password-hint">Пароль: от 1 до 72 символов.</p>
+                                               autocomplete="new-password" minlength="12" required></label>
+                <p class="muted password-hint">Пароль: от 12 до 72 символов.</p>
                 <button class="button primary full" type="submit">Создать учётную запись</button>
                 <button id="back-to-login" class="button subtle full" type="button">Вернуться ко входу</button>
             </form>
             <form id="required-password-form" hidden>
                 <h2>Смените временный пароль</h2>
-                <p class="muted">Пароль должен содержать от 1 до 72 символов. После смены панель откроется
+                <p class="muted">Пароль должен содержать от 12 до 72 символов. После смены панель откроется
                     автоматически.</p>
                 <label>Новый пароль <input id="required-new-password" type="password" autocomplete="new-password"
-                                           required></label>
+                                           minlength="12" required></label>
                 <label>Повторите пароль <input id="required-confirm-password" type="password"
-                                               autocomplete="new-password" required></label>
+                                               autocomplete="new-password" minlength="12" required></label>
                 <button class="button primary full" type="submit">Сохранить пароль</button>
                 <button id="other-account" class="button subtle full" type="button">Войти под другим пользователем
                 </button>
@@ -382,14 +382,14 @@
                     <div class="profile-line"><span>Доступ</span><strong id="profile-roles">—</strong></div>
                 </article>
                 <form id="profile-password-form" class="card profile-card"><h3>Сменить пароль</h3>
-                    <p class="muted">Новый пароль должен содержать от 1 до 72 символов. После смены войдите снова.</p>
+                    <p class="muted">Новый пароль должен содержать от 12 до 72 символов. После смены войдите снова.</p>
                     <label>Текущий пароль <input id="profile-current-password" type="password"
                                                  autocomplete="current-password" required></label><label>Новый пароль
                         <input id="profile-new-password" type="password" autocomplete="new-password"
-                               required></label><label>Повторите новый пароль <input id="profile-confirm-password"
+                               minlength="12" required></label><label>Повторите новый пароль <input id="profile-confirm-password"
                                                                                      type="password"
                                                                                      autocomplete="new-password"
-                                                                                     required></label>
+                                                                                     minlength="12" required></label>
                     <p id="profile-message" class="form-message" role="alert"></p>
                     <button class="button primary" type="submit">Сменить пароль</button>
                 </form>
