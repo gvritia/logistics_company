@@ -16,7 +16,10 @@ public final class ConsoleApp {
     private final ApplicationContext context;
     private final ConsoleReader reader;
 
-    public ConsoleApp(ApplicationContext context, ConsoleReader reader) {
+    public ConsoleApp(
+        ApplicationContext context,
+        ConsoleReader reader
+    ) {
         this.context = Objects.requireNonNull(context);
         this.reader = Objects.requireNonNull(reader);
     }

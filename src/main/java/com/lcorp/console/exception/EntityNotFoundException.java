@@ -8,7 +8,10 @@ public class EntityNotFoundException extends LogisticsException {
 
     private final Long entityId;
 
-    public EntityNotFoundException(String entityName, Long entityId) {
+    public EntityNotFoundException(
+        String entityName,
+        Long entityId
+    ) {
         super(entityName + " с ID " + entityId + " не найден(а)");
         this.entityName = entityName;
         this.entityId = entityId;

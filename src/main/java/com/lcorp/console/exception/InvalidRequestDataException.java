@@ -8,7 +8,10 @@ public class InvalidRequestDataException extends LogisticsException {
 
     private final String reason;
 
-    public InvalidRequestDataException(String fieldName, String reason) {
+    public InvalidRequestDataException(
+        String fieldName,
+        String reason
+    ) {
         super("Некорректные данные заявки: поле '" + fieldName + "' — " + reason);
         this.fieldName = fieldName;
         this.reason = reason;

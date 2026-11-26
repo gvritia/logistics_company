@@ -29,7 +29,9 @@ import java.math.BigDecimal;
 public class CsvController {
     private final CsvRequestService csv;
 
-    public CsvController(CsvRequestService csv) { this.csv = csv; }
+    public CsvController(CsvRequestService csv) {
+        this.csv = csv;
+    }
 
     @PostMapping(value = "/import/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")
@@ -50,15 +52,15 @@ public class CsvController {
 
     @GetMapping(value = "/export", produces = "text/csv")
     public ResponseEntity<StreamingResponseBody> export(@RequestParam(required = false) String q,
-                                                         @RequestParam(required = false) Long clientId,
-                                                         @RequestParam(required = false) TransportationRequestStatus status,
-                                                         @RequestParam(required = false) Boolean fragile,
-                                                         @RequestParam(required = false) WeightCategory weightCategory,
-                                                         @RequestParam(required = false) String tag,
-                                                         @RequestParam(defaultValue = "false") boolean archived,
-                                                         @RequestParam(required = false) String weightOp,
-                                                         @RequestParam(required = false) BigDecimal weightValue,
-                                                         @RequestParam(defaultValue = "createdAt,desc") String sort) {
+                                                        @RequestParam(required = false) Long clientId,
+                                                        @RequestParam(required = false) TransportationRequestStatus status,
+                                                        @RequestParam(required = false) Boolean fragile,
+                                                        @RequestParam(required = false) WeightCategory weightCategory,
+                                                        @RequestParam(required = false) String tag,
+                                                        @RequestParam(defaultValue = "false") boolean archived,
+                                                        @RequestParam(required = false) String weightOp,
+                                                        @RequestParam(required = false) BigDecimal weightValue,
+                                                        @RequestParam(defaultValue = "createdAt,desc") String sort) {
         RequestSearch search = new RequestSearch(q, clientId, status, fragile, weightCategory,
             tag, archived, weightOp, weightValue, 0, 50, sort);
         StreamingResponseBody body = output -> csv.export(search, output);

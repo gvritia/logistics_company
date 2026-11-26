@@ -31,7 +31,7 @@ public class ReferenceAdminService {
 
     @Transactional
     public ReferenceDtos.Person createOperator(ReferenceDtos.CreatePerson body, UUID actorId,
-                                                String correlationId) {
+                                               String correlationId) {
         Operator operator = operators.saveAndFlush(new Operator(body.fullName().trim(), phone(body.phone())));
         record(actorId, "OPERATOR_CREATED", operator.getId(), correlationId);
         return new ReferenceDtos.Person(operator.getId(), operator.getFullName());

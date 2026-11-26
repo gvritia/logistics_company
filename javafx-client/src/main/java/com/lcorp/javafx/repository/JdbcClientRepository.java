@@ -5,16 +5,12 @@ import com.lcorp.console.exception.DataAccessException;
 import com.lcorp.console.model.Client;
 import com.lcorp.console.repository.ClientRepository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// JDBC-реализация интерфейса клиентов, который ожидают сервисы КР1
+
 public final class JdbcClientRepository implements ClientRepository {
     private final DatabaseConnectionFactory database;
 
@@ -24,6 +20,8 @@ public final class JdbcClientRepository implements ClientRepository {
 
     @Override
     public Client create(Client client) {
+
+
         try (Connection connection = database.openConnection();
              PreparedStatement statement = connection.prepareStatement(
                  "INSERT INTO clients (full_name, phone, email) VALUES (?, ?, ?)",
@@ -38,6 +36,7 @@ public final class JdbcClientRepository implements ClientRepository {
             throw failure("создать клиента", e);
         }
     }
+
 
     @Override
     public Optional<Client> findById(Long id) {
@@ -73,8 +72,11 @@ public final class JdbcClientRepository implements ClientRepository {
         }
     }
 
-    // Подставляет значения отдельно от SQL и собирает модели из ResultSet.
-    private List<Client> select(String suffix, Object... args) {
+
+    private List<Client> select(
+        String suffix,
+        Object... args
+    ) {
         try (Connection connection = database.openConnection();
              PreparedStatement statement = connection.prepareStatement(
                  "SELECT id, full_name, phone, email FROM clients " + suffix)) {
@@ -92,13 +94,19 @@ public final class JdbcClientRepository implements ClientRepository {
         }
     }
 
-    private void bind(PreparedStatement statement, Client client) throws SQLException {
+    private void bind(
+        PreparedStatement statement,
+        Client client
+    ) throws SQLException {
         statement.setString(1, client.getFullName());
         statement.setString(2, client.getPhone());
         statement.setString(3, client.getEmail());
     }
 
-    private DataAccessException failure(String action, SQLException cause) {
+    private DataAccessException failure(
+        String action,
+        SQLException cause
+    ) {
         return new DataAccessException("Не удалось " + action + " в базе данных", cause);
     }
 }

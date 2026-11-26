@@ -65,7 +65,9 @@ public class JwtService {
         return new ParsedToken(UUID.fromString(claims.getSubject()), authVersion.longValue());
     }
 
-    public int refreshDays() { return refreshDays; }
+    public int refreshDays() {
+        return refreshDays;
+    }
 
     public record IssuedToken(String value, Instant expiresAt) {
     }

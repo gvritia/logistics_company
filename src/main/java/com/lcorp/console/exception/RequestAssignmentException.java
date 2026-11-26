@@ -8,9 +8,13 @@ public class RequestAssignmentException extends LogisticsException {
     private final Long driverId;
     private final String reason;
 
-    public RequestAssignmentException(Long requestId, Long driverId, String reason) {
+    public RequestAssignmentException(
+        Long requestId,
+        Long driverId,
+        String reason
+    ) {
         super("Невозможно назначить доставщика с ID " + driverId
-                + " на заявку с ID " + requestId + ": " + reason);
+            + " на заявку с ID " + requestId + ": " + reason);
         this.requestId = requestId;
         this.driverId = driverId;
         this.reason = reason;

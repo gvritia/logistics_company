@@ -15,7 +15,7 @@ public class TransportationRequest {
     private Long id;
 
 
-    // Сохраняем ID связей: внешние ключи уже определены в SQL-схеме
+
     @Column(name = "client_id", nullable = false)
     private Long clientId;
 
@@ -43,16 +43,16 @@ public class TransportationRequest {
     @Column(name = "planned_delivery_at", nullable = false)
     private LocalDateTime plannedDeliveryAt;
 
-    // STRING хранит название (APPROVED), а не порядковый номер enum
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
-    private TransportationRequestStatus status;  // enum
+    private TransportationRequestStatus status;
     @Column(name = "pickup_address", length = 300, nullable = false)
     private String pickupAddress;
     @Column(name = "delivery_address", length = 300, nullable = false)
     private String deliveryAddress;
 
-    // Конструктор для загрузки существующей заявки через Hibernate
+
     protected TransportationRequest() {
     }
 

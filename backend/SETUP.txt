@@ -9,18 +9,24 @@ BOOTSTRAP_ADMIN_PASSWORD. Пример без секретов — в .env.examp
 
   [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 
-Вставьте результат в локальный .env. Задайте уникальный пароль администратора
-длиной от 12 до 72 символов. Файл .env игнорируется Git. При первом запуске
-на пустой базе создаётся только ADMIN с обязательной сменой пароля.
+Set JWT_SECRET_BASE64 in the root .env to the generated value. Git ignores this file.
+Set BOOTSTRAP_ADMIN_PASSWORD to a nonblank temporary password of up to 72 characters.
+An empty database starts with one ADMIN account. On first login, choose a different
+nonblank password of up to 72 characters.
 
-Из корня репозитория в PowerShell:
+From the repository root, start the services using the root .env:
 
-  powershell -ExecutionPolicy Bypass -File .\backend\start-compose.ps1
+  docker compose up -d --build --wait
 
-Скрипт собирает backend и запускает PostgreSQL 17 и Spring Boot в Docker.
-Compose КР3 использует отдельные проект и том `logistics-kr3`. Он не меняет
-том и данные Compose КР2. В пустой базе Flyway автоматически выполняет V1,
-V2 и V3. Проверка:
+Compose builds the backend, starts PostgreSQL 17 and Mailpit, and waits for Spring Boot
+to become healthy. Flyway applies migrations through V5. The KR3 database uses a
+separate Docker volume from KR2.
+
+Without external SMTP settings, email codes appear in Mailpit at http://localhost:8025.
+Set SMTP_FROM to an empty value to disable email authentication. To send to external
+mailboxes, configure the SMTP settings listed in .env.example.
+
+Service URLs:
 
   http://localhost:8080/api/system/info
   http://localhost:8080/actuator/health
@@ -45,9 +51,10 @@ POST /api/auth/refresh меняет refresh-токен на новую пару;
 повторно использовать нельзя. POST /api/auth/logout отзывает refresh-токен.
 GET /api/auth/me возвращает текущего пользователя.
 
-Самостоятельная регистрация: POST /api/auth/register принимает email,
-displayName и password (от 12 до 72 символов). Создаётся активная учётная
-запись только с ролью VIEWER. После регистрации выполните обычный вход.
+When email authentication is enabled, enter an email on the main page and verify it
+with the code from the inbox. New users can choose a password and receive the VIEWER
+role. With email authentication disabled, POST /api/auth/register accepts an email,
+a display name (displayName) and a nonblank password of up to 72 characters.
 Изменить права может только ADMIN через /api/admin/users. Регистрация
 ограничена пятью попытками с одного IP за час. Новые пароли хранятся как
 BCrypt-хеш от SHA-256-представления, чтобы длина кириллических паролей

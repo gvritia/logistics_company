@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class BulkController {
     private final BulkService bulk;
 
-    public BulkController(BulkService bulk) { this.bulk = bulk; }
+    public BulkController(BulkService bulk) {
+        this.bulk = bulk;
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")

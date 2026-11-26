@@ -10,7 +10,7 @@ import com.lcorp.console.util.PhoneValidator;
 import java.util.List;
 import java.util.Objects;
 
-// Управление данными доставщиков и их пользовательскими сценариями
+
 public class DriverService {
 
     private final DriverRepository driverRepository;
@@ -24,7 +24,7 @@ public class DriverService {
         this.requestService = Objects.requireNonNull(requestService);
     }
 
-    // Проверяет и сохраняет нового активного доставщика
+
     public Driver createDriver(Driver driver) {
         validateNewDriver(driver);
         return driverRepository.create(driver);
@@ -42,7 +42,7 @@ public class DriverService {
         return driverRepository.findActive();
     }
 
-    // Обновляет ФИО, телефон и признак активности существующего доставщика
+
     public Driver updateDriver(Driver driver) {
         validateExistingDriver(driver);
         requireDriver(driver.getId());
@@ -53,7 +53,7 @@ public class DriverService {
         return driver;
     }
 
-    // Делает доставщика доступным для новых назначений
+
     public Driver activate(Long driverId) {
         Driver driver = requireDriver(driverId);
         driver.setActive(true);
@@ -61,7 +61,7 @@ public class DriverService {
         return driver;
     }
 
-    // Запрещает новые назначения, сохраняя доставщика и историю его заявок
+
     public Driver deactivate(Long driverId) {
         Driver driver = requireDriver(driverId);
         driver.setActive(false);
@@ -70,7 +70,7 @@ public class DriverService {
     }
 
 
-    // Удаляет доставщика только при отсутствии связанных заявок
+
     public void deleteDriver(Long driverId) {
         Driver driver = requireDriver(driverId);
         if (!requestService.findByDriverId(driver.getId()).isEmpty()) {
@@ -84,40 +84,52 @@ public class DriverService {
         }
     }
 
-    // Возвращает свободные заявки, которые активный доставщик может взять
+
     public List<TransportationRequest> findAvailableRequests(Long driverId) {
         requireActiveDriver(driverId);
         return requestService.findAvailable();
     }
 
-    // Возвращает заявки, назначенные выбранному доставщику
+
     public List<TransportationRequest> findAssignedRequests(Long driverId) {
         requireDriver(driverId);
         return requestService.findByDriverId(driverId);
     }
 
-    //Делегирует принятие свободной заявки TransportationRequestService
-    public TransportationRequest takeRequest(Long driverId, Long requestId) {
+
+    public TransportationRequest takeRequest(
+        Long driverId,
+        Long requestId
+    ) {
         requireActiveDriver(driverId);
         return requestService.takeRequest(requestId, driverId);
     }
 
-    // Делегирует отказ от назначения TransportationRequestService.
-    public TransportationRequest rejectAssignment(Long driverId, Long requestId) {
+
+    public TransportationRequest rejectAssignment(
+        Long driverId,
+        Long requestId
+    ) {
         requireDriver(driverId);
         return requestService.rejectAssignment(requestId, driverId);
     }
 
-    // Делегирует начало перевозки TransportationRequestService.
-    public TransportationRequest startTransportation(Long driverId, Long requestId) {
+
+    public TransportationRequest startTransportation(
+        Long driverId,
+        Long requestId
+    ) {
         requireActiveDriver(driverId);
         return requestService.startTransportation(requestId, driverId);
     }
 
-    // Делегирует завершение перевозки TransportationRequestService.
-    public TransportationRequest completeDelivery(Long driverId, Long requestId) {
-        // Деактивация запрещает новые назначения, но не мешает завершить
-        // перевозку, которая уже была начата этим доставщиком.
+
+    public TransportationRequest completeDelivery(
+        Long driverId,
+        Long requestId
+    ) {
+
+
         requireDriver(driverId);
         return requestService.completeDelivery(requestId, driverId);
     }
@@ -162,7 +174,7 @@ public class DriverService {
         if (!driver.isActive()) {
             throw new DriverUnavailableException(driverId, "доставщик неактивен");
         }
-        // return driver;
+
     }
 
     private void updateExisting(Driver driver) {

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-// Выполняет только чтение через JDBC. CRUD этого класса не касается.
+
 public class JdbcTransportationRequestQueryRepository
     implements TransportationRequestQueryRepository {
 
@@ -96,8 +96,8 @@ public class JdbcTransportationRequestQueryRepository
             criteria.getPlannedTo()
         );
 
-        // Имена столбцов нельзя передать параметром PreparedStatement
-        // Поэтому выбираем их только из закрытого enum через switch
+
+
         sql.append(" ORDER BY ")
             .append(toOrderByColumn(criteria.getSortField()))
             .append(' ')

@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-// В БД хранится хеш refresh-токена, а не исходное значение токена
 @Entity
 @Table(name = "refresh_sessions", schema = "public")
 public class RefreshSession {
@@ -46,11 +45,31 @@ public class RefreshSession {
         this.expiresAt = expiresAt;
     }
 
-    public UUID getId() { return id; }
-    public UserAccount getUser() { return user; }
-    public String getTokenHash() { return tokenHash; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getExpiresAt() { return expiresAt; }
-    public Instant getRevokedAt() { return revokedAt; }
-    public void setRevokedAt(Instant revokedAt) { this.revokedAt = revokedAt; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UserAccount getUser() {
+        return user;
+    }
+
+    public String getTokenHash() {
+        return tokenHash;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+
+    public Instant getRevokedAt() {
+        return revokedAt;
+    }
+
+    public void setRevokedAt(Instant revokedAt) {
+        this.revokedAt = revokedAt;
+    }
 }

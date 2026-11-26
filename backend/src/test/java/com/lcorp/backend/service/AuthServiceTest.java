@@ -37,7 +37,7 @@ class AuthServiceTest {
         String secret = Base64.getEncoder().encodeToString(new byte[32]);
         AuthService auth = new AuthService(users, mock(RefreshSessionRepository.class),
             mock(AuditEventRepository.class), encoder, new PasswordPolicy(),
-            new JwtService(secret, "test", 15, 14), 5, 15);
+            new JwtService(secret, "test", 15, 14), mock(EmailLoginService.class), 5, 15);
 
         var created = auth.register(" Viewer@Example.org ", "Viewer", "пароль-для-входа", "test");
         ArgumentCaptor<UserAccount> saved = ArgumentCaptor.forClass(UserAccount.class);
@@ -58,7 +58,7 @@ class AuthServiceTest {
         String secret = Base64.getEncoder().encodeToString(new byte[32]);
         AuthService auth = new AuthService(users, mock(RefreshSessionRepository.class),
             mock(AuditEventRepository.class), encoder, new PasswordPolicy(),
-            new JwtService(secret, "test", 15, 14), 5, 15);
+            new JwtService(secret, "test", 15, 14), mock(EmailLoginService.class), 5, 15);
 
         for (int i = 0; i < 5; i++) {
             assertThrows(AuthFailure.class, () -> auth.login("admin@example.org", "wrong", "test"));

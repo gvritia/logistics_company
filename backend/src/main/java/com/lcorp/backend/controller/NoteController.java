@@ -29,10 +29,14 @@ import java.util.UUID;
 public class NoteController {
     private final NoteService notes;
 
-    public NoteController(NoteService notes) { this.notes = notes; }
+    public NoteController(NoteService notes) {
+        this.notes = notes;
+    }
 
     @GetMapping
-    public List<NoteDtos.View> list(@PathVariable UUID requestId) { return notes.list(requestId); }
+    public List<NoteDtos.View> list(@PathVariable UUID requestId) {
+        return notes.list(requestId);
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")

@@ -5,7 +5,8 @@ import com.lcorp.console.model.query.SortDirection;
 import com.lcorp.console.model.query.TransportationRequestSortField;
 
 public final class UiLabels {
-    private UiLabels() { }
+    private UiLabels() {
+    }
 
     public static String status(TransportationRequestStatus value) {
         return switch (value) {

@@ -5,24 +5,21 @@ import com.lcorp.console.exception.DataAccessException;
 import com.lcorp.console.model.Operator;
 import com.lcorp.console.repository.OperatorRepository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// JDBC-реализация интерфейса операторов для сервисов КР1
+
 public final class JdbcOperatorRepository implements OperatorRepository {
+
     private final DatabaseConnectionFactory database;
 
     public JdbcOperatorRepository(DatabaseConnectionFactory database) {
         this.database = database;
     }
 
-    // @Override указывает, что метод реализует контракт OperatorRepository.
+
     @Override
     public Operator create(Operator operator) {
         try (Connection connection = database.openConnection();
@@ -74,8 +71,11 @@ public final class JdbcOperatorRepository implements OperatorRepository {
         }
     }
 
-    // Подставляет параметры запроса и преобразует ResultSet в список операторов.
-    private List<Operator> select(String suffix, Object... args) {
+
+    private List<Operator> select(
+        String suffix,
+        Object... args
+    ) {
         try (Connection connection = database.openConnection();
              PreparedStatement statement = connection.prepareStatement(
                  "SELECT id, full_name, phone FROM operators " + suffix)) {
@@ -93,12 +93,18 @@ public final class JdbcOperatorRepository implements OperatorRepository {
         }
     }
 
-    private void bind(PreparedStatement statement, Operator operator) throws SQLException {
+    private void bind(
+        PreparedStatement statement,
+        Operator operator
+    ) throws SQLException {
         statement.setString(1, operator.getFullName());
         statement.setString(2, operator.getPhone());
     }
 
-    private DataAccessException failure(String action, SQLException cause) {
+    private DataAccessException failure(
+        String action,
+        SQLException cause
+    ) {
         return new DataAccessException("Не удалось " + action + " в базе данных", cause);
     }
 }

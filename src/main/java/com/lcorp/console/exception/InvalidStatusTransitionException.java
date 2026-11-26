@@ -11,11 +11,11 @@ public class InvalidStatusTransitionException extends LogisticsException {
     private final TransportationRequestStatus targetStatus;
 
     public InvalidStatusTransitionException(
-            TransportationRequestStatus currentStatus,
-            TransportationRequestStatus targetStatus
+        TransportationRequestStatus currentStatus,
+        TransportationRequestStatus targetStatus
     ) {
         super("Недопустимый переход статуса заявки: "
-                + currentStatus + " -> " + targetStatus);
+            + currentStatus + " -> " + targetStatus);
         this.currentStatus = currentStatus;
         this.targetStatus = targetStatus;
     }

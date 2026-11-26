@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-
 @Entity
 @Table(name = "audit_events", schema = "public")
 public class AuditEvent {
@@ -55,12 +54,35 @@ public class AuditEvent {
         this.correlationId = correlationId;
     }
 
-    public UUID getId() { return id; }
-    public UserAccount getUser() { return user; }
-    public String getEventType() { return eventType; }
-    public String getEntityType() { return entityType; }
-    public UUID getEntityId() { return entityId; }
-    public Instant getOccurredAt() { return occurredAt; }
-    public String getDescription() { return description; }
-    public String getCorrelationId() { return correlationId; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UserAccount getUser() {
+        return user;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public String getEntityType() {
+        return entityType;
+    }
+
+    public UUID getEntityId() {
+        return entityId;
+    }
+
+    public Instant getOccurredAt() {
+        return occurredAt;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
+    }
 }

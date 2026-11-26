@@ -47,8 +47,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
-                                                    PasswordChangeRequiredFilter passwordFilter,
-                                                    ObjectMapper mapper) throws Exception {
+                                                   PasswordChangeRequiredFilter passwordFilter,
+                                                   ObjectMapper mapper) throws Exception {
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.disable())
             .formLogin(form -> form.disable())
@@ -56,7 +56,8 @@ public class SecurityConfig {
             .logout(logout -> logout.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/refresh",
+                    "/api/auth/logout", "/api/auth/email/start", "/api/auth/email/request", "/api/auth/email/verify").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info", "/api/system/info").permitAll()
                 .requestMatchers(HttpMethod.GET, "/docs-login.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/", "/index.html", "/app.css", "/app.js").permitAll()

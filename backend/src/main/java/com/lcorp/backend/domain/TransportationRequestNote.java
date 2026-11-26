@@ -14,7 +14,6 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
 
-
 @Entity
 @Table(name = "transportation_request_notes", schema = "public")
 public class TransportationRequestNote {
@@ -69,14 +68,43 @@ public class TransportationRequestNote {
         updatedAt = Instant.now();
     }
 
-    public UUID getId() { return id; }
-    public TransportationRequest getRequest() { return request; }
-    public UserAccount getAuthor() { return author; }
-    public String getBody() { return body; }
-    public void setBody(String body) { this.body = body; }
-    public boolean isPinned() { return pinned; }
-    public void setPinned(boolean pinned) { this.pinned = pinned; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-    public long getVersion() { return version; }
+    public UUID getId() {
+        return id;
+    }
+
+    public TransportationRequest getRequest() {
+        return request;
+    }
+
+    public UserAccount getAuthor() {
+        return author;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public boolean isPinned() {
+        return pinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        this.pinned = pinned;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public long getVersion() {
+        return version;
+    }
 }

@@ -6,7 +6,7 @@ import com.lcorp.backend.domain.WeightCategory;
 import java.math.BigDecimal;
 import java.util.List;
 
-public final class AnalyticsDtos{
+public final class AnalyticsDtos {
     private AnalyticsDtos() {
     }
 
