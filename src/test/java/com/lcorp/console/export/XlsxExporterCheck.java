@@ -4,15 +4,16 @@ import com.lcorp.console.exception.ExportException;
 import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.console.model.query.TransportationRequestView;
 import com.lcorp.console.util.ConsoleReader;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public final class XlsxExporterCheck {
     public static void main(String[] args) throws Exception {
@@ -53,7 +54,8 @@ public final class XlsxExporterCheck {
             try {
                 exporter.export(directory, List.of());
                 throw new AssertionError("Каталог нельзя перезаписать файлом");
-            } catch (ExportException expected) { }
+            } catch (ExportException expected) {
+            }
         } finally {
             Files.deleteIfExists(file);
             Files.deleteIfExists(directory);
@@ -61,12 +63,20 @@ public final class XlsxExporterCheck {
         System.out.println("PASS: XLSX readback, filtered totals, precision, overwrite refusal, write error");
     }
 
-    private static TransportationRequestView row(Long id, String price, String weight) {
+    private static TransportationRequestView row(
+        Long id,
+        String price,
+        String weight
+    ) {
         return new TransportationRequestView(id, 1L, "Клиент", null, null, 1L, "Оператор",
             "=1+1", new BigDecimal(weight), new BigDecimal(price), LocalDateTime.of(2026, 9, 1, 12, 0),
             LocalDateTime.of(2026, 10, 1, 12, 0), TransportationRequestStatus.CREATED, "Москва", "Тверь");
     }
-    private static void require(boolean value, String message) {
+
+    private static void require(
+        boolean value,
+        String message
+    ) {
         if (!value) throw new AssertionError(message);
     }
 }

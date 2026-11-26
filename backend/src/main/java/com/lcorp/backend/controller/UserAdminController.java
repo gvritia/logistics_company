@@ -46,8 +46,8 @@ public class UserAdminController {
 
     @PostMapping
     public ResponseEntity<UserAdminDtos.TemporaryPassword> create(@Valid @RequestBody UserAdminDtos.Create body,
-                                                                    @AuthenticationPrincipal AuthPrincipal actor,
-                                                                    HttpServletRequest request) {
+                                                                  @AuthenticationPrincipal AuthPrincipal actor,
+                                                                  HttpServletRequest request) {
         var created = users.create(body, actor.id(), CorrelationIdFilter.get(request));
         return ResponseEntity.created(URI.create("/api/admin/users/" + created.user().id()))
             .header(HttpHeaders.CACHE_CONTROL, "no-store").body(created);

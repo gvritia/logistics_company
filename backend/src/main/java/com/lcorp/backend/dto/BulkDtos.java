@@ -14,7 +14,7 @@ public final class BulkDtos {
     private BulkDtos() {
     }
 
-    public enum Action { ARCHIVE, RESTORE, CHANGE_STATUS, ADD_TAG, REMOVE_TAG }
+    public enum Action {ARCHIVE, RESTORE, CHANGE_STATUS, ADD_TAG, REMOVE_TAG}
 
     public record Target(@NotNull UUID id, @NotNull @PositiveOrZero Long version) {
     }

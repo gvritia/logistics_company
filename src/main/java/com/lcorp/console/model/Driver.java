@@ -2,11 +2,11 @@ package com.lcorp.console.model;
 
 import jakarta.persistence.*;
 
-// Entity связывает Java-класс с таблицей, а Column — поле со столбцом
+
 @Entity
 @Table(name = "drivers", schema = "public")
 public class Driver {
-    // Значение ID создаёт PostgreSQL своим identity-счётчиком
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,15 +17,23 @@ public class Driver {
     @Column(name = "active", nullable = false)
     private boolean active;
 
-    // Hibernate сначала создаёт пустой объект, затем заполняет поля из БД
+
     protected Driver() {
     }
 
-    public Driver(String fullName, String phone) {
+    public Driver(
+        String fullName,
+        String phone
+    ) {
         this(null, fullName, phone, true);
     }
 
-    public Driver(Long id, String fullName, String phone, boolean active) {
+    public Driver(
+        Long id,
+        String fullName,
+        String phone,
+        boolean active
+    ) {
         this.id = id;
         this.fullName = fullName;
         this.phone = phone;

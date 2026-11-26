@@ -19,6 +19,7 @@ import java.util.UUID;
 
 @Service
 public class ClientService {
+
     private final ClientRepository clients;
     private final UserAccountRepository users;
     private final AuditEventRepository audit;
@@ -37,7 +38,9 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
-    public ClientDtos.View get(long id) { return view(find(id)); }
+    public ClientDtos.View get(long id) {
+        return view(find(id));
+    }
 
     @Transactional
     public ClientDtos.View create(ClientDtos.Create body, UUID actorId, String correlationId) {
@@ -101,7 +104,7 @@ public class ClientService {
     }
 
     private void record(UUID actorId, String type, long clientId, String correlationId) {
-        // У клиентов числовые ключи КР1/КР2; audit_events.entity_id предназначен для UUID.
+
         audit.save(new AuditEvent(UUID.randomUUID(), users.getReferenceById(actorId), type,
             "CLIENT", null, Instant.now(), "Клиент #" + clientId, correlationId));
     }

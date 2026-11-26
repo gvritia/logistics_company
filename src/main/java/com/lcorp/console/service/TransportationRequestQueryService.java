@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
-// Проверяет параметры чтения и не содержит SQL.
+
 public class TransportationRequestQueryService {
 
     private final TransportationRequestQueryRepository queryRepository;
@@ -52,13 +52,19 @@ public class TransportationRequestQueryService {
         }
     }
 
-    private void requirePositiveId(Long value, String fieldName) {
+    private void requirePositiveId(
+        Long value,
+        String fieldName
+    ) {
         if (value != null && value <= 0) {
             throw new IllegalArgumentException(fieldName + " должен быть положительным");
         }
     }
 
-    private void requireNonNegative(BigDecimal value, String fieldName) {
+    private void requireNonNegative(
+        BigDecimal value,
+        String fieldName
+    ) {
         if (value != null && value.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException(fieldName + " не может быть отрицательным");
         }

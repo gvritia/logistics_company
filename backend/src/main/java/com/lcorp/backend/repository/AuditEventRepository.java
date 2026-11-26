@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.UUID;
 
 public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID>, JpaSpecificationExecutor<AuditEvent> {
+    boolean existsByUser_IdAndEventType(UUID userId, String eventType);
+
     @EntityGraph(attributePaths = "user")
     Page<AuditEvent> findAll(Specification<AuditEvent> specification, Pageable pageable);
 }

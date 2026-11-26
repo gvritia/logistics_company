@@ -8,7 +8,11 @@ public final class Session {
     private final Long actorId;
     private final String actorName;
 
-    public Session(Role role, Long actorId, String actorName) {
+    public Session(
+        Role role,
+        Long actorId,
+        String actorName
+    ) {
         this.role = Objects.requireNonNull(role);
         this.actorId = Objects.requireNonNull(actorId);
         this.actorName = Objects.requireNonNull(actorName);

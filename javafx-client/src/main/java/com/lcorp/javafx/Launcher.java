@@ -3,6 +3,8 @@ package com.lcorp.javafx;
 import javafx.application.Application;
 
 public final class Launcher {
+
+
     private Launcher() {
     }
 

@@ -2,11 +2,11 @@ package com.lcorp.console.model;
 
 import jakarta.persistence.*;
 
-// Entity связывает Java-класс с таблицей, а Column — поле со столбцом
+
 @Entity
 @Table(name = "operators", schema = "public")
 public class Operator {
-    // Значение ID создаёт PostgreSQL своим identity-счётчиком
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -15,15 +15,22 @@ public class Operator {
     @Column(name = "phone", length = 32, nullable = false)
     private String phone;
 
-    // Hibernate сначала создаёт пустой объект, затем заполняет поля из БД
+
     protected Operator() {
     }
 
-    public Operator(String fullName, String phone) {
+    public Operator(
+        String fullName,
+        String phone
+    ) {
         this(null, fullName, phone);
     }
 
-    public Operator(Long id, String fullName, String phone){
+    public Operator(
+        Long id,
+        String fullName,
+        String phone
+    ) {
         this.id = id;
         this.fullName = fullName;
         this.phone = phone;
@@ -33,28 +40,28 @@ public class Operator {
         return id;
     }
 
-    public void setId(Long id){
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public String getFullName(){
+    public String getFullName() {
         return fullName;
     }
 
-    public void setFullName(String fullName){
+    public void setFullName(String fullName) {
         this.fullName = fullName;
     }
 
-    public String getPhone(){
+    public String getPhone() {
         return phone;
     }
 
-    public void setPhone(String phone){
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "Operator{" +
             "id=" + id +
             ", fullName='" + fullName + '\'' +

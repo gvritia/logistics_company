@@ -16,7 +16,11 @@ public final class DatabaseConfig {
     private final String username;
     private final String password;
 
-    private DatabaseConfig(String jdbcUrl, String username, String password) {
+    private DatabaseConfig(
+        String jdbcUrl,
+        String username,
+        String password
+    ) {
         this.jdbcUrl = jdbcUrl;
         this.username = username;
         this.password = password;
@@ -33,18 +37,6 @@ public final class DatabaseConfig {
 
         String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + database;
         return new DatabaseConfig(jdbcUrl, username, password);
-    }
-
-    public String getJdbcUrl() {
-        return jdbcUrl;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     private static Map<String, String> readDotEnv() {
@@ -75,7 +67,10 @@ public final class DatabaseConfig {
         }
     }
 
-        private static String requireSetting(String key, Map<String, String> fileValues) {
+    private static String requireSetting(
+        String key,
+        Map<String, String> fileValues
+    ) {
         String value = firstNotBlank(
             System.getProperty(key),
             System.getenv(key),
@@ -98,5 +93,17 @@ public final class DatabaseConfig {
             }
         }
         return null;
+    }
+
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 }

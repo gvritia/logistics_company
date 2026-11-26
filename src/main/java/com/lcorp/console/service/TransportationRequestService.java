@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
-// Реализация бизнес-правила для работы с заявками на перевозку
+
 public class TransportationRequestService {
 
     private final TransportationRequestRepository requestRepository;
@@ -22,7 +22,7 @@ public class TransportationRequestService {
     private final OperatorRepository operatorRepository;
     private final DriverRepository driverRepository;
 
-    // Зависимости передаются через конструктор
+
     public TransportationRequestService(
         TransportationRequestRepository requestRepository,
         ClientRepository clientRepository,
@@ -35,7 +35,7 @@ public class TransportationRequestService {
         this.driverRepository = Objects.requireNonNull(driverRepository);
     }
 
-    // Проверяет новую заявку и сохраняет её через Repository
+
     public TransportationRequest createRequest(TransportationRequest request) {
         validateNewRequest(request);
 
@@ -45,8 +45,8 @@ public class TransportationRequestService {
         return requestRepository.create(request);
     }
 
-    // Изменять содержимое можно только у новой заявки, пока её не начали обрабатывать.
-    // Служебные поля берутся из сохранённой заявки, а не из объекта, полученного от меню.
+
+
     public TransportationRequest updateRequest(TransportationRequest request) {
         if (request == null) {
             throw new InvalidRequestDataException("request", "заявка не должна быть null");
@@ -73,8 +73,8 @@ public class TransportationRequestService {
         return existingRequest;
     }
 
-    // Физически удалять можно только черновик CREATED.
-    // Для заявок, попавших в обработку, используется смена статуса на CANCELLED.
+
+
     public void deleteRequest(Long requestId) {
         TransportationRequest request = requireRequest(requestId);
         ensureDraftRequest(request, "Удаление");
@@ -101,14 +101,17 @@ public class TransportationRequestService {
         return requestRepository.findByDriverId(driverId);
     }
 
-    // Переводит созданную заявку в состояние APPROVED
+
     public TransportationRequest approve(Long requestId) {
         return changeStatus(requestId, TransportationRequestStatus.APPROVED);
     }
 
-    // Назначает активного доставщика на свободную одобренную заявку
-    // Метод может вызывать меню оператора
-    public TransportationRequest assignDriver(Long requestId, Long driverId) {
+
+
+    public TransportationRequest assignDriver(
+        Long requestId,
+        Long driverId
+    ) {
         TransportationRequest request = requireRequest(requestId);
         Driver driver = requireActiveDriver(driverId);
 
@@ -126,15 +129,21 @@ public class TransportationRequestService {
         return request;
     }
 
-    // Доставщик самостоятельно берёт свободную заявку
-    public TransportationRequest takeRequest(Long requestId, Long driverId) {
+
+    public TransportationRequest takeRequest(
+        Long requestId,
+        Long driverId
+    ) {
         return assignDriver(requestId, driverId);
     }
 
 
-    // Меняет назначенного доставщика до начала перевозки
-    // После перехода в IN_TRANSIT правило ensureApproved запретит операцию
-    public TransportationRequest reassignDriver(Long requestId, Long newDriverId) {
+
+
+    public TransportationRequest reassignDriver(
+        Long requestId,
+        Long newDriverId
+    ) {
         TransportationRequest request = requireRequest(requestId);
         Driver driver = requireActiveDriver(newDriverId);
 
@@ -144,9 +153,12 @@ public class TransportationRequestService {
         return request;
     }
 
-    // Снимает доставщика с заявки до начала перевозки
-    // Заявка остаётся одобренной и снова появляется в списке свободных
-    public TransportationRequest rejectAssignment(Long requestId, Long driverId) {
+
+
+    public TransportationRequest rejectAssignment(
+        Long requestId,
+        Long driverId
+    ) {
         TransportationRequest request = requireRequest(requestId);
 
         ensureApproved(request, driverId);
@@ -157,8 +169,11 @@ public class TransportationRequestService {
         return request;
     }
 
-    // Начинает перевозку назначенным доставщиком
-    public TransportationRequest startTransportation(Long requestId, Long driverId) {
+
+    public TransportationRequest startTransportation(
+        Long requestId,
+        Long driverId
+    ) {
         TransportationRequest request = requireRequest(requestId);
         ensureAssignedTo(request, driverId);
 
@@ -167,8 +182,11 @@ public class TransportationRequestService {
         return request;
     }
 
-    // Завершает перевозку назначенным доставщиком
-    public TransportationRequest completeDelivery(Long requestId, Long driverId) {
+
+    public TransportationRequest completeDelivery(
+        Long requestId,
+        Long driverId
+    ) {
         TransportationRequest request = requireRequest(requestId);
         ensureAssignedTo(request, driverId);
 
@@ -177,7 +195,7 @@ public class TransportationRequestService {
         return request;
     }
 
-    // Отменяет только созданную или одобренную заявку
+
     public TransportationRequest cancel(Long requestId) {
         return changeStatus(requestId, TransportationRequestStatus.CANCELLED);
     }
@@ -192,7 +210,7 @@ public class TransportationRequestService {
         return request;
     }
 
-    // Проверяет таблицу разрешённых переходов статусов
+
     private void changeStatus(
         TransportationRequest request,
         TransportationRequestStatus targetStatus
@@ -273,7 +291,10 @@ public class TransportationRequestService {
         }
     }
 
-    private void ensureDraftRequest(TransportationRequest request, String operationName) {
+    private void ensureDraftRequest(
+        TransportationRequest request,
+        String operationName
+    ) {
         if (request.getStatus() != TransportationRequestStatus.CREATED
             || request.getDriverId() != null) {
             throw new IllegalStateException(
@@ -282,7 +303,10 @@ public class TransportationRequestService {
         }
     }
 
-    private void ensureApproved(TransportationRequest request, Long driverId) {
+    private void ensureApproved(
+        TransportationRequest request,
+        Long driverId
+    ) {
         if (request.getStatus() != TransportationRequestStatus.APPROVED) {
             throw new RequestAssignmentException(
                 request.getId(),
@@ -292,7 +316,10 @@ public class TransportationRequestService {
         }
     }
 
-    private void ensureAssignedTo(TransportationRequest request, Long driverId) {
+    private void ensureAssignedTo(
+        TransportationRequest request,
+        Long driverId
+    ) {
         requireId(driverId, "driverId");
         if (!Objects.equals(request.getDriverId(), driverId)) {
             throw new RequestAssignmentException(
@@ -339,7 +366,10 @@ public class TransportationRequestService {
         }
     }
 
-    private void requireId(Long id, String fieldName) {
+    private void requireId(
+        Long id,
+        String fieldName
+    ) {
         if (id == null || id <= 0) {
             throw new InvalidRequestDataException(
                 fieldName,
@@ -348,13 +378,19 @@ public class TransportationRequestService {
         }
     }
 
-    private void requireText(String value, String fieldName) {
+    private void requireText(
+        String value,
+        String fieldName
+    ) {
         if (value == null || value.isBlank()) {
             throw new InvalidRequestDataException(fieldName, "значение обязательно");
         }
     }
 
-    private void requirePositive(BigDecimal value, String fieldName) {
+    private void requirePositive(
+        BigDecimal value,
+        String fieldName
+    ) {
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidRequestDataException(
                 fieldName,

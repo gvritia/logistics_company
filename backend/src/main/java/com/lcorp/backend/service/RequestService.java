@@ -140,7 +140,7 @@ public class RequestService {
         record(actorId, "REQUEST_DELETED", id, "Заявка окончательно удалена", correlationId);
     }
 
-    public enum Action { APPROVE, CANCEL, ASSIGN, UNASSIGN, START, DELIVER }
+    public enum Action {APPROVE, CANCEL, ASSIGN, UNASSIGN, START, DELIVER}
 
     @Transactional
     public RequestDtos.Item act(UUID id, long version, Action action, Long driverId,
@@ -243,7 +243,9 @@ public class RequestService {
         }
     }
 
-    private static String code(String value) { return value.trim().toUpperCase(Locale.ROOT); }
+    private static String code(String value) {
+        return value.trim().toUpperCase(Locale.ROOT);
+    }
 
     private static Set<String> tags(Set<String> values) {
         if (values == null) return Set.of();

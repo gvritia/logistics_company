@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-// Необязательные условия поиска. Незаполненное поле не добавляется в WHERE
+
 public final class TransportationRequestSearchCriteria {
 
     private String searchText;

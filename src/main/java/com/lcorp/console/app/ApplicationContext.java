@@ -49,6 +49,15 @@ public final class ApplicationContext implements AutoCloseable {
         this.queryService = new TransportationRequestQueryService(queryRepository);
     }
 
+    private static void verifyConnection(DatabaseConnectionFactory connectionFactory)
+        throws SQLException {
+        try (Connection connection = connectionFactory.openConnection()) {
+            if (!connection.isValid(5)) {
+                throw new SQLException("PostgreSQL не подтвердил соединение");
+            }
+        }
+    }
+
     public ClientService clients() {
         return clientService;
     }
@@ -76,14 +85,5 @@ public final class ApplicationContext implements AutoCloseable {
     @Override
     public void close() {
         sessionFactory.close();
-    }
-
-    private static void verifyConnection(DatabaseConnectionFactory connectionFactory)
-            throws SQLException {
-        try (Connection connection = connectionFactory.openConnection()) {
-            if (!connection.isValid(5)) {
-                throw new SQLException("PostgreSQL не подтвердил соединение");
-            }
-        }
     }
 }

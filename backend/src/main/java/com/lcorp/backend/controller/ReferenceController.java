@@ -22,6 +22,7 @@ import java.util.List;
 
 @RestController
 public class ReferenceController {
+
     private final OperatorRepository operators;
     private final DriverRepository drivers;
     private final ReferenceAdminService admin;
@@ -48,8 +49,8 @@ public class ReferenceController {
     @PostMapping("/api/operators")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ReferenceDtos.Person> createOperator(@Valid @RequestBody ReferenceDtos.CreatePerson body,
-                                                                @AuthenticationPrincipal AuthPrincipal actor,
-                                                                HttpServletRequest request) {
+                                                               @AuthenticationPrincipal AuthPrincipal actor,
+                                                               HttpServletRequest request) {
         var created = admin.createOperator(body, actor.id(), CorrelationIdFilter.get(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -57,8 +58,8 @@ public class ReferenceController {
     @PostMapping("/api/drivers")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ReferenceDtos.Driver> createDriver(@Valid @RequestBody ReferenceDtos.CreatePerson body,
-                                                              @AuthenticationPrincipal AuthPrincipal actor,
-                                                              HttpServletRequest request) {
+                                                             @AuthenticationPrincipal AuthPrincipal actor,
+                                                             HttpServletRequest request) {
         var created = admin.createDriver(body, actor.id(), CorrelationIdFilter.get(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

@@ -6,7 +6,7 @@ public final class CsvDtos {
     private CsvDtos() {
     }
 
-    public enum Mode { CREATE_ONLY, UPSERT_BY_CODE }
+    public enum Mode {CREATE_ONLY, UPSERT_BY_CODE}
 
     public record Issue(long row, String field, String message) {
     }

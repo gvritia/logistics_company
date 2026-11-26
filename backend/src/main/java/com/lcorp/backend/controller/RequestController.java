@@ -30,9 +30,12 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/requests")
 public class RequestController {
+
     private final RequestService requests;
 
-    public RequestController(RequestService requests) { this.requests = requests; }
+    public RequestController(RequestService requests) {
+        this.requests = requests;
+    }
 
     @GetMapping
     public RequestDtos.PageResponse list(@RequestParam(required = false) String q,
@@ -52,7 +55,9 @@ public class RequestController {
     }
 
     @GetMapping("/{id}")
-    public RequestDtos.Item get(@PathVariable UUID id) { return requests.get(id); }
+    public RequestDtos.Item get(@PathVariable UUID id) {
+        return requests.get(id);
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('EDITOR','ADMIN')")

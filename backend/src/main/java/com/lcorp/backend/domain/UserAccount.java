@@ -14,10 +14,10 @@ import jakarta.persistence.Version;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-// Поле passwordHash содержит только хеш пароля и никогда не выдаётся в REST DTO.
 @Entity
 @Table(name = "app_users", schema = "public")
 public class UserAccount {
@@ -27,10 +27,13 @@ public class UserAccount {
     @Column(nullable = false, unique = true, length = 254)
     private String email;
 
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
+
     @Column(name = "display_name", nullable = false, length = 160)
     private String displayName;
 
-    @Column(name = "password_hash", nullable = false, length = 100)
+    @Column(name = "password_hash", length = 100)
     private String passwordHash;
 
     @Column(nullable = false)
@@ -69,26 +72,94 @@ public class UserAccount {
         this.roles = new LinkedHashSet<>(roles);
     }
 
-    public UUID getId() { return id; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public String getDisplayName() { return displayName; }
-    public void setDisplayName(String displayName) { this.displayName = displayName; }
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
-    public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public boolean isPasswordChangeRequired() { return passwordChangeRequired; }
+    public UUID getId() {
+        return id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        if (!Objects.equals(this.email, email)) {
+            emailVerifiedAt = null;
+        }
+        this.email = email;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
+    }
+
+    public void verifyEmail(Instant now) {
+        emailVerifiedAt = now;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public boolean isPasswordChangeRequired() {
+        return passwordChangeRequired;
+    }
+
     public void setPasswordChangeRequired(boolean passwordChangeRequired) {
         this.passwordChangeRequired = passwordChangeRequired;
     }
-    public int getFailedLoginAttempts() { return failedLoginAttempts; }
-    public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
-    public Instant getLockedUntil() { return lockedUntil; }
-    public void setLockedUntil(Instant lockedUntil) { this.lockedUntil = lockedUntil; }
-    public long getVersion() { return version; }
-    public long getAuthVersion() { return authVersion; }
-    public void incrementAuthVersion() { authVersion++; }
-    public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = new LinkedHashSet<>(roles); }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public void setFailedLoginAttempts(int failedLoginAttempts) {
+        this.failedLoginAttempts = failedLoginAttempts;
+    }
+
+    public Instant getLockedUntil() {
+        return lockedUntil;
+    }
+
+    public void setLockedUntil(Instant lockedUntil) {
+        this.lockedUntil = lockedUntil;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public long getAuthVersion() {
+        return authVersion;
+    }
+
+    public void incrementAuthVersion() {
+        authVersion++;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = new LinkedHashSet<>(roles);
+    }
 }

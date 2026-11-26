@@ -3,6 +3,7 @@ package com.lcorp.backend.dto;
 import com.lcorp.backend.domain.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
@@ -22,6 +23,21 @@ public final class AuthDtos {
                                   @NotBlank @Size(max = 256) String password) {
     }
 
+    public record EmailCodeRequest(@NotBlank @Email @Size(max = 254) String email) {
+    }
+
+    public enum EmailAuthMode {
+        SIGN_UP, PASSWORD, PASSWORD_ONLY, CODE, UNAVAILABLE
+    }
+
+    public record EmailCodeLogin(@NotBlank @Email @Size(max = 254) String email,
+                                 @NotBlank @Pattern(regexp = "[0-9]{6}") String code,
+                                 @Size(max = 256) String password) {
+    }
+
+    public record EmailCodeConfirmation(@NotBlank @Pattern(regexp = "[0-9]{6}") String code) {
+    }
+
     public record RefreshRequest(@NotBlank @Size(max = 256) String refreshToken) {
     }
 
@@ -30,7 +46,7 @@ public final class AuthDtos {
     }
 
     public record CurrentUser(UUID id, String email, String displayName,
-                              Set<Role> roles, boolean passwordChangeRequired) {
+                              Set<Role> roles, boolean passwordChangeRequired, boolean emailVerified, boolean hasPassword) {
     }
 
     public record AuthResponse(String accessToken, String refreshToken,

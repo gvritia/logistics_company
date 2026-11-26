@@ -19,9 +19,11 @@ import java.util.UUID;
 public class BulkService {
     private final RequestService requests;
 
-    public BulkService(RequestService requests) { this.requests = requests; }
+    public BulkService(RequestService requests) {
+        this.requests = requests;
+    }
 
-    // Без общей транзакции: успешный элемент уже сохранён, когда следующий вернул ошибку.
+
     public BulkDtos.Result execute(BulkDtos.Request body, UUID actorId, String correlationId) {
         String tag = validate(body);
         List<BulkDtos.Success> successes = new ArrayList<>();

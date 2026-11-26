@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
 public interface TransportationRequestRepository extends JpaRepository<TransportationRequest, Long>,
+
     JpaSpecificationExecutor<TransportationRequest> {
     @EntityGraph(attributePaths = {"client", "operator", "driver"})
     Optional<TransportationRequest> findByPublicId(UUID publicId);
@@ -24,14 +25,20 @@ public interface TransportationRequestRepository extends JpaRepository<Transport
     Page<TransportationRequest> findAll(Specification<TransportationRequest> specification, Pageable pageable);
 
     boolean existsByRequestCodeIgnoreCase(String requestCode);
+
     Optional<TransportationRequest> findByRequestCodeIgnoreCase(String requestCode);
 
     long countByArchivedFalse();
+
     long countByArchivedTrue();
+
     long countByArchivedFalseAndFragileTrue();
+
     long countByArchivedFalseAndWeightKgLessThan(BigDecimal maximum);
+
     long countByArchivedFalseAndWeightKgGreaterThanEqualAndWeightKgLessThan(BigDecimal minimum,
-                                                                             BigDecimal maximum);
+                                                                            BigDecimal maximum);
+
     long countByArchivedFalseAndWeightKgGreaterThanEqual(BigDecimal minimum);
 
     @Query("select sum(r.weightKg) from TransportationRequest r where r.archived = false")

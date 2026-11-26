@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface RefreshSessionRepository extends JpaRepository<RefreshSession, UUID> {
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from RefreshSession s join fetch s.user where s.tokenHash = :hash")
     Optional<RefreshSession> findLockedByHash(String hash);
@@ -19,4 +20,5 @@ public interface RefreshSessionRepository extends JpaRepository<RefreshSession, 
     @Modifying
     @Query("update RefreshSession s set s.revokedAt = :now where s.user.id = :userId and s.revokedAt is null")
     int revokeActiveByUser(UUID userId, Instant now);
+
 }

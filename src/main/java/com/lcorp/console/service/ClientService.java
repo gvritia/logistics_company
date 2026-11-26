@@ -9,15 +9,15 @@ import com.lcorp.console.util.PhoneValidator;
 import java.util.List;
 import java.util.Objects;
 
-// Управление клиентами логистической компании
+
 public class ClientService {
 
     private final ClientRepository clientRepository;
     private final TransportationRequestService requestService;
 
     public ClientService(
-            ClientRepository clientRepository,
-            TransportationRequestService requestService
+        ClientRepository clientRepository,
+        TransportationRequestService requestService
     ) {
         this.clientRepository = Objects.requireNonNull(clientRepository);
         this.requestService = Objects.requireNonNull(requestService);
@@ -49,11 +49,11 @@ public class ClientService {
     public void deleteClient(Long clientId) {
         requireClient(clientId);
 
-        // Клиента со связанными заявками нельзя удалять, иначе потеряется
-        // связь с историей перевозок
+
+
         if (!findRequestsForExistingClient(clientId).isEmpty()) {
             throw new IllegalStateException(
-                    "Нельзя удалить клиента, у которого есть заявки"
+                "Нельзя удалить клиента, у которого есть заявки"
             );
         }
 
@@ -62,8 +62,8 @@ public class ClientService {
         }
     }
 
-    // В Repository пока нет отдельного запроса findByClientId, поэтому на
-    // текущем этапе фильтрация выполняется через сервис заявок
+
+
     public List<TransportationRequest> findRequests(Long clientId) {
         requireClient(clientId);
         return findRequestsForExistingClient(clientId);
@@ -71,8 +71,8 @@ public class ClientService {
 
     private List<TransportationRequest> findRequestsForExistingClient(Long clientId) {
         return requestService.findAll().stream()
-                .filter(request -> Objects.equals(request.getClientId(), clientId))
-                .toList();
+            .filter(request -> Objects.equals(request.getClientId(), clientId))
+            .toList();
     }
 
     private void validateNewClient(Client client) {
@@ -98,7 +98,7 @@ public class ClientService {
         boolean emailMissing = client.getEmail() == null || client.getEmail().isBlank();
         if (phoneMissing && emailMissing) {
             throw new IllegalArgumentException(
-                    "У клиента должен быть указан телефон или email"
+                "У клиента должен быть указан телефон или email"
             );
         }
 
@@ -120,7 +120,7 @@ public class ClientService {
     private Client requireClient(Long clientId) {
         requirePositiveId(clientId);
         return clientRepository.findById(clientId)
-                .orElseThrow(() -> new EntityNotFoundException("Клиент", clientId));
+            .orElseThrow(() -> new EntityNotFoundException("Клиент", clientId));
     }
 
     private void requireClientObject(Client client) {

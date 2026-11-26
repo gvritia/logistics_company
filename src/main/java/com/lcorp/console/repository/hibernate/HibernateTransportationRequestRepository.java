@@ -27,7 +27,7 @@ public class HibernateTransportationRequestRepository implements TransportationR
             throw new IllegalArgumentException("Для create нужна заявка без ID");
         }
         return inTransaction(session -> {
-            // IDENTITY записывает выданный PostgreSQL ID в переданный объект
+
             session.persist(request);
             return request;
         });
@@ -87,7 +87,7 @@ public class HibernateTransportationRequestRepository implements TransportationR
 
     @Override
     public List<TransportationRequest> findAvailable() {
-        // Свободна только одобренная заявка без доставщика; одного NULL недостаточно
+
         return inTransaction(session -> session
             .createSelectionQuery(
                 "from TransportationRequest r where r.status = :status "
@@ -101,8 +101,8 @@ public class HibernateTransportationRequestRepository implements TransportationR
     @Override
     public List<TransportationRequest> findByDriverId(Long driverId) {
         Objects.requireNonNull(driverId);
-        // Именованный параметр передаёт значение отдельно от текста запроса
-        // Статус не ограничиваем: история завершённых/отменённых заявок тоже нужна
+
+
         return inTransaction(session -> session
             .createSelectionQuery(
                 "from TransportationRequest r where r.driverId = :driverId order by r.id",

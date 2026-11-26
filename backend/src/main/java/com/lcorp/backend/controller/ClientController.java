@@ -26,7 +26,9 @@ import java.util.List;
 public class ClientController {
     private final ClientService clients;
 
-    public ClientController(ClientService clients) { this.clients = clients; }
+    public ClientController(ClientService clients) {
+        this.clients = clients;
+    }
 
     @GetMapping
     public List<ClientDtos.View> list(@RequestParam(required = false) Boolean active) {
@@ -34,7 +36,9 @@ public class ClientController {
     }
 
     @GetMapping("/{id}")
-    public ClientDtos.View get(@PathVariable long id) { return clients.get(id); }
+    public ClientDtos.View get(@PathVariable long id) {
+        return clients.get(id);
+    }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")

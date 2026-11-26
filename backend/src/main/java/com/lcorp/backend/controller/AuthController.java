@@ -3,6 +3,10 @@ package com.lcorp.backend.controller;
 import com.lcorp.backend.dto.AuthDtos.AuthResponse;
 import com.lcorp.backend.dto.AuthDtos.ChangePasswordRequest;
 import com.lcorp.backend.dto.AuthDtos.CurrentUser;
+import com.lcorp.backend.dto.AuthDtos.EmailAuthMode;
+import com.lcorp.backend.dto.AuthDtos.EmailCodeConfirmation;
+import com.lcorp.backend.dto.AuthDtos.EmailCodeLogin;
+import com.lcorp.backend.dto.AuthDtos.EmailCodeRequest;
 import com.lcorp.backend.dto.AuthDtos.LoginRequest;
 import com.lcorp.backend.dto.AuthDtos.RegisterRequest;
 import com.lcorp.backend.dto.AuthDtos.RefreshRequest;
@@ -11,6 +15,7 @@ import com.lcorp.backend.security.AuthPrincipal;
 import com.lcorp.backend.security.LoginRateLimiter;
 import com.lcorp.backend.security.RegistrationRateLimiter;
 import com.lcorp.backend.service.AuthService;
+import com.lcorp.backend.service.EmailLoginService;
 import com.lcorp.backend.web.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -33,14 +38,16 @@ import java.time.Instant;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService auth;
+    private final EmailLoginService emailLogin;
     private final LoginRateLimiter limiter;
     private final RegistrationRateLimiter registrationLimiter;
     private final boolean cookieSecure;
 
-    public AuthController(AuthService auth, LoginRateLimiter limiter,
+    public AuthController(AuthService auth, EmailLoginService emailLogin, LoginRateLimiter limiter,
                           RegistrationRateLimiter registrationLimiter,
                           @Value("${app.cookie.secure:false}") boolean cookieSecure) {
         this.auth = auth;
+        this.emailLogin = emailLogin;
         this.limiter = limiter;
         this.registrationLimiter = registrationLimiter;
         this.cookieSecure = cookieSecure;
@@ -50,6 +57,46 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest body, HttpServletRequest request) {
         limiter.check(request.getRemoteAddr());
         return withSwaggerCookie(auth.login(body.email(), body.password(), CorrelationIdFilter.get(request)), request);
+    }
+
+    @PostMapping("/email/start")
+    public ResponseEntity<EmailAuthMode> startEmailAuth(@Valid @RequestBody EmailCodeRequest body,
+                                                       HttpServletRequest request) {
+        limiter.check("email:" + request.getRemoteAddr());
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store").body(emailLogin.start(body.email()));
+    }
+
+    @PostMapping("/email/request")
+    public ResponseEntity<Void> requestEmailLogin(@Valid @RequestBody EmailCodeRequest body,
+                                                  HttpServletRequest request) {
+        limiter.check("email:" + request.getRemoteAddr());
+        emailLogin.requestLogin(body.email());
+        return ResponseEntity.noContent().header(HttpHeaders.CACHE_CONTROL, "no-store").build();
+    }
+
+    @PostMapping("/email/verify")
+    public ResponseEntity<AuthResponse> verifyEmailLogin(@Valid @RequestBody EmailCodeLogin body,
+                                                          HttpServletRequest request) {
+        limiter.check("email:" + request.getRemoteAddr());
+        return withSwaggerCookie(auth.loginByEmail(body.email(), body.code(), body.password(),
+            CorrelationIdFilter.get(request)), request);
+    }
+
+    @PostMapping("/email/enroll/request")
+    public ResponseEntity<Void> requestEmailEnrollment(@AuthenticationPrincipal AuthPrincipal principal,
+                                                       HttpServletRequest request) {
+        limiter.check("email:" + request.getRemoteAddr());
+        emailLogin.requestEnrollment(principal.id());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/email/enroll/verify")
+    public ResponseEntity<Void> confirmEmailEnrollment(@AuthenticationPrincipal AuthPrincipal principal,
+                                                       @Valid @RequestBody EmailCodeConfirmation body,
+                                                       HttpServletRequest request) {
+        limiter.check("email:" + request.getRemoteAddr());
+        emailLogin.confirmEnrollment(principal.id(), body.code());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/register")
@@ -91,7 +138,7 @@ public class AuthController {
     }
 
     private ResponseEntity<AuthResponse> withSwaggerCookie(AuthResponse response, HttpServletRequest request) {
-        ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store");
         if (!response.user().passwordChangeRequired() && response.user().roles().contains(Role.ADMIN)) {
             long seconds = Math.max(0, Duration.between(Instant.now(), response.accessExpiresAt()).toSeconds());
             builder.header(HttpHeaders.SET_COOKIE, ResponseCookie.from("logistics_swagger", response.accessToken())

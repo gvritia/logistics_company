@@ -8,7 +8,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-/** Reads existing BCrypt hashes and stores new passwords without BCrypt's input length limit. */
+
+
+
 public final class CompatiblePasswordEncoder implements PasswordEncoder {
     private static final String PREFIX = "{sha256-bcrypt}";
     private final BCryptPasswordEncoder bcrypt;
