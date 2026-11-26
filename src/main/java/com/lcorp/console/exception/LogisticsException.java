@@ -8,7 +8,10 @@ public abstract class LogisticsException extends RuntimeException {
         super(message);
     }
 
-    protected LogisticsException(String message, Throwable cause) {
+    protected LogisticsException(
+        String message,
+        Throwable cause
+    ) {
         super(message, cause);
     }
 }

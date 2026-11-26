@@ -8,6 +8,7 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 public final class Main extends Application {
+
     @Override
     public void start(Stage stage) {
         try {
@@ -17,7 +18,7 @@ public final class Main extends Application {
             scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
             MainController controller = loader.getController();
             controller.setContext(context);
-            stage.setTitle("Логистическая компания — заявки (КР2)");
+            stage.setTitle("Логистическая компания");
             stage.setMinWidth(900);
             stage.setMinHeight(580);
             stage.setScene(scene);

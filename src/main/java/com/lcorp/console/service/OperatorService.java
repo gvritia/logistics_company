@@ -9,15 +9,15 @@ import com.lcorp.console.util.PhoneValidator;
 import java.util.List;
 import java.util.Objects;
 
-// Управление данными операторов
+
 public class OperatorService {
 
     private final OperatorRepository operatorRepository;
     private final TransportationRequestService requestService;
 
     public OperatorService(
-            OperatorRepository operatorRepository,
-            TransportationRequestService requestService
+        OperatorRepository operatorRepository,
+        TransportationRequestService requestService
     ) {
         this.operatorRepository = Objects.requireNonNull(operatorRepository);
         this.requestService = Objects.requireNonNull(requestService);
@@ -49,12 +49,12 @@ public class OperatorService {
     public void deleteOperator(Long operatorId) {
         requireOperator(operatorId);
 
-        // Удаление оператора со связанными заявками нарушило бы историю.
+
         boolean hasRequests = requestService.findAll().stream()
-                .anyMatch(request -> Objects.equals(request.getOperatorId(), operatorId));
+            .anyMatch(request -> Objects.equals(request.getOperatorId(), operatorId));
         if (hasRequests) {
             throw new IllegalStateException(
-                    "Нельзя удалить оператора, у которого есть созданные заявки"
+                "Нельзя удалить оператора, у которого есть созданные заявки"
             );
         }
 
@@ -63,7 +63,7 @@ public class OperatorService {
         }
     }
 
-    // Оператор создаёт заявку, но её валидация остаётся в сервисе заявок.
+
     public TransportationRequest createRequest(TransportationRequest request) {
         return requestService.createRequest(request);
     }
@@ -88,11 +88,17 @@ public class OperatorService {
         return requestService.approve(requestId);
     }
 
-    public TransportationRequest assignDriver(Long requestId, Long driverId) {
+    public TransportationRequest assignDriver(
+        Long requestId,
+        Long driverId
+    ) {
         return requestService.assignDriver(requestId, driverId);
     }
 
-    public TransportationRequest reassignDriver(Long requestId, Long newDriverId) {
+    public TransportationRequest reassignDriver(
+        Long requestId,
+        Long newDriverId
+    ) {
         return requestService.reassignDriver(requestId, newDriverId);
     }
 
@@ -129,7 +135,7 @@ public class OperatorService {
     private Operator requireOperator(Long operatorId) {
         requirePositiveId(operatorId);
         return operatorRepository.findById(operatorId)
-                .orElseThrow(() -> new EntityNotFoundException("Оператор", operatorId));
+            .orElseThrow(() -> new EntityNotFoundException("Оператор", operatorId));
     }
 
     private void requireOperatorObject(Operator operator) {

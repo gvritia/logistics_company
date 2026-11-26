@@ -1,6 +1,7 @@
 package com.lcorp.console.util;
 
 import com.lcorp.console.model.TransportationRequestStatus;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.math.BigDecimal;
@@ -66,20 +67,29 @@ public final class ConsoleReaderCheck {
             try {
                 reader("").readString("Поле", 1, 10);
                 throw new AssertionError("EOF должен завершать ввод");
-            } catch (InputClosedException expected) { }
+            } catch (InputClosedException expected) {
+            }
         } finally {
             System.setOut(original);
         }
     }
 
-    private static ConsoleReader reader(String input) { return new ConsoleReader(new Scanner(input)); }
-    private static void require(boolean value, String message) {
+    private static ConsoleReader reader(String input) {
+        return new ConsoleReader(new Scanner(input));
+    }
+
+    private static void require(
+        boolean value,
+        String message
+    ) {
         if (!value) throw new AssertionError(message);
     }
+
     private static void cancelled(Runnable action) {
         try {
             action.run();
             throw new AssertionError("Ожидалась отмена");
-        } catch (InputCancelledException expected) { }
+        } catch (InputCancelledException expected) {
+        }
     }
 }

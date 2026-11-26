@@ -63,9 +63,11 @@ public record RequestSearch(String q, Long clientId, TransportationRequestStatus
             if (weightCategory != null) {
                 switch (weightCategory) {
                     case LIGHT -> filters.add(cb.lessThan(root.get("weightKg"), WeightCategory.MEDIUM_FROM_KG));
-                    case MEDIUM -> filters.add(cb.and(cb.greaterThanOrEqualTo(root.get("weightKg"), WeightCategory.MEDIUM_FROM_KG),
-                        cb.lessThan(root.get("weightKg"), WeightCategory.HEAVY_FROM_KG)));
-                    case HEAVY -> filters.add(cb.greaterThanOrEqualTo(root.get("weightKg"), WeightCategory.HEAVY_FROM_KG));
+                    case MEDIUM ->
+                        filters.add(cb.and(cb.greaterThanOrEqualTo(root.get("weightKg"), WeightCategory.MEDIUM_FROM_KG),
+                            cb.lessThan(root.get("weightKg"), WeightCategory.HEAVY_FROM_KG)));
+                    case HEAVY ->
+                        filters.add(cb.greaterThanOrEqualTo(root.get("weightKg"), WeightCategory.HEAVY_FROM_KG));
                 }
             }
             if (weightValue != null) {

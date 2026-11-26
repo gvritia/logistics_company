@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiError> error(HttpStatus status, String code, String message,
-                                            HttpServletRequest request, Map<String, String> fields) {
+                                           HttpServletRequest request, Map<String, String> fields) {
         return ResponseEntity.status(status).body(new ApiError(Instant.now(), status.value(), code,
             message, request.getRequestURI(), CorrelationIdFilter.get(request), fields));
     }

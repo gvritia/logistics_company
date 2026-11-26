@@ -54,7 +54,7 @@ public class HibernateDriverRepository implements DriverRepository {
                 return false;
             }
 
-            // Загруженный объект управляется Hibernate: commit сохранит эти изменения
+
             existing.setFullName(driver.getFullName());
             existing.setPhone(driver.getPhone());
             existing.setActive(driver.isActive());
@@ -70,7 +70,7 @@ public class HibernateDriverRepository implements DriverRepository {
             if (existing == null) {
                 return false;
             }
-            // При наличии заявок внешний ключ в БД запретит удаление
+
             session.remove(existing);
             return true;
         });
@@ -78,7 +78,7 @@ public class HibernateDriverRepository implements DriverRepository {
 
     @Override
     public List<Driver> findActive() {
-        // active — имя поля Java-модели. HQL выполняет фильтрацию в БД
+
         return inTransaction(session -> session
             .createSelectionQuery("from Driver d where d.active = true order by d.id", Driver.class)
             .getResultList());

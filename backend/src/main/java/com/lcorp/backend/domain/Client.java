@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
-// Справочник клиентов использует прежний числовой ключ, знакомый КР1 и КР2.
 @Entity
 @Table(name = "clients", schema = "public")
 public class Client {
@@ -41,14 +40,43 @@ public class Client {
         this.email = email;
     }
 
-    public Long getId() { return id; }
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
-    public long getVersion() { return version; }
+    public Long getId() {
+        return id;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public long getVersion() {
+        return version;
+    }
 }

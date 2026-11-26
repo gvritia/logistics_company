@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-// Оператор КР1/КР2 пока не приравнивается автоматически к учётной записи.
 @Entity
 @Table(name = "operators", schema = "public")
 public class Operator {
@@ -29,9 +28,23 @@ public class Operator {
         this.phone = phone;
     }
 
-    public Long getId() { return id; }
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public Long getId() {
+        return id;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 }

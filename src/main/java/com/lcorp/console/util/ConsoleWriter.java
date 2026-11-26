@@ -29,11 +29,18 @@ public final class ConsoleWriter {
         System.out.println(ConsoleReader.CANCEL_INPUT + " — отменить и вернуться в меню");
     }
 
-    public static void printMenu(String title, List<String> items) {
+    public static void printMenu(
+        String title,
+        List<String> items
+    ) {
         printMenu(title, items, "Назад");
     }
 
-    public static void printMenu(String title, List<String> items, String backLabel) {
+    public static void printMenu(
+        String title,
+        List<String> items,
+        String backLabel
+    ) {
         printTitle(title);
         for (int index = 0; index < items.size(); index++) {
             System.out.println("  " + (index + 1) + ") " + items.get(index));
@@ -211,7 +218,10 @@ public final class ConsoleWriter {
         return value == null ? "-" : value.format(ConsoleReader.DATE_TIME_FORMAT);
     }
 
-    private static String cut(String value, int maxLength) {
+    private static String cut(
+        String value,
+        int maxLength
+    ) {
         if (value == null) {
             return "-";
         }

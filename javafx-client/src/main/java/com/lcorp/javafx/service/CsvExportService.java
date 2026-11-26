@@ -10,7 +10,16 @@ import java.nio.file.Path;
 import java.util.List;
 
 public final class CsvExportService {
-    public void export(Path path, List<TransportationRequestView> rows) throws IOException {
+
+
+    private static String escape(String value) {
+        return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
+
+    public void export(
+        Path path,
+        List<TransportationRequestView> rows
+    ) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             writer.write("ID,Клиент,Оператор,Доставщик,Груз,Вес кг,Цена,Создана,План доставки,Статус,Откуда,Куда");
             writer.newLine();
@@ -25,10 +34,5 @@ public final class CsvExportService {
                 writer.newLine();
             }
         }
-    }
-
-    // Кавычки внутри поля удваиваются, чтобы запятые и переносы не ломали CSV.
-    private static String escape(String value) {
-        return "\"" + value.replace("\"", "\"\"") + "\"";
     }
 }

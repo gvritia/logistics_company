@@ -6,11 +6,7 @@ import com.lcorp.console.model.TransportationRequest;
 import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.javafx.DesktopContext;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.math.BigDecimal;
@@ -20,24 +16,38 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 
 public final class RequestFormController {
-    // @FXML связывает поля и обработчики с элементами request-form.fxml.
-    @FXML private ComboBox<MainController.NamedId> clientBox;
-    @FXML private ComboBox<MainController.NamedId> operatorBox;
-    @FXML private TextArea cargoField;
-    @FXML private TextField weightField;
-    @FXML private TextField priceField;
-    @FXML private TextField pickupField;
-    @FXML private TextField deliveryField;
-    @FXML private DatePicker plannedDate;
-    @FXML private TextField plannedTime;
-    @FXML private Label errorLabel;
+
+    @FXML
+    private ComboBox<MainController.NamedId> clientBox;
+    @FXML
+    private ComboBox<MainController.NamedId> operatorBox;
+    @FXML
+    private TextArea cargoField;
+    @FXML
+    private TextField weightField;
+    @FXML
+    private TextField priceField;
+    @FXML
+    private TextField pickupField;
+    @FXML
+    private TextField deliveryField;
+    @FXML
+    private DatePicker plannedDate;
+    @FXML
+    private TextField plannedTime;
+    @FXML
+    private Label errorLabel;
     private DesktopContext context;
     private Stage stage;
     private TransportationRequest existing;
     private boolean saved;
 
-    // Заполняет форму без ID готовит новую заявку, а с ID загружает существующую
-    public void configure(DesktopContext context, Stage stage, Long requestId) {
+
+    public void configure(
+        DesktopContext context,
+        Stage stage,
+        Long requestId
+    ) {
         this.context = context;
         this.stage = stage;
         for (Client client : context.clients().findAll()) {
@@ -63,11 +73,14 @@ public final class RequestFormController {
         }
     }
 
-    private void selectById(ComboBox<MainController.NamedId> box, Long id) {
+    private void selectById(
+        ComboBox<MainController.NamedId> box,
+        Long id
+    ) {
         box.getItems().stream().filter(item -> item.id().equals(id)).findFirst().ifPresent(box::setValue);
     }
 
-    // Проверяет ввод, создаёт или обновляет заявку через сервис и закрывает форму
+
     @FXML
     private void save() {
         try {
@@ -89,7 +102,7 @@ public final class RequestFormController {
             }
             LocalDateTime planned = LocalDateTime.of(plannedDate.getValue(), time);
             LocalDateTime created = existing == null ? LocalDateTime.now() : existing.getCreatedAt();
-            // При редактировании служебные поля остаются из сохранённой заявки
+
             TransportationRequest request = new TransportationRequest(
                 existing == null ? null : existing.getId(), client.id(),
                 existing == null ? null : existing.getDriverId(), operator.id(),
@@ -108,8 +121,12 @@ public final class RequestFormController {
         }
     }
 
-    // Убирает пробелы и проверяет обязательный текст с ограничением длины
-    private String text(String raw, String label, int maxLength) {
+
+    private String text(
+        String raw,
+        String label,
+        int maxLength
+    ) {
         String value = raw == null ? "" : raw.trim();
         if (value.isEmpty()) throw new IllegalArgumentException(label + ": заполните поле.");
         if (value.length() > maxLength) {
@@ -118,8 +135,13 @@ public final class RequestFormController {
         return value;
     }
 
-    // Проверяет положительное число, число знаков после запятой и общую точность БД
-    private BigDecimal positiveDecimal(String raw, String label, int maxScale, int maxPrecision) {
+
+    private BigDecimal positiveDecimal(
+        String raw,
+        String label,
+        int maxScale,
+        int maxPrecision
+    ) {
         try {
             BigDecimal value = new BigDecimal(raw.trim().replace(',', '.'));
             if (value.signum() <= 0 || value.scale() < 0 || value.scale() > maxScale
@@ -134,7 +156,11 @@ public final class RequestFormController {
     }
 
     @FXML
-    private void cancel() { stage.close(); }
+    private void cancel() {
+        stage.close();
+    }
 
-    public boolean isSaved() { return saved; }
+    public boolean isSaved() {
+        return saved;
+    }
 }

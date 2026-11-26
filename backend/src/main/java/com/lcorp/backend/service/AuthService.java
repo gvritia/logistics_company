@@ -38,6 +38,7 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final PasswordPolicy passwordPolicy;
     private final JwtService jwt;
+    private final EmailLoginService emailLogin;
     private final String dummyHash;
     private final int maxFailedAttempts;
     private final int lockMinutes;
@@ -45,7 +46,7 @@ public class AuthService {
 
     public AuthService(UserAccountRepository users, RefreshSessionRepository sessions,
                        AuditEventRepository audit, PasswordEncoder encoder,
-                       PasswordPolicy passwordPolicy, JwtService jwt,
+                       PasswordPolicy passwordPolicy, JwtService jwt, EmailLoginService emailLogin,
                        @Value("${app.auth.max-failed-attempts}") int maxFailedAttempts,
                        @Value("${app.auth.lock-minutes}") int lockMinutes) {
         this.users = users;
@@ -54,6 +55,7 @@ public class AuthService {
         this.encoder = encoder;
         this.passwordPolicy = passwordPolicy;
         this.jwt = jwt;
+        this.emailLogin = emailLogin;
         this.dummyHash = encoder.encode(UUID.randomUUID().toString());
         this.maxFailedAttempts = maxFailedAttempts;
         this.lockMinutes = lockMinutes;
@@ -63,15 +65,16 @@ public class AuthService {
     @Transactional(noRollbackFor = AuthFailure.class)
     public AuthResponse login(String email, String password, String correlationId) {
         UserAccount user = users.findForLogin(email.trim().toLowerCase(Locale.ROOT)).orElse(null);
-        boolean matches = encoder.matches(password, user == null ? dummyHash : user.getPasswordHash());
+        boolean hasPassword = user != null && user.getPasswordHash() != null;
+        boolean matches = encoder.matches(password, hasPassword ? user.getPasswordHash() : dummyHash);
         Instant now = Instant.now();
         boolean locked = user != null && user.getLockedUntil() != null && user.getLockedUntil().isAfter(now);
         if (user != null && user.getLockedUntil() != null && !locked) {
             user.setFailedLoginAttempts(0);
             user.setLockedUntil(null);
         }
-        if (user == null || !user.isEnabled() || locked || !matches) {
-            if (user != null && user.isEnabled() && !locked) {
+        if (!hasPassword || !user.isEnabled() || locked || !matches) {
+            if (hasPassword && user.isEnabled() && !locked) {
                 int count = user.getFailedLoginAttempts() + 1;
                 user.setFailedLoginAttempts(count);
                 if (count >= maxFailedAttempts) user.setLockedUntil(now.plus(lockMinutes, ChronoUnit.MINUTES));
@@ -85,8 +88,42 @@ public class AuthService {
         return issue(user, now);
     }
 
+    @Transactional(noRollbackFor = AuthFailure.class)
+    public AuthResponse loginByEmail(String email, String code, String password, String correlationId) {
+        if (password != null) passwordPolicy.validate(password);
+        Instant now = Instant.now();
+        var existing = emailLogin.verifyLogin(email, code, now);
+        UserAccount user;
+        if (existing.isEmpty()) {
+            String address = email.trim().toLowerCase(Locale.ROOT);
+            String passwordHash = password == null ? null : encoder.encode(password);
+            user = new UserAccount(UUID.randomUUID(), address, address.substring(0, address.lastIndexOf('@')),
+                passwordHash, Set.of(Role.VIEWER));
+            user.setPasswordChangeRequired(false);
+            user.verifyEmail(now);
+            users.saveAndFlush(user);
+            record(user, "USER_REGISTERED", "Регистрация по коду из письма", correlationId);
+        } else {
+            if (password != null) throw new ConflictFailure("Учётная запись уже создана. Войдите снова.");
+            user = existing.get();
+            if (!user.isEmailVerified()) {
+                if (user.getPasswordHash() != null && audit.existsByUser_IdAndEventType(user.getId(), "USER_REGISTERED")) {
+                    user.setPasswordHash(null);
+                    user.incrementAuthVersion();
+                    sessions.revokeActiveByUser(user.getId(), now);
+                }
+                user.verifyEmail(now);
+            }
+        }
+        record(user, "LOGIN_SUCCESS", "Вход по коду из письма", correlationId);
+        return issue(user, now);
+    }
+
     @Transactional
     public CurrentUser register(String email, String displayName, String password, String correlationId) {
+        if (emailLogin.enabled()) {
+            throw new ConflictFailure("Зарегистрируйтесь с помощью кода из письма");
+        }
         String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
         passwordPolicy.validate(password);
         if (users.existsByEmailIgnoreCase(normalizedEmail)) {
@@ -159,7 +196,8 @@ public class AuthService {
 
     private static CurrentUser current(UserAccount user) {
         return new CurrentUser(user.getId(), user.getEmail(), user.getDisplayName(),
-            Set.copyOf(user.getRoles()), user.isPasswordChangeRequired());
+            Set.copyOf(user.getRoles()), user.isPasswordChangeRequired(), user.isEmailVerified(),
+            user.getPasswordHash() != null);
     }
 
     private void record(UserAccount user, String type, String description, String correlationId) {

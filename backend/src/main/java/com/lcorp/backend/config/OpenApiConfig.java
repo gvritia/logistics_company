@@ -13,11 +13,11 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI logisticsOpenApi() {
         return new OpenAPI().components(new Components().addSecuritySchemes("bearerAuth",
-            new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")))
+                new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")))
             .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
             .info(new Info()
-            .title("Logistics Company API")
-            .description("REST API для заявок на перевозку груза")
-            .version("1.0.0"));
+                .title("Logistics Company API")
+                .description("REST API для заявок на перевозку груза")
+                .version("1.0.0"));
     }
 }

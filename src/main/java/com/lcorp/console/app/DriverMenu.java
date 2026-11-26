@@ -25,7 +25,11 @@ public final class DriverMenu implements Menu {
     private final ConsoleReader reader;
     private final Session session;
 
-    public DriverMenu(ApplicationContext context, ConsoleReader reader, Session session) {
+    public DriverMenu(
+        ApplicationContext context,
+        ConsoleReader reader,
+        Session session
+    ) {
         this.driverService = Objects.requireNonNull(context).drivers();
         this.reader = Objects.requireNonNull(reader);
         this.session = Objects.requireNonNull(session);
@@ -97,7 +101,10 @@ public final class DriverMenu implements Menu {
         ConsoleWriter.printSuccess("Заявка " + requestId + " доставлена");
     }
 
-    private Long chooseRequest(String title, List<TransportationRequest> requests) {
+    private Long chooseRequest(
+        String title,
+        List<TransportationRequest> requests
+    ) {
         if (requests.isEmpty()) {
             ConsoleWriter.printTitle(title);
             ConsoleWriter.printInfo("Подходящих заявок нет");

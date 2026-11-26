@@ -40,12 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 users.findById(parsed.userId())
                     .filter(user -> user.isEnabled() && user.getAuthVersion() == parsed.authVersion())
                     .ifPresent(user -> {
-                    var authorities = user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name())).toList();
-                    var principal = new AuthPrincipal(user.getId(), user.isPasswordChangeRequired());
-                    var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                });
+                        var authorities = user.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name())).toList();
+                        var principal = new AuthPrincipal(user.getId(), user.isPasswordChangeRequired());
+                        var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    });
             } catch (JwtException | IllegalArgumentException ignored) {
                 SecurityContextHolder.clearContext();
             }

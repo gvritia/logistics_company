@@ -27,6 +27,16 @@ public final class ConsoleReader {
         this.scanner = Objects.requireNonNull(scanner);
     }
 
+    private static void printOptions(
+        String prompt,
+        List<?> values
+    ) {
+        System.out.println(prompt);
+        for (int index = 0; index < values.size(); index++) {
+            System.out.println("  " + (index + 1) + ") " + values.get(index));
+        }
+    }
+
     public int readMenuChoice(int itemCount) {
         while (true) {
             String line = nextLine("Выбор");
@@ -41,7 +51,11 @@ public final class ConsoleReader {
         }
     }
 
-    public int readInt(String prompt, int min, int max) {
+    public int readInt(
+        String prompt,
+        int min,
+        int max
+    ) {
         while (true) {
             String line = readLine(prompt);
             try {
@@ -57,7 +71,10 @@ public final class ConsoleReader {
         }
     }
 
-    public long readLong(String prompt, long min) {
+    public long readLong(
+        String prompt,
+        long min
+    ) {
         while (true) {
             String line = readLine(prompt);
             try {
@@ -73,7 +90,10 @@ public final class ConsoleReader {
         }
     }
 
-    public Long readOptionalLong(String prompt, long min) {
+    public Long readOptionalLong(
+        String prompt,
+        long min
+    ) {
         while (true) {
             String line = readLine(prompt + " (Enter — пропустить)");
             if (line.isEmpty()) {
@@ -92,7 +112,10 @@ public final class ConsoleReader {
         }
     }
 
-    public long readIdFrom(String prompt, Collection<Long> allowedIds) {
+    public long readIdFrom(
+        String prompt,
+        Collection<Long> allowedIds
+    ) {
         while (true) {
             long value = readLong(prompt, 1);
             if (allowedIds.contains(value)) {
@@ -106,7 +129,11 @@ public final class ConsoleReader {
         nextLine("Enter — вернуться в меню");
     }
 
-    public Path readFilePath(String prompt, String defaultName, String extension) {
+    public Path readFilePath(
+        String prompt,
+        String defaultName,
+        String extension
+    ) {
         while (true) {
             String line = readLine(prompt + " (Enter — " + defaultName + ")");
             String fileName = line.isEmpty() ? defaultName : line;
@@ -134,7 +161,11 @@ public final class ConsoleReader {
         }
     }
 
-    public String readString(String prompt, int minLength, int maxLength) {
+    public String readString(
+        String prompt,
+        int minLength,
+        int maxLength
+    ) {
         while (true) {
             String line = readLine(prompt);
             if (line.length() < minLength) {
@@ -151,7 +182,10 @@ public final class ConsoleReader {
         }
     }
 
-    public String readOptionalString(String prompt, int maxLength) {
+    public String readOptionalString(
+        String prompt,
+        int maxLength
+    ) {
         while (true) {
             String line = readLine(prompt + " (Enter — пропустить)");
             if (line.isEmpty()) {
@@ -165,7 +199,12 @@ public final class ConsoleReader {
         }
     }
 
-    public String readEditedString(String prompt, String current, int minLength, int maxLength) {
+    public String readEditedString(
+        String prompt,
+        String current,
+        int minLength,
+        int maxLength
+    ) {
         while (true) {
             String line = readLine(prompt + " [" + current + "] (Enter — оставить)");
             if (line.isEmpty()) {
@@ -183,7 +222,11 @@ public final class ConsoleReader {
         }
     }
 
-    public String readEditedOptionalString(String prompt, String current, int maxLength) {
+    public String readEditedOptionalString(
+        String prompt,
+        String current,
+        int maxLength
+    ) {
         String hint = current == null
             ? " [не указан] (Enter — оставить пустым)"
             : " [" + current + "] (Enter — оставить, " + CLEAR_INPUT + " — удалить)";
@@ -203,7 +246,11 @@ public final class ConsoleReader {
         }
     }
 
-    public BigDecimal readPositiveDecimal(String prompt, BigDecimal max, int maxScale) {
+    public BigDecimal readPositiveDecimal(
+        String prompt,
+        BigDecimal max,
+        int maxScale
+    ) {
         while (true) {
             String line = readLine(prompt);
             BigDecimal value = parseDecimal(line);
@@ -226,7 +273,10 @@ public final class ConsoleReader {
         }
     }
 
-    public BigDecimal readOptionalBigDecimal(String prompt, BigDecimal min) {
+    public BigDecimal readOptionalBigDecimal(
+        String prompt,
+        BigDecimal min
+    ) {
         while (true) {
             String line = readLine(prompt + " (Enter — пропустить)");
             if (line.isEmpty()) {
@@ -277,14 +327,20 @@ public final class ConsoleReader {
         }
     }
 
-    public <E extends Enum<E>> E readEnum(String prompt, Class<E> enumType) {
+    public <E extends Enum<E>> E readEnum(
+        String prompt,
+        Class<E> enumType
+    ) {
         List<E> values = List.of(enumType.getEnumConstants());
         printOptions(prompt, values);
         int choice = readInt("Выбор", 1, values.size());
         return values.get(choice - 1);
     }
 
-    public <E extends Enum<E>> E readOptionalEnum(String prompt, Class<E> enumType) {
+    public <E extends Enum<E>> E readOptionalEnum(
+        String prompt,
+        Class<E> enumType
+    ) {
         List<E> values = List.of(enumType.getEnumConstants());
         printOptions(prompt, values);
         while (true) {
@@ -326,13 +382,6 @@ public final class ConsoleReader {
             return scanner.nextLine().trim();
         } catch (NoSuchElementException exception) {
             throw new InputClosedException("Ввод завершён", exception);
-        }
-    }
-
-    private static void printOptions(String prompt, List<?> values) {
-        System.out.println(prompt);
-        for (int index = 0; index < values.size(); index++) {
-            System.out.println("  " + (index + 1) + ") " + values.get(index));
         }
     }
 

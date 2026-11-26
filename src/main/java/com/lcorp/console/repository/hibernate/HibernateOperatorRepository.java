@@ -32,7 +32,7 @@ public class HibernateOperatorRepository implements OperatorRepository {
     }
 
     @Override
-    public Optional<Operator> findById(Long id){
+    public Optional<Operator> findById(Long id) {
         Objects.requireNonNull(id);
         return inTransaction(session -> Optional.ofNullable(session.find(Operator.class, id)));
     }
@@ -46,12 +46,12 @@ public class HibernateOperatorRepository implements OperatorRepository {
     }
 
     @Override
-    public boolean update(Operator operator){
+    public boolean update(Operator operator) {
         Objects.requireNonNull(operator);
         Objects.requireNonNull(operator.getId());
         return inTransaction(session -> {
             Operator existing = session.find(Operator.class, operator.getId());
-            if (existing == null){
+            if (existing == null) {
                 return false;
             }
             existing.setFullName(operator.getFullName());
@@ -61,11 +61,11 @@ public class HibernateOperatorRepository implements OperatorRepository {
     }
 
     @Override
-    public boolean deleteById(Long id){
+    public boolean deleteById(Long id) {
         Objects.requireNonNull(id);
         return inTransaction(session -> {
             Operator existing = session.find(Operator.class, id);
-            if (existing == null){
+            if (existing == null) {
                 return false;
             }
             session.remove(existing);
@@ -75,7 +75,7 @@ public class HibernateOperatorRepository implements OperatorRepository {
 
 
     private <T> T inTransaction(Function<Session, T> action) {
-        try (Session session = sessionFactory.openSession()){
+        try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
             try {
                 T result = action.apply(session);

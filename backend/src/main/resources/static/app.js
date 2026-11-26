@@ -41,6 +41,10 @@ const viewNames = {
 };
 let refreshPromise = null;
 let toastTimer = null;
+let emailLoginEnabled = null;
+let emailAuthStep = 'address';
+let emailAuthMode = null;
+let emailSignupPassword = null;
 
 function node(tag, className, value) {
   const item = document.createElement(tag);
@@ -89,8 +93,8 @@ function syncActionStates() {
 }
 function validatePassword(password) {
   const length = Array.from(password).length;
-  if (length < 12 || length > 72 || !password.trim()) {
-    throw new Error('Пароль должен содержать от 12 до 72 символов.');
+  if (length > 72 || !password.trim()) {
+    throw new Error('Пароль должен содержать от 1 до 72 символов.');
   }
 }
 function queryString(values) {
@@ -158,7 +162,10 @@ function showLogin() {
   state.auditPage = 0; state.auditData = null;
   document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
   $('app-screen').hidden = true; $('auth-screen').hidden = false;
-  $('login-form').hidden = false; $('register-form').hidden = true;
+  $('login-form').hidden = emailLoginEnabled !== false; $('register-form').hidden = true;
+  $('email-login-form').hidden = emailLoginEnabled !== true;
+  resetEmailAuth();
+  resetProfileEmail();
   $('required-password-form').hidden = true;
   $('login-password').value = '';
   $('register-form').reset(); $('required-password-form').reset();
@@ -167,6 +174,7 @@ function showLogin() {
   $('audit-search-form').reset();
   updateSelection();
   syncActionStates();
+  $('auth-message').classList.remove('info');
   $('auth-message').textContent = '';
 }
 function setAuth(result) {
@@ -177,6 +185,7 @@ function setAuth(result) {
 function enterApp() {
   $('auth-screen').hidden = true; $('app-screen').hidden = false;
   $('login-password').value = '';
+  resetEmailAuth();
   $('required-new-password').value = ''; $('required-confirm-password').value = '';
   $('sidebar-name').textContent = state.user.displayName;
   $('topbar-user').textContent = state.user.displayName;
@@ -188,6 +197,17 @@ function enterApp() {
 }
 async function login(email, password) {
   return api('/api/auth/login', {method:'POST', json:{email,password}, anonymous:true});
+}
+function completePasswordLogin(result, password) {
+  setAuth(result);
+  if (!result.user.passwordChangeRequired) { enterApp(); return; }
+  state.temporaryPassword = password;
+  $('login-password').value = '';
+  resetEmailAuth();
+  $('login-form').hidden = true;
+  $('email-login-form').hidden = true;
+  $('required-password-form').hidden = false;
+  $('required-new-password').focus();
 }
 async function logout() {
   const refreshToken = state.refreshToken;
@@ -213,7 +233,39 @@ function loadProfile() {
   $('profile-name').textContent = state.user.displayName;
   $('profile-email').textContent = state.user.email;
   $('profile-roles').textContent = state.user.roles.map(role => roleNames[role] || role).join(', ');
+  $('profile-password-form').hidden = state.user.hasPassword === false;
   $('profile-password-form').reset(); $('profile-message').textContent = '';
+  renderProfileEmail();
+}
+function renderProfileEmail() {
+  $('profile-email-form').hidden = !emailLoginEnabled;
+  if (state.user.emailVerified) {
+    $('profile-email-status').textContent = 'Почта подтверждена. Вход по коду включён.';
+    $('profile-email-send').hidden = true;
+  }
+}
+function showEmailCode(prefix, visible, submitLabel) {
+  $(`${prefix}-code-label`).hidden = !visible;
+  $(`${prefix}-code`).disabled = !visible;
+  $(`${prefix}-resend`).hidden = !visible;
+  $(`${prefix}-send`).textContent = submitLabel;
+}
+function resetProfileEmail() {
+  $('profile-email-form').reset();
+  $('profile-email-status').textContent = '';
+  $('profile-email-send').hidden = false;
+  showEmailCode('profile-email', false, 'Подтвердить почту');
+}
+async function emailFormAction(prefix, message, action) {
+  const submit = $(`${prefix}-send`);
+  const resend = $(`${prefix}-resend`);
+  if (submit.disabled) return;
+  submit.disabled = true;
+  resend.disabled = true;
+  message.textContent = '';
+  try { await action(); }
+  catch (error) { message.textContent = error.message; }
+  finally { submit.disabled = false; resend.disabled = false; }
 }
 function metric(label, value, note, color) {
   const card = node('article', `metric ${color || ''}`);
@@ -786,17 +838,158 @@ $('login-form').addEventListener('submit', event => {
     try {
       const email = $('login-email').value.trim();
       const password = $('login-password').value;
-      const result = await login(email,password);
-      setAuth(result);
-      if (result.user.passwordChangeRequired) {
-        state.temporaryPassword = password;
-        $('login-password').value = '';
-        $('login-form').hidden = true; $('required-password-form').hidden = false;
-      } else enterApp();
+      completePasswordLogin(await login(email,password), password);
     } catch (error) { $('auth-message').textContent = error.message; }
     finally { submit.disabled = false; }
   })();
 });
+const emailAuthSteps = {
+  address: ['Продолжить', 'email-login-address'],
+  password: ['Войти', 'email-login-password'],
+  signup: ['Создать пароль', null],
+  newPassword: ['Отправить код', 'email-signup-password'],
+  code: ['Подтвердить код', 'email-login-code']
+};
+
+function setEmailAuthStep(step) {
+  emailAuthStep = step;
+  const [label, focus] = emailAuthSteps[step];
+  const signingUp = emailAuthMode === 'SIGN_UP';
+  $('email-login-title').textContent = step === 'address'
+    ? 'Вход или регистрация' : signingUp ? 'Регистрация' : 'Вход';
+  $('email-login-address').readOnly = step !== 'address';
+  $('email-login-back').hidden = step === 'address';
+  $('email-login-password-label').hidden = $('email-login-password').disabled = step !== 'password';
+  $('email-signup-password-fields').hidden = step !== 'newPassword';
+  $('email-signup-password').disabled = $('email-signup-confirm-password').disabled = step !== 'newPassword';
+  $('email-login-code-label').hidden = $('email-login-code').disabled = step !== 'code';
+  $('email-login-resend').hidden = step !== 'code';
+  $('email-login-use-password').hidden = step !== 'code' || emailAuthMode !== 'PASSWORD';
+  $('email-login-use-code').hidden = step !== 'signup' && !(step === 'password' && emailAuthMode === 'PASSWORD');
+  $('email-login-use-code').textContent = signingUp ? 'Зарегистрироваться по коду' : 'Войти по коду';
+  $('email-login-send').textContent = label;
+  if (focus && !$('email-login-form').hidden) $(focus).focus();
+}
+function resetEmailAuth(address = '') {
+  emailAuthMode = null;
+  emailSignupPassword = null;
+  $('email-login-form').reset();
+  $('email-login-address').value = address;
+  setEmailAuthStep('address');
+}
+async function runEmailAuth(action) {
+  const form = $('email-login-form');
+  const controls = form.querySelectorAll('button');
+  if ($('email-login-send').disabled) return;
+  controls.forEach(control => { control.disabled = true; });
+  $('auth-message').classList.remove('info');
+  $('auth-message').textContent = '';
+  try { await action(); }
+  catch (error) { $('auth-message').textContent = error.message; }
+  finally {
+    controls.forEach(control => { control.disabled = false; });
+    if (emailAuthStep === 'signup' && !form.hidden) $('email-login-send').focus();
+  }
+}
+function emailAuthRequest(path, json) {
+  return api(`/api/auth/email/${path}`, {method:'POST', anonymous:true, json});
+}
+function showCodeStep() {
+  $('email-login-password').value = '';
+  $('email-signup-password').value = '';
+  $('email-signup-confirm-password').value = '';
+  $('email-login-code').value = '';
+  setEmailAuthStep('code');
+  $('auth-message').classList.add('info');
+  $('auth-message').textContent = 'Проверьте почту и папку «Спам».';
+}
+async function requestEmailLogin(password = null) {
+  await emailAuthRequest('request', {email:$('email-login-address').value.trim()});
+  emailSignupPassword = password;
+  showCodeStep();
+}
+async function startEmailAuth(email) {
+  const address = $('email-login-address');
+  address.readOnly = true;
+  try {
+    emailAuthMode = await emailAuthRequest('start', {email});
+    switch (emailAuthMode) {
+      case 'SIGN_UP': setEmailAuthStep('signup'); break;
+      case 'PASSWORD':
+      case 'PASSWORD_ONLY': setEmailAuthStep('password'); break;
+      case 'CODE': showCodeStep(); break;
+      default: throw new Error('Вход для этого адреса сейчас недоступен.');
+    }
+  } finally {
+    if (emailAuthStep === 'address') address.readOnly = false;
+  }
+}
+$('email-login-back').addEventListener('click', () => {
+  resetEmailAuth($('email-login-address').value);
+  $('auth-message').textContent = '';
+  $('email-login-address').select();
+});
+$('email-login-use-password').addEventListener('click', () => {
+  $('auth-message').textContent = '';
+  $('email-login-code').value = '';
+  setEmailAuthStep('password');
+});
+$('email-login-use-code').addEventListener('click', () => runEmailAuth(() => requestEmailLogin()));
+$('email-login-resend').addEventListener('click', () => runEmailAuth(() => requestEmailLogin(emailSignupPassword)));
+$('email-login-form').addEventListener('submit', event => {
+  event.preventDefault();
+  runEmailAuth(async () => {
+    const email = $('email-login-address').value.trim();
+    switch (emailAuthStep) {
+      case 'address': await startEmailAuth(email); break;
+      case 'password': {
+        const password = $('email-login-password').value;
+        completePasswordLogin(await login(email,password), password);
+        break;
+      }
+      case 'signup': setEmailAuthStep('newPassword'); break;
+      case 'newPassword': {
+        const password = $('email-signup-password').value;
+        validatePassword(password);
+        if (password !== $('email-signup-confirm-password').value) throw new Error('Пароли не совпадают.');
+        await requestEmailLogin(password);
+        break;
+      }
+      case 'code': {
+        const code = $('email-login-code').value;
+        const result = await emailAuthRequest('verify', {
+          email, code, ...(emailSignupPassword === null ? {} : {password:emailSignupPassword})
+        });
+        setAuth(result); enterApp();
+        break;
+      }
+    }
+  });
+});
+function requestEmailEnrollment() {
+  return emailFormAction('profile-email', $('profile-email-status'), async () => {
+    const userId = state.user.id;
+    await api('/api/auth/email/enroll/request', {method:'POST'});
+    if (state.user?.id !== userId) return;
+    showEmailCode('profile-email', true, 'Подтвердить код');
+    $('profile-email-status').textContent = 'Проверьте почту. Новый код можно запросить через минуту.';
+    $('profile-email-code').select();
+  });
+}
+$('profile-email-form').addEventListener('submit', event => {
+  event.preventDefault();
+  if ($('profile-email-code').disabled) return requestEmailEnrollment();
+  emailFormAction('profile-email', $('profile-email-status'), async () => {
+    const userId = state.user.id;
+    const code = $('profile-email-code').value;
+    await api('/api/auth/email/enroll/verify', {method:'POST', keepSessionOnUnauthorized:true, json:{code}});
+    if (state.user?.id !== userId) return;
+    state.user.emailVerified = true;
+    resetProfileEmail();
+    renderProfileEmail();
+  });
+});
+$('profile-email-resend').addEventListener('click', requestEmailEnrollment);
 $('show-register').addEventListener('click', () => {
   $('auth-message').textContent = '';
   $('login-form').hidden = true; $('register-form').hidden = false;
@@ -830,6 +1023,7 @@ $('required-password-form').addEventListener('submit', event => {
   (async () => {
     submit.disabled = true; $('auth-message').textContent = '';
     try {
+      const email = state.user.email;
       const newPassword = $('required-new-password').value;
       validatePassword(newPassword);
       if (newPassword !== $('required-confirm-password').value) throw new Error('Пароли не совпадают.');
@@ -837,7 +1031,7 @@ $('required-password-form').addEventListener('submit', event => {
         currentPassword:state.temporaryPassword,newPassword
       }});
       state.temporaryPassword = null;
-      const result = await login($('login-email').value.trim(),newPassword);
+      const result = await login(email,newPassword);
       setAuth(result); enterApp();
     } catch (error) { $('auth-message').textContent = error.message; }
     finally { submit.disabled = false; }
@@ -934,3 +1128,10 @@ $('audit-prev').addEventListener('click',event => run(async () => { state.auditP
 $('audit-next').addEventListener('click',event => run(async () => { state.auditPage++; await loadAudit(); },event.currentTarget));
 
 showLogin();
+api('/api/system/info', {anonymous:true})
+  .then(info => info.emailLoginEnabled === true)
+  .catch(() => false)
+  .then(enabled => {
+    emailLoginEnabled = enabled;
+    showLogin();
+  });

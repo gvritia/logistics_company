@@ -1,5 +1,6 @@
 package com.lcorp.console.app;
 
+import com.lcorp.console.export.ExportResult;
 import com.lcorp.console.model.Client;
 import com.lcorp.console.model.Driver;
 import com.lcorp.console.model.TransportationRequest;
@@ -8,7 +9,6 @@ import com.lcorp.console.model.query.SortDirection;
 import com.lcorp.console.model.query.TransportationRequestSearchCriteria;
 import com.lcorp.console.model.query.TransportationRequestSortField;
 import com.lcorp.console.model.query.TransportationRequestView;
-import com.lcorp.console.export.ExportResult;
 import com.lcorp.console.service.ClientService;
 import com.lcorp.console.service.DriverService;
 import com.lcorp.console.service.OperatorService;
@@ -84,13 +84,23 @@ public final class OperatorMenu implements Menu {
     private final ConsoleReader reader;
     private final Session session;
 
-    public OperatorMenu(ApplicationContext context, ConsoleReader reader, Session session) {
+    public OperatorMenu(
+        ApplicationContext context,
+        ConsoleReader reader,
+        Session session
+    ) {
         this.context = Objects.requireNonNull(context);
         this.operatorService = context.operators();
         this.clientService = context.clients();
         this.driverService = context.drivers();
         this.reader = Objects.requireNonNull(reader);
         this.session = Objects.requireNonNull(session);
+    }
+
+    private static boolean isEmailValid(String email) {
+        int at = email.indexOf('@');
+        int dot = email.lastIndexOf('.');
+        return at > 0 && dot > at + 1 && dot < email.length() - 1;
     }
 
     @Override
@@ -275,7 +285,10 @@ public final class OperatorMenu implements Menu {
         ConsoleWriter.printSuccess("Заявка " + requestId + " отменена");
     }
 
-    private Long chooseRequest(String title, List<TransportationRequest> requests) {
+    private Long chooseRequest(
+        String title,
+        List<TransportationRequest> requests
+    ) {
         if (requests.isEmpty()) {
             ConsoleWriter.printTitle(title);
             ConsoleWriter.printInfo("Подходящих заявок нет");
@@ -382,7 +395,10 @@ public final class OperatorMenu implements Menu {
         ConsoleWriter.printSuccess("Клиент " + clientId + " обновлён");
     }
 
-    private Long chooseClient(String title, Predicate<Client> suitable) {
+    private Long chooseClient(
+        String title,
+        Predicate<Client> suitable
+    ) {
         List<Client> clients = clientService.findAll().stream().filter(suitable).toList();
         if (clients.isEmpty()) {
             ConsoleWriter.printTitle(title);
@@ -452,12 +468,6 @@ public final class OperatorMenu implements Menu {
             }
             ConsoleWriter.printError("Введите email, например name@example.com");
         }
-    }
-
-    private static boolean isEmailValid(String email) {
-        int at = email.indexOf('@');
-        int dot = email.lastIndexOf('.');
-        return at > 0 && dot > at + 1 && dot < email.length() - 1;
     }
 
     private void showDrivers() {
@@ -544,7 +554,10 @@ public final class OperatorMenu implements Menu {
         ConsoleWriter.printSuccess("Доставщик " + driverId + " обновлён");
     }
 
-    private Long chooseDriver(String title, List<Driver> drivers) {
+    private Long chooseDriver(
+        String title,
+        List<Driver> drivers
+    ) {
         if (drivers.isEmpty()) {
             ConsoleWriter.printTitle(title);
             ConsoleWriter.printInfo("Подходящих доставщиков нет");
@@ -614,7 +627,10 @@ public final class OperatorMenu implements Menu {
         exportToFile(all, "requests_all");
     }
 
-    private void exportToFile(List<TransportationRequestView> requests, String namePrefix) {
+    private void exportToFile(
+        List<TransportationRequestView> requests,
+        String namePrefix
+    ) {
         String defaultName = namePrefix + "_"
             + LocalDateTime.now().format(FILE_NAME_TIME) + ".xlsx";
 

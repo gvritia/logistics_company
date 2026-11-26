@@ -128,39 +128,137 @@ public class TransportationRequest {
         updatedAt = LocalDateTime.now();
     }
 
-    public Long getId() { return id; }
-    public UUID getPublicId() { return publicId; }
-    public String getRequestCode() { return requestCode; }
-    public void setRequestCode(String requestCode) { this.requestCode = requestCode; }
-    public Client getClient() { return client; }
-    public void setClient(Client client) { this.client = client; }
-    public Driver getDriver() { return driver; }
-    public void setDriver(Driver driver) { this.driver = driver; }
-    public Operator getOperator() { return operator; }
-    public void setOperator(Operator operator) { this.operator = operator; }
-    public String getCargoDescription() { return cargoDescription; }
-    public void setCargoDescription(String cargoDescription) { this.cargoDescription = cargoDescription; }
-    public BigDecimal getWeightKg() { return weightKg; }
-    public void setWeightKg(BigDecimal weightKg) { this.weightKg = weightKg; }
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
-    public String getPickupAddress() { return pickupAddress; }
-    public void setPickupAddress(String pickupAddress) { this.pickupAddress = pickupAddress; }
-    public String getDeliveryAddress() { return deliveryAddress; }
-    public void setDeliveryAddress(String deliveryAddress) { this.deliveryAddress = deliveryAddress; }
-    public LocalDateTime getPlannedDeliveryAt() { return plannedDeliveryAt; }
-    public void setPlannedDeliveryAt(LocalDateTime plannedDeliveryAt) { this.plannedDeliveryAt = plannedDeliveryAt; }
-    public TransportationRequestStatus getStatus() { return status; }
-    public void setStatus(TransportationRequestStatus status) { this.status = status; }
-    public boolean isFragile() { return fragile; }
-    public void setFragile(boolean fragile) { this.fragile = fragile; }
-    public boolean isArchived() { return archived; }
-    public void setArchived(boolean archived) { this.archived = archived; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public long getVersion() { return version; }
-    public Set<String> getTags() { return tags; }
-    public void setTags(Set<String> tags) { this.tags = new LinkedHashSet<>(tags); }
+    public Long getId() {
+        return id;
+    }
+
+    public UUID getPublicId() {
+        return publicId;
+    }
+
+    public String getRequestCode() {
+        return requestCode;
+    }
+
+    public void setRequestCode(String requestCode) {
+        this.requestCode = requestCode;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public Driver getDriver() {
+        return driver;
+    }
+
+    public void setDriver(Driver driver) {
+        this.driver = driver;
+    }
+
+    public Operator getOperator() {
+        return operator;
+    }
+
+    public void setOperator(Operator operator) {
+        this.operator = operator;
+    }
+
+    public String getCargoDescription() {
+        return cargoDescription;
+    }
+
+    public void setCargoDescription(String cargoDescription) {
+        this.cargoDescription = cargoDescription;
+    }
+
+    public BigDecimal getWeightKg() {
+        return weightKg;
+    }
+
+    public void setWeightKg(BigDecimal weightKg) {
+        this.weightKg = weightKg;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public String getPickupAddress() {
+        return pickupAddress;
+    }
+
+    public void setPickupAddress(String pickupAddress) {
+        this.pickupAddress = pickupAddress;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public LocalDateTime getPlannedDeliveryAt() {
+        return plannedDeliveryAt;
+    }
+
+    public void setPlannedDeliveryAt(LocalDateTime plannedDeliveryAt) {
+        this.plannedDeliveryAt = plannedDeliveryAt;
+    }
+
+    public TransportationRequestStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TransportationRequestStatus status) {
+        this.status = status;
+    }
+
+    public boolean isFragile() {
+        return fragile;
+    }
+
+    public void setFragile(boolean fragile) {
+        this.fragile = fragile;
+    }
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = new LinkedHashSet<>(tags);
+    }
 
     @Transient
     public WeightCategory getWeightCategory() {

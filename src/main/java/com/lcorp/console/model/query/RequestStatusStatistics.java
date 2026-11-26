@@ -4,7 +4,7 @@ import com.lcorp.console.model.TransportationRequestStatus;
 
 import java.math.BigDecimal;
 
-// record тип класса, для хранения неизменяемых данных
+
 public record RequestStatusStatistics(
     TransportationRequestStatus status,
     long requestCount,

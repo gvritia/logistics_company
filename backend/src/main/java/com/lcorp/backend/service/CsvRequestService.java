@@ -75,7 +75,7 @@ public class CsvRequestService {
             parsed.sha256(), parsed.issues());
     }
 
-    // Нет общей транзакции: каждая корректная строка применяется через RequestService отдельно.
+
     public CsvDtos.Apply apply(MultipartFile file, CsvDtos.Mode mode, String expectedSha256,
                                UUID actorId, String correlationId) {
         byte[] bytes = read(file);
@@ -174,8 +174,11 @@ public class CsvRequestService {
         BigDecimal weight = decimal(record.get("weight_kg"), "weight_kg");
         BigDecimal price = decimal(record.get("price"), "price");
         LocalDateTime planned;
-        try { planned = LocalDateTime.parse(record.get("planned_delivery_at").trim()); }
-        catch (DateTimeParseException ex) { throw new RowProblem("planned_delivery_at", "Ожидается ISO-дата и время"); }
+        try {
+            planned = LocalDateTime.parse(record.get("planned_delivery_at").trim());
+        } catch (DateTimeParseException ex) {
+            throw new RowProblem("planned_delivery_at", "Ожидается ISO-дата и время");
+        }
         String rawFragile = record.get("fragile").trim();
         if (!rawFragile.equalsIgnoreCase("true") && !rawFragile.equalsIgnoreCase("false")) {
             throw new RowProblem("fragile", "Ожидается true или false");
@@ -215,7 +218,8 @@ public class CsvRequestService {
             throw new RowProblem("delivery_address", "Адреса должны отличаться");
         }
         LocalDateTime created = existing == null ? LocalDateTime.now() : existing.getCreatedAt();
-        if (!planned.isAfter(created)) throw new RowProblem("planned_delivery_at", "Доставка должна быть позже создания");
+        if (!planned.isAfter(created))
+            throw new RowProblem("planned_delivery_at", "Доставка должна быть позже создания");
         RequestDtos.Update update = existing == null ? null : new RequestDtos.Update(version, code,
             clientId, operatorId, create.cargoDescription(), weight, price, create.pickupAddress(),
             create.deliveryAddress(), planned, fragile, tags);
@@ -244,12 +248,17 @@ public class CsvRequestService {
             long result = Long.parseLong(value.trim());
             if (result < 0) throw new NumberFormatException();
             return result;
-        } catch (NumberFormatException ex) { throw new RowProblem(field, "Ожидается целое неотрицательное число"); }
+        } catch (NumberFormatException ex) {
+            throw new RowProblem(field, "Ожидается целое неотрицательное число");
+        }
     }
 
     private static BigDecimal decimal(String value, String field) {
-        try { return new BigDecimal(value.trim()); }
-        catch (NumberFormatException ex) { throw new RowProblem(field, "Ожидается десятичное число"); }
+        try {
+            return new BigDecimal(value.trim());
+        } catch (NumberFormatException ex) {
+            throw new RowProblem(field, "Ожидается десятичное число");
+        }
     }
 
     private static Set<String> decodeTags(String encoded) {
@@ -262,10 +271,11 @@ public class CsvRequestService {
                 if (ch != '\\' && ch != '|') throw new RowProblem("tags", "Некорректное экранирование тега");
                 current.append(ch);
                 escaped = false;
-            }
-            else if (ch == '\\') escaped = true;
-            else if (ch == '|') { addTag(tags, current.toString()); current.setLength(0); }
-            else current.append(ch);
+            } else if (ch == '\\') escaped = true;
+            else if (ch == '|') {
+                addTag(tags, current.toString());
+                current.setLength(0);
+            } else current.append(ch);
         }
         if (escaped) throw new RowProblem("tags", "Незавершённое экранирование тега");
         addTag(tags, current.toString());
@@ -309,21 +319,31 @@ public class CsvRequestService {
             byte[] bytes = file.getBytes();
             if (bytes.length > MAX_BYTES) throw new IllegalArgumentException("CSV превышает 2 МБ");
             return bytes;
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("Не удалось прочитать CSV");
         }
-        catch (IOException ex) { throw new IllegalArgumentException("Не удалось прочитать CSV"); }
     }
 
     private static String sha256(byte[] bytes) {
-        try { return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); }
-        catch (NoSuchAlgorithmException ex) { throw new IllegalStateException("SHA-256 недоступен", ex); }
+        try {
+            return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 недоступен", ex);
+        }
     }
 
     private record CsvRow(long number, RequestDtos.Create create, RequestDtos.Update update, UUID existingId) {
     }
+
     private record Parsed(int total, List<CsvRow> rows, List<CsvDtos.Issue> issues, String sha256) {
     }
+
     private static final class RowProblem extends RuntimeException {
         private final String field;
-        private RowProblem(String field, String message) { super(message); this.field = field; }
+
+        private RowProblem(String field, String message) {
+            super(message);
+            this.field = field;
+        }
     }
 }

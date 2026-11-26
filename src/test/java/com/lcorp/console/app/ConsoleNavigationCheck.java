@@ -5,6 +5,8 @@ import com.lcorp.console.model.Client;
 import com.lcorp.console.model.TransportationRequest;
 import com.lcorp.console.model.TransportationRequestStatus;
 import com.lcorp.console.util.ConsoleReader;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.math.BigDecimal;
@@ -17,7 +19,6 @@ import java.util.Scanner;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public final class ConsoleNavigationCheck {
     private static final String HINT = "0 — отменить и вернуться в меню";
@@ -72,13 +73,13 @@ public final class ConsoleNavigationCheck {
                     + "\nПробный груз\n-1\n0.0\n1.123\n0,00\n100.50\n31.02.2028 12:00\n01.01.2000 12:00\n"
                     + date + "\nМосква\nМосква\nТверь\n\n0\n0\n");
                 require(created.contains("Заявка создана") && !created.contains("[Ошибка] Invalid")
-                    && !created.contains("значение должно быть больше нуля"),
+                        && !created.contains("значение должно быть больше нуля"),
                     "Ошибки полей исправляются сразу, без отказа сервиса");
                 var ownRequests = context.clients().findRequests(client.getId());
                 require(ownRequests.size() == 1
-                    && ownRequests.getFirst().getCargoDescription().equals("Пробный груз")
-                    && ownRequests.getFirst().getWeightKg().compareTo(new BigDecimal("1.123")) == 0
-                    && ownRequests.getFirst().getPrice().compareTo(new BigDecimal("100.50")) == 0,
+                        && ownRequests.getFirst().getCargoDescription().equals("Пробный груз")
+                        && ownRequests.getFirst().getWeightKg().compareTo(new BigDecimal("1.123")) == 0
+                        && ownRequests.getFirst().getPrice().compareTo(new BigDecimal("100.50")) == 0,
                     "Повторный ввод сохраняет остальные поля");
 
                 Path directory = Files.createTempDirectory("console-export-check-");
@@ -151,24 +152,42 @@ public final class ConsoleNavigationCheck {
             + " XLSX export, action filtering");
     }
 
-    private static void checkChoices(ApplicationContext context, Session session, int action,
-                                     List<TransportationRequest> all, Predicate<TransportationRequest> allowed) {
+    private static void checkChoices(
+        ApplicationContext context,
+        Session session,
+        int action,
+        List<TransportationRequest> all,
+        Predicate<TransportationRequest> allowed
+    ) {
         boolean any = all.stream().anyMatch(allowed);
         String output = operator(context, session, "1\n" + action + "\n" + (any ? "0\n" : "\n") + "0\n0\n");
         require(any == output.contains(HINT), "Подсказка отмены только перед вводом");
         assertRows(output, all, allowed);
     }
-    private static void assertRows(String output, List<TransportationRequest> all,
-                                   Predicate<TransportationRequest> allowed) {
+
+    private static void assertRows(
+        String output,
+        List<TransportationRequest> all,
+        Predicate<TransportationRequest> allowed
+    ) {
         for (var request : all) {
             boolean shown = Pattern.compile("(?m)^" + request.getId() + "\\s{2,}").matcher(output).find();
             require(shown == allowed.test(request), "Неверный список для действия: " + request.getId());
         }
     }
-    private static String operator(ApplicationContext context, Session session, String input) {
+
+    private static String operator(
+        ApplicationContext context,
+        Session session,
+        String input
+    ) {
         return capture(() -> new OperatorMenu(context, reader(input), session).show());
     }
-    private static ConsoleReader reader(String input) { return new ConsoleReader(new Scanner(input)); }
+
+    private static ConsoleReader reader(String input) {
+        return new ConsoleReader(new Scanner(input));
+    }
+
     private static String capture(Runnable action) {
         PrintStream original = System.out;
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -180,7 +199,11 @@ public final class ConsoleNavigationCheck {
         }
         return bytes.toString(StandardCharsets.UTF_8);
     }
-    private static void require(boolean value, String message) {
+
+    private static void require(
+        boolean value,
+        String message
+    ) {
         if (!value) throw new AssertionError(message);
     }
 }

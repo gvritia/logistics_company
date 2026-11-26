@@ -19,7 +19,7 @@ public final class DesktopContext {
     private final TransportationRequestQueryService queries;
     private final ClientService clientService;
 
-    // Собирает JDBC-репозитории и сервисы КР1 для работы настольного интерфейса
+
     public DesktopContext() {
         DatabaseConnectionFactory database = new DatabaseConnectionFactory(DatabaseConfig.load());
         clients = new JdbcClientRepository(database);
@@ -32,10 +32,27 @@ public final class DesktopContext {
         clientService = new ClientService(clients, requests);
     }
 
-    public JdbcClientRepository clients() { return clients; }
-    public JdbcDriverRepository drivers() { return drivers; }
-    public JdbcOperatorRepository operators() { return operators; }
-    public TransportationRequestService requests() { return requests; }
-    public TransportationRequestQueryService queries() { return queries; }
-    public ClientService clientService() { return clientService; }
+    public JdbcClientRepository clients() {
+        return clients;
+    }
+
+    public JdbcDriverRepository drivers() {
+        return drivers;
+    }
+
+    public JdbcOperatorRepository operators() {
+        return operators;
+    }
+
+    public TransportationRequestService requests() {
+        return requests;
+    }
+
+    public TransportationRequestQueryService queries() {
+        return queries;
+    }
+
+    public ClientService clientService() {
+        return clientService;
+    }
 }

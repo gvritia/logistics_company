@@ -5,16 +5,12 @@ import com.lcorp.console.exception.DataAccessException;
 import com.lcorp.console.model.Driver;
 import com.lcorp.console.repository.DriverRepository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Сохраняет и загружает доставщиков через JDBC, включая признак активности
+
 public final class JdbcDriverRepository implements DriverRepository {
     private final DatabaseConnectionFactory database;
 
@@ -49,7 +45,7 @@ public final class JdbcDriverRepository implements DriverRepository {
         return select("ORDER BY full_name, id");
     }
 
-    // Только активные доставщики могут получить новое назначение.
+
     @Override
     public List<Driver> findActive() {
         return select("WHERE active ORDER BY full_name, id");
@@ -79,8 +75,11 @@ public final class JdbcDriverRepository implements DriverRepository {
         }
     }
 
-    // Общая выборка восстанавливает признак active для каждого доставщика
-    private List<Driver> select(String suffix, Object... args) {
+
+    private List<Driver> select(
+        String suffix,
+        Object... args
+    ) {
         try (Connection connection = database.openConnection();
              PreparedStatement statement = connection.prepareStatement(
                  "SELECT id, full_name, phone, active FROM drivers " + suffix)) {
@@ -98,13 +97,19 @@ public final class JdbcDriverRepository implements DriverRepository {
         }
     }
 
-    private void bind(PreparedStatement statement, Driver driver) throws SQLException {
+    private void bind(
+        PreparedStatement statement,
+        Driver driver
+    ) throws SQLException {
         statement.setString(1, driver.getFullName());
         statement.setString(2, driver.getPhone());
         statement.setBoolean(3, driver.isActive());
     }
 
-    private DataAccessException failure(String action, SQLException cause) {
+    private DataAccessException failure(
+        String action,
+        SQLException cause
+    ) {
         return new DataAccessException("Не удалось " + action + " в базе данных", cause);
     }
 }
